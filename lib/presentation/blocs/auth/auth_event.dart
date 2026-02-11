@@ -63,6 +63,45 @@ class GoogleProfileDetailsSubmitted extends AuthEvent {
   List<Object?> get props => [occupation, country];
 }
 
+class VerificationCodeSent extends AuthEvent {
+  final String email;
+  final String firstName;
+
+  const VerificationCodeSent({
+    required this.email,
+    required this.firstName,
+  });
+
+  @override
+  List<Object?> get props => [email, firstName];
+}
+
+class VerificationCodeSubmitted extends AuthEvent {
+  final String email;
+  final String code;
+
+  const VerificationCodeSubmitted({
+    required this.email,
+    required this.code,
+  });
+
+  @override
+  List<Object?> get props => [email, code];
+}
+
+class ResendVerificationCode extends AuthEvent {
+  final String email;
+  final String firstName;
+
+  const ResendVerificationCode({
+    required this.email,
+    required this.firstName,
+  });
+
+  @override
+  List<Object?> get props => [email, firstName];
+}
+
 class RegistrationStepBack extends AuthEvent {}
 
 class RegistrationReset extends AuthEvent {}
