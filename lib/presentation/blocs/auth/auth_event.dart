@@ -1,0 +1,68 @@
+import 'package:equatable/equatable.dart';
+
+abstract class AuthEvent extends Equatable {
+  const AuthEvent();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class SignUpInfoSubmitted extends AuthEvent {
+  final String firstName;
+  final String lastName;
+  final String email;
+
+  const SignUpInfoSubmitted({
+    required this.firstName,
+    required this.lastName,
+    required this.email,
+  });
+
+  @override
+  List<Object?> get props => [firstName, lastName, email];
+}
+
+class ProfileDetailsSubmitted extends AuthEvent {
+  final String occupation;
+  final String country;
+
+  const ProfileDetailsSubmitted({
+    required this.occupation,
+    required this.country,
+  });
+
+  @override
+  List<Object?> get props => [occupation, country];
+}
+
+class SecuritySetupSubmitted extends AuthEvent {
+  final String password;
+  final String confirmPassword;
+
+  const SecuritySetupSubmitted({
+    required this.password,
+    required this.confirmPassword,
+  });
+
+  @override
+  List<Object?> get props => [password, confirmPassword];
+}
+
+class GoogleSignInRequested extends AuthEvent {}
+
+class GoogleProfileDetailsSubmitted extends AuthEvent {
+  final String occupation;
+  final String country;
+
+  const GoogleProfileDetailsSubmitted({
+    required this.occupation,
+    required this.country,
+  });
+
+  @override
+  List<Object?> get props => [occupation, country];
+}
+
+class RegistrationStepBack extends AuthEvent {}
+
+class RegistrationReset extends AuthEvent {}
