@@ -4,6 +4,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
+import 'email_verification_screen.dart';
 import 'security_setup_screen.dart';
 
 class ProfileDetailsScreen extends StatefulWidget {
@@ -81,8 +82,23 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         if (state is ProfileDetailsCollected) {
           _navigateToSecuritySetup();
         } else if (state is RegistrationSuccess) {
-          // Google user profile saved — go to home
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          final email = state.email;
+          final firstName = state.firstName;
+          Navigator.of(context).pushAndRemoveUntil(
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => BlocProvider(
+                create: (_) => AuthBloc(),
+                child: EmailVerificationScreen(
+                  email: email,
+                  firstName: firstName,
+                ),
+              ),
+              transitionsBuilder: (_, animation, __, child) =>
+                  FadeTransition(opacity: animation, child: child),
+              transitionDuration: const Duration(milliseconds: 300),
+            ),
+            (route) => route.isFirst,
+          );
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

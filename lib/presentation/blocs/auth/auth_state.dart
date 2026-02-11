@@ -39,7 +39,45 @@ class GoogleSignInSuccess extends AuthState {
 
 class AuthLoading extends AuthState {}
 
-class RegistrationSuccess extends AuthState {}
+class RegistrationSuccess extends AuthState {
+  final String email;
+  final String firstName;
+
+  const RegistrationSuccess({required this.email, required this.firstName});
+
+  @override
+  List<Object?> get props => [email, firstName];
+}
+
+class VerificationCodeSentSuccess extends AuthState {
+  final String email;
+  final String firstName;
+
+  const VerificationCodeSentSuccess({
+    required this.email,
+    required this.firstName,
+  });
+
+  @override
+  List<Object?> get props => [email, firstName];
+}
+
+class VerificationSuccess extends AuthState {}
+
+class VerificationFailed extends AuthState {
+  final String message;
+  final String email;
+  final String firstName;
+
+  const VerificationFailed({
+    required this.message,
+    required this.email,
+    required this.firstName,
+  });
+
+  @override
+  List<Object?> get props => [message, email, firstName];
+}
 
 class AuthError extends AuthState {
   final String message;

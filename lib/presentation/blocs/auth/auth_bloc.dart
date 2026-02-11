@@ -2,21 +2,27 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/models/registration_data.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../services/verification_service.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
+  final VerificationService _verificationService;
   RegistrationData _registrationData = const RegistrationData();
 
-  AuthBloc({AuthRepository? authRepository})
+  AuthBloc({AuthRepository? authRepository, VerificationService? verificationService})
       : _authRepository = authRepository ?? AuthRepository(),
+        _verificationService = verificationService ?? VerificationService(),
         super(AuthInitial()) {
     on<SignUpInfoSubmitted>(_onSignUpInfoSubmitted);
     on<ProfileDetailsSubmitted>(_onProfileDetailsSubmitted);
     on<SecuritySetupSubmitted>(_onSecuritySetupSubmitted);
     on<GoogleSignInRequested>(_onGoogleSignInRequested);
     on<GoogleProfileDetailsSubmitted>(_onGoogleProfileDetailsSubmitted);
+    on<VerificationCodeSent>(_onVerificationCodeSent);
+    on<VerificationCodeSubmitted>(_onVerificationCodeSubmitted);
+    on<ResendVerificationCode>(_onResendVerificationCode);
     on<RegistrationStepBack>(_onRegistrationStepBack);
     on<RegistrationReset>(_onRegistrationReset);
   }
@@ -67,14 +73,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     try {
       await _authRepository.registerWithEmailAndPassword(_registrationData);
+      final email = _registrationData.email;
+      final firstName = _registrationData.firstName;
       _registrationData = const RegistrationData();
-      emit(RegistrationSuccess());
+      emit(RegistrationSuccess(email: email, firstName: firstName));
     } on FirebaseAuthException catch (e) {
       emit(AuthError(_mapFirebaseError(e.code),
           registrationData: _registrationData));
     } catch (e) {
       final message = e.toString();
-      // Check if it's a Firebase error with a code we can extract
       if (e is FirebaseException) {
         emit(AuthError(_mapFirebaseError(e.code),
             registrationData: _registrationData));
@@ -105,8 +112,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           !(await _authRepository.userProfileExists(user.uid))) {
         emit(GoogleSignInSuccess(_registrationData));
       } else {
+        final email = _registrationData.email;
+        final firstName = _registrationData.firstName;
         _registrationData = const RegistrationData();
-        emit(RegistrationSuccess());
+        emit(RegistrationSuccess(email: email, firstName: firstName));
       }
     } catch (e) {
       emit(AuthError(e.toString()));
@@ -134,10 +143,87 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         country: _registrationData.country,
         photoUrl: user.photoURL,
       );
+      final email = _registrationData.email;
+      final firstName = _registrationData.firstName;
       _registrationData = const RegistrationData();
-      emit(RegistrationSuccess());
+      emit(RegistrationSuccess(email: email, firstName: firstName));
     } catch (e) {
       emit(AuthError(e.toString(), registrationData: _registrationData));
+    }
+  }
+
+  Future<void> _onVerificationCodeSent(
+    VerificationCodeSent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _verificationService.sendVerificationCode(
+        email: event.email,
+        firstName: event.firstName,
+      );
+      emit(VerificationCodeSentSuccess(
+        email: event.email,
+        firstName: event.firstName,
+      ));
+    } catch (e) {
+      emit(VerificationFailed(
+        message: 'Failed to send verification code: $e',
+        email: event.email,
+        firstName: event.firstName,
+      ));
+    }
+  }
+
+  Future<void> _onVerificationCodeSubmitted(
+    VerificationCodeSubmitted event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final isValid = await _verificationService.verifyCode(
+        email: event.email,
+        code: event.code,
+      );
+
+      if (isValid) {
+        emit(VerificationSuccess());
+      } else {
+        emit(VerificationFailed(
+          message: 'Code is invalid or expired. Please check or request a new one.',
+          email: event.email,
+          firstName: '',
+        ));
+      }
+    } catch (e) {
+      emit(VerificationFailed(
+        message: 'Verification failed. Please try again.',
+        email: event.email,
+        firstName: '',
+      ));
+    }
+  }
+
+  Future<void> _onResendVerificationCode(
+    ResendVerificationCode event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _verificationService.sendVerificationCode(
+        email: event.email,
+        firstName: event.firstName,
+      );
+      emit(VerificationCodeSentSuccess(
+        email: event.email,
+        firstName: event.firstName,
+      ));
+    } catch (e) {
+      emit(VerificationFailed(
+        message: 'Failed to resend code: $e',
+        email: event.email,
+        firstName: event.firstName,
+      ));
     }
   }
 
