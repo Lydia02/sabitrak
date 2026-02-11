@@ -6,6 +6,8 @@ SabiTrak is a mobile food inventory management app designed for African students
 
 **Design Mockups:** [View on Uizard](https://app.uizard.io/p/4f316171)
 
+**Demo Video:** [Watch Initial Product Demo](https://drive.google.com/file/d/1fEGalPJlz8gyPdhFqUWo3lqrl8H0xaZE/view?usp=sharing)
+
 ---
 
 ## Features

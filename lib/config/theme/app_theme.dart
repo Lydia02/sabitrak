@@ -10,6 +10,11 @@ class AppTheme {
   static const Color white = Color(0xFFFFFFFF);
   static const Color subtitleGrey = Color(0xFF6B6B6B);
 
+  // Form Colors
+  static const Color fieldHintColor = Color(0xFFA0A4B8);
+  static const Color fieldBorderColor = Color(0xFFD0D0D0);
+  static const Color backButtonColor = Color(0xFFA0A4B8);
+
   static ThemeData get lightTheme {
     return ThemeData(
       fontFamily: 'Roboto',
@@ -20,6 +25,27 @@ class AppTheme {
         surface: backgroundColor,
       ),
       useMaterial3: true,
+      inputDecorationTheme: const InputDecorationTheme(
+        hintStyle: TextStyle(
+          fontFamily: 'Roboto',
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: fieldHintColor,
+        ),
+        enabledBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: fieldBorderColor, width: 1.0),
+        ),
+        focusedBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: primaryGreen, width: 1.5),
+        ),
+        errorBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.red, width: 1.0),
+        ),
+        focusedErrorBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.red, width: 1.5),
+        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 12),
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: buttonGreen,
