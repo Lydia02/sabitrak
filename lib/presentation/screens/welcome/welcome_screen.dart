@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../blocs/auth/auth_bloc.dart';
+import '../auth/sign_up_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -92,7 +95,23 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          // TODO: Navigate to registration
+                          Navigator.of(context).push(
+                            PageRouteBuilder(
+                              pageBuilder: (context, animation,
+                                      secondaryAnimation) =>
+                                  BlocProvider(
+                                create: (context) => AuthBloc(),
+                                child: const SignUpScreen(),
+                              ),
+                              transitionsBuilder: (context, animation,
+                                  secondaryAnimation, child) {
+                                return FadeTransition(
+                                    opacity: animation, child: child);
+                              },
+                              transitionDuration:
+                                  const Duration(milliseconds: 400),
+                            ),
+                          );
                         },
                         child: const Text('Create Account'),
                       ),
