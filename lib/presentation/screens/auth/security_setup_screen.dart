@@ -4,6 +4,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
+import 'email_verification_screen.dart';
 
 class SecuritySetupScreen extends StatefulWidget {
   const SecuritySetupScreen({super.key});
@@ -40,9 +41,23 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is RegistrationSuccess) {
-          // Account created — go back to first route (welcome)
-          // TODO: Navigate to email verification screen when built
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          final email = state.email;
+          final firstName = state.firstName;
+          Navigator.of(context).pushAndRemoveUntil(
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => BlocProvider(
+                create: (_) => AuthBloc(),
+                child: EmailVerificationScreen(
+                  email: email,
+                  firstName: firstName,
+                ),
+              ),
+              transitionsBuilder: (_, animation, __, child) =>
+                  FadeTransition(opacity: animation, child: child),
+              transitionDuration: const Duration(milliseconds: 300),
+            ),
+            (route) => route.isFirst,
+          );
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
