@@ -1,101 +1,140 @@
-# SabiTrak (SabiTrak)
+# SabiTrak
 
-## Description
-SabiTrak is a mobile food inventory management application designed for African student and young professional contexts. It supports barcode scanning where available, manual item entry, expiry date tracking with alerts, household collaboration, recipe recommendations, and waste logging to support food waste reduction.
+**Smart tracking. Less waste.**
 
-## GitHub Repository Link
-<PASTE YOUR GITHUB REPO LINK HERE>
+SabiTrak is a mobile food inventory management app designed for African students and young professionals. It helps reduce food waste through barcode scanning, expiry tracking, recipe recommendations based on what you have, and household collaboration.
 
-## Features
-- Inventory tracking (Pantry/Fridge/Freezer)
-- Barcode scanning (fallback to manual entry)
-- Expiry date tracking + notifications
-- Update Pantry (used/wasted tracking)
-- Recipe recommendations based on inventory and expiry urgency
-- Household collaboration (create/join household, shared inventory)
-- Analytics/insights (waste reduction summary)
+**Design Mockups:** [View on Uizard](https://app.uizard.io/p/4f316171)
 
 ---
 
-## Environment Setup
+## Features
+
+- **Inventory Management** - Track items across Pantry, Fridge, and Freezer with color-coded expiry indicators
+- **Barcode Scanning** - Scan products to auto-fill details via Open Food Facts API, with manual entry fallback
+- **Expiry Date Tracking** - Get alerts for items expiring soon, with OCR capture for expiry dates
+- **Recipe Recommendations** - Get recipe suggestions based on current inventory, prioritizing expiring items
+- **Household Collaboration** - Create or join a household with invite codes, share inventory with family/roommates
+- **Update Pantry** - Log used and wasted items after cooking to keep inventory accurate
+- **Insights & Analytics** - View waste reduction summaries and savings
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Flutter (Dart) |
+| State Management | BLoC |
+| Backend | Firebase (Auth, Firestore, Storage, Cloud Messaging) |
+| Barcode API | Open Food Facts |
+| Local Storage | Hive, SharedPreferences |
+| Navigation | GoRouter |
+
+---
+
+## Getting Started
 
 ### Prerequisites
-- Flutter SDK (stable)
+
+- Flutter SDK (stable) - [Install Flutter](https://docs.flutter.dev/get-started/install)
 - Dart SDK (bundled with Flutter)
 - Android Studio / Xcode (for emulator/simulator)
-- Firebase project (Authentication + Firestore/Realtime DB + Cloud Messaging)
+- Firebase CLI - `npm install -g firebase-tools`
+- FlutterFire CLI - `dart pub global activate flutterfire_cli`
 
 ### Clone & Install
+
 ```bash
-git clone <https://github.com/Lydia02/sabitrak.git>
-cd <sabitrak>
+git clone https://github.com/Lydia02/sabitrak.git
+cd sabitrak
 flutter pub get
+```
 
+### Firebase Configuration
 
-Firebase Configuration
+1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+2. Enable the following services:
+   - **Authentication** (Email/Password)
+   - **Cloud Firestore**
+   - **Firebase Storage**
+   - **Cloud Messaging** (for expiry alerts)
+3. Configure FlutterFire:
+   ```bash
+   firebase login
+   flutterfire configure
+   ```
+   This generates `lib/firebase_options.dart` automatically.
 
-Create a Firebase project
+### Run the App
 
-Enable:
-
-Firebase Authentication (Email/Password)
-
-Firestore or Realtime Database (whichever you used)
-
-Firebase Cloud Messaging (for expiry alerts)
-
-Download config files:
-
-Android: google-services.json → place in android/app/
-
-iOS: GoogleService-Info.plist → place in ios/Runner/
-
-Run:
-
-flutterfire configure
-
-Run the App
+```bash
 flutter run
+```
 
-Designs
+---
 
-Figma Mockups: <PASTE FIGMA LINK HERE>
+## Project Structure
 
-App Screenshots: See /docs/screenshots/
+```
+lib/
+├── main.dart
+├── firebase_options.dart
+├── config/
+│   ├── routes/          # GoRouter configuration
+│   └── theme/           # App theme, colors, typography
+├── core/
+│   ├── constants/
+│   ├── utils/
+│   └── errors/
+├── data/
+│   ├── models/          # FoodItem, Recipe, Household
+│   ├── repositories/    # Data access layer
+│   └── datasources/     # Local (Hive) & Remote (Firebase)
+├── presentation/
+│   ├── blocs/           # BLoC state management
+│   ├── screens/         # App screens
+│   └── widgets/         # Reusable UI components
+└── services/            # Firebase, Barcode, Notifications
+```
 
-System Architecture / Flow Diagrams: See /docs/diagrams/
+---
 
-Deployment Plan
-Android (Google Play Store)
+## App Flow
 
-Update package name + app icon + version (pubspec.yaml)
+1. **Splash** - Animated logo reveal
+2. **Welcome** - Create Account / Log In
+3. **Registration** - Name, profile details, password, email verification
+4. **Household Setup** - Create household, join with invite code, or go solo
+5. **Dashboard** - Overview with expiry alerts, quick actions, smart suggestions
+6. **Inventory** - Browse items by category (Pantry/Fridge/Freezer/Expiring Soon)
+7. **Add Item** - Scan barcode, capture expiry with camera, or add manually
+8. **Recipes** - Suggestions based on inventory, filtered by diet and expiry urgency
+9. **Cooking Mode** - Step-by-step instructions, then update pantry with used/wasted items
+10. **Profile** - Household management, notifications, data sync, analytics
 
-Build release:
+---
 
+## Deployment
+
+### Android (Google Play Store)
+
+```bash
 flutter build appbundle
+```
 
+Upload the `.aab` file to Google Play Console.
 
-Upload the .aab file to Google Play Console
+### iOS (Apple App Store)
 
-Use staged rollout (recommended)
-
-iOS (Apple App Store)
-
-Configure bundle identifier + signing in Xcode
-
-Build:
-
+```bash
 flutter build ios --release
+```
 
+Archive in Xcode and upload to App Store Connect.
 
-Archive in Xcode → upload to App Store Connect
+---
 
-Submit for review
+## License
 
-Backend / Firebase Deployment
-
-Use Firebase rules for household data access control
-
-Enable analytics (optional) with explicit opt-in
-
-Configure FCM for expiry alerts
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
