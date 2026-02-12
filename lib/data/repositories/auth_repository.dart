@@ -98,6 +98,19 @@ class AuthRepository {
     );
   }
 
+  Future<User> signInWithEmailAndPassword(String email, String password) async {
+    final UserCredential credential =
+        await _firebaseService.auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    return credential.user!;
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _firebaseService.auth.sendPasswordResetEmail(email: email);
+  }
+
   Future<bool> userProfileExists(String uid) async {
     final doc = await _firebaseService.users.doc(uid).get();
     return doc.exists;

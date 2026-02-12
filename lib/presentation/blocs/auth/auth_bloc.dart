@@ -23,6 +23,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<VerificationCodeSent>(_onVerificationCodeSent);
     on<VerificationCodeSubmitted>(_onVerificationCodeSubmitted);
     on<ResendVerificationCode>(_onResendVerificationCode);
+    on<SignInSubmitted>(_onSignInSubmitted);
+    on<ForgotPasswordSubmitted>(_onForgotPasswordSubmitted);
     on<RegistrationStepBack>(_onRegistrationStepBack);
     on<RegistrationReset>(_onRegistrationReset);
   }
@@ -224,6 +226,58 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         email: event.email,
         firstName: event.firstName,
       ));
+    }
+  }
+
+  Future<void> _onSignInSubmitted(
+    SignInSubmitted event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final user = await _authRepository.signInWithEmailAndPassword(
+        event.email,
+        event.password,
+      );
+      emit(SignInSuccess(displayName: user.displayName ?? user.email ?? ''));
+    } on FirebaseAuthException catch (e) {
+      emit(AuthError(_mapSignInError(e.code)));
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
+  }
+
+  Future<void> _onForgotPasswordSubmitted(
+    ForgotPasswordSubmitted event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _authRepository.sendPasswordResetEmail(event.email);
+      emit(ForgotPasswordSuccess());
+    } on FirebaseAuthException catch (e) {
+      emit(AuthError(_mapSignInError(e.code)));
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
+  }
+
+  String _mapSignInError(String code) {
+    switch (code) {
+      case 'user-not-found':
+        return 'No account found with this email';
+      case 'wrong-password':
+        return 'Incorrect password';
+      case 'invalid-email':
+        return 'Please enter a valid email address';
+      case 'user-disabled':
+        return 'This account has been disabled';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later';
+      case 'invalid-credential':
+        return 'Invalid email or password';
+      default:
+        return 'Sign in failed. Please try again.';
     }
   }
 
