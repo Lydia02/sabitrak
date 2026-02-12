@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../blocs/auth/auth_bloc.dart';
+import '../auth/sign_in_screen.dart';
 import '../auth/sign_up_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -118,7 +119,21 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () {
-                          // TODO: Navigate to login
+                          Navigator.of(context).push(
+                            PageRouteBuilder(
+                              pageBuilder: (context, animation, _) =>
+                                  BlocProvider(
+                                create: (_) => AuthBloc(),
+                                child: const SignInScreen(),
+                              ),
+                              transitionsBuilder:
+                                  (context, animation, _, child) =>
+                                      FadeTransition(
+                                          opacity: animation, child: child),
+                              transitionDuration:
+                                  const Duration(milliseconds: 400),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF4A5A2C),
