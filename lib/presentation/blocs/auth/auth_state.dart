@@ -62,6 +62,16 @@ class VerificationCodeSentSuccess extends AuthState {
   List<Object?> get props => [email, firstName];
 }
 
+class SignInSuccess extends AuthState {
+  final String displayName;
+  const SignInSuccess({required this.displayName});
+
+  @override
+  List<Object?> get props => [displayName];
+}
+
+class ForgotPasswordSuccess extends AuthState {}
+
 class VerificationSuccess extends AuthState {}
 
 class VerificationFailed extends AuthState {

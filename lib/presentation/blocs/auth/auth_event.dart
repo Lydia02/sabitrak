@@ -102,6 +102,25 @@ class ResendVerificationCode extends AuthEvent {
   List<Object?> get props => [email, firstName];
 }
 
+class SignInSubmitted extends AuthEvent {
+  final String email;
+  final String password;
+
+  const SignInSubmitted({required this.email, required this.password});
+
+  @override
+  List<Object?> get props => [email, password];
+}
+
+class ForgotPasswordSubmitted extends AuthEvent {
+  final String email;
+
+  const ForgotPasswordSubmitted({required this.email});
+
+  @override
+  List<Object?> get props => [email];
+}
+
 class RegistrationStepBack extends AuthEvent {}
 
 class RegistrationReset extends AuthEvent {}
