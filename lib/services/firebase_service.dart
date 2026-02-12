@@ -24,4 +24,27 @@ class FirebaseService {
 
   // Check if user is logged in
   bool get isLoggedIn => currentUser != null;
+
+  // Check if the current user belongs to any household
+  Future<bool> hasHousehold() async {
+    final uid = currentUser?.uid;
+    if (uid == null) return false;
+    final query = await households
+        .where('members', arrayContains: uid)
+        .limit(1)
+        .get();
+    return query.docs.isNotEmpty;
+  }
+
+  // Get the household name for the current user (null if none)
+  Future<String?> getHouseholdName() async {
+    final uid = currentUser?.uid;
+    if (uid == null) return null;
+    final query = await households
+        .where('members', arrayContains: uid)
+        .limit(1)
+        .get();
+    if (query.docs.isEmpty) return null;
+    return query.docs.first['name'] as String?;
+  }
 }
