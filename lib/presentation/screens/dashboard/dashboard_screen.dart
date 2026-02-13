@@ -12,250 +12,479 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   String? _householdName;
   bool _loaded = false;
+  int _totalItems = 0;   // updated once inventory is built
+  int _expiringItems = 0; // updated once inventory is built
+  int _memberCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadHouseholdName();
+    _loadDashboardData();
   }
 
-  Future<void> _loadHouseholdName() async {
-    final name = await FirebaseService().getHouseholdName();
+  Future<void> _loadDashboardData() async {
+    final firebaseService = FirebaseService();
+    final name = await firebaseService.getHouseholdName();
+    // TODO: Replace with real inventory queries once inventory is built
+    final uid = firebaseService.currentUser?.uid;
+    int members = 1;
+    if (uid != null) {
+      final query = await firebaseService.households
+          .where('members', arrayContains: uid)
+          .limit(1)
+          .get();
+      if (query.docs.isNotEmpty) {
+        final data = query.docs.first.data() as Map<String, dynamic>;
+        final memberList = data['members'] as List<dynamic>?;
+        members = memberList?.length ?? 1;
+      }
+    }
     if (mounted) {
       setState(() {
         _householdName = name;
+        _memberCount = members;
+        _totalItems = 0;
+        _expiringItems = 0;
         _loaded = true;
       });
     }
   }
 
-  String get _greeting {
+  String get _greetingName {
     if (!_loaded) return '';
     if (_householdName != null && _householdName!.isNotEmpty) {
-      return 'Welcome, $_householdName!';
+      return _householdName!;
     }
     final user = FirebaseService().currentUser;
     final displayName = user?.displayName ?? user?.email ?? 'there';
-    final firstName = displayName.contains(' ')
+    return displayName.contains(' ')
         ? displayName.split(' ').first
         : displayName.split('@').first;
-    return 'Welcome, $firstName!';
   }
+
+  String get _timeGreeting {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  bool get _isEmpty => _totalItems == 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: SafeArea(
+        child: _loaded
+            ? SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Header ──
+                    _buildHeader(),
+                    const SizedBox(height: 20),
+
+                    // ── Stat Cards ──
+                    _buildStatCards(),
+                    const SizedBox(height: 20),
+
+                    // ── Analytical Overview ──
+                    _buildAnalyticalOverview(),
+                    const SizedBox(height: 24),
+
+                    // ── Quick Actions ──
+                    _buildQuickActions(),
+                    const SizedBox(height: 24),
+
+                    // ── Recommended / Empty State ──
+                    if (_isEmpty)
+                      _buildEmptyState()
+                    else
+                      _buildRecommended(),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              )
+            : const Center(
+                child: CircularProgressIndicator(
+                  color: AppTheme.primaryGreen,
+                  strokeWidth: 2,
+                ),
+              ),
+      ),
+    );
+  }
+
+  // ── Header: Avatar + Greeting + Notification bell ──
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Row(
         children: [
-          // ── Header ──
+          // Avatar
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(24, 52, 24, 20),
-            color: AppTheme.primaryGreen,
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppTheme.fieldBorderColor.withValues(alpha: 0.3),
+            ),
+            child: const Icon(
+              Icons.person,
+              color: AppTheme.subtitleGrey,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Greeting
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: _loaded
-                          ? Text(
-                              _greeting,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 2,
-                              style: const TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.white,
-                              ),
-                            )
-                          : const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppTheme.white,
-                              ),
-                            ),
-                    ),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.notifications_outlined,
-                              color: AppTheme.white),
-                          onPressed: () {},
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.settings_outlined,
-                              color: AppTheme.white),
-                          onPressed: () {},
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Track your food and reduce waste.',
-                  style: TextStyle(
+                Text(
+                  '$_timeGreeting, $_greetingName!',
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: const TextStyle(
                     fontFamily: 'Roboto',
-                    fontSize: 13,
-                    color: AppTheme.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primaryGreen,
                   ),
                 ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Sync: Online',
-                  style: TextStyle(
+                Text(
+                  _isEmpty
+                      ? 'Start tracking your food today.'
+                      : 'You saved 0kg of food this month',
+                  style: const TextStyle(
                     fontFamily: 'Roboto',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.white,
+                    fontSize: 13,
+                    color: AppTheme.subtitleGrey,
                   ),
                 ),
               ],
             ),
           ),
+          // Notification bell
+          GestureDetector(
+            onTap: () {},
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.notifications_outlined,
+                color: AppTheme.primaryGreen,
+                size: 22,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-          // ── Body — fills remaining space ──
+  // ── 3 Stat Cards: Expiring, Total Items, Members ──
+  Widget _buildStatCards() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: [
           Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final h = constraints.maxHeight;
-                // Proportional vertical spacing based on available height
-                final sectionGap = h * 0.04; // ~4% of body height
-                final cardPadding = h * 0.02;
+            child: _StatCard(
+              icon: Icons.warning_amber_rounded,
+              iconColor: const Color(0xFFE65100),
+              value: '$_expiringItems',
+              label: 'EXPIRING',
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _StatCard(
+              icon: Icons.shopping_bag_outlined,
+              iconColor: AppTheme.primaryGreen,
+              value: '$_totalItems',
+              label: 'TOTAL ITEMS',
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _StatCard(
+              icon: Icons.people_outline,
+              iconColor: const Color(0xFF1565C0),
+              value: '$_memberCount',
+              label: 'MEMBERS',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                return Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: 20, vertical: sectionGap),
+  // ── Analytical Overview: Waste Reduction Goal ──
+  Widget _buildAnalyticalOverview() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppTheme.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'ANALYTICAL OVERVIEW',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.subtitleGrey,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                Icon(
+                  Icons.bar_chart,
+                  size: 20,
+                  color: AppTheme.primaryGreen.withValues(alpha: 0.5),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                // Circular progress
+                SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        value: _isEmpty ? 0.0 : 0.85,
+                        strokeWidth: 5,
+                        backgroundColor: AppTheme.fieldBorderColor.withValues(alpha: 0.3),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          AppTheme.primaryGreen,
+                        ),
+                      ),
+                      Text(
+                        _isEmpty ? '0%' : '85%',
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primaryGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Insights
                       const Text(
-                        'Insights',
+                        'Waste Reduction Goal',
                         style: TextStyle(
                           fontFamily: 'Roboto',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
                           color: AppTheme.primaryGreen,
                         ),
                       ),
-                      SizedBox(height: cardPadding),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _InsightCard(
-                              number: '10',
-                              label: 'items',
-                              subtitle: 'Use within 7 days',
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _InsightCard(
-                              number: '5',
-                              label: 'items saved',
-                              subtitle: 'This month',
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-
-                      // Smart Suggestions
-                      const Text(
-                        'Smart Suggestions',
-                        style: TextStyle(
+                      const SizedBox(height: 4),
+                      Text(
+                        _isEmpty
+                            ? 'Start tracking your food to see your reduction progress.'
+                            : 'You\'re doing great! Only 15% away from your monthly target.',
+                        style: const TextStyle(
                           fontFamily: 'Roboto',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryGreen,
+                          fontSize: 12,
+                          color: AppTheme.subtitleGrey,
                         ),
                       ),
-                      SizedBox(height: cardPadding),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 16),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryGreen,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Row(
-                                children: const [
-                                  Icon(Icons.lightbulb_outline,
-                                      color: AppTheme.white, size: 20),
-                                  SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text(
-                                      '2 items expire',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontFamily: 'Roboto',
-                                        fontSize: 14,
-                                        color: AppTheme.white,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () {},
-                              child: const Text(
-                                'View Recipes',
-                                style: TextStyle(
-                                  fontFamily: 'Roboto',
-                                  fontSize: 14,
-                                  color: AppTheme.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Spacer(),
-
-                      // Quick Actions
-                      const Text(
-                        'Quick Actions',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryGreen,
-                        ),
-                      ),
-                      SizedBox(height: cardPadding),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: const [
-                          _QuickAction(
-                              icon: Icons.qr_code_scanner, label: 'Scan'),
-                          _QuickAction(
-                              icon: Icons.inventory_2_outlined,
-                              label: 'Update\nPantry'),
-                          _QuickAction(
-                              icon: Icons.restaurant_menu, label: 'Recipes'),
-                        ],
-                      ),
-                      SizedBox(height: sectionGap),
                     ],
                   ),
-                );
-              },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Quick Actions: Scan, Add Item, Update Pantry ──
+  Widget _buildQuickActions() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _QuickActionButton(
+            icon: Icons.qr_code_scanner,
+            label: 'Scan',
+            filled: true,
+            onTap: () {},
+          ),
+          _QuickActionButton(
+            icon: Icons.add_circle_outline,
+            label: 'Add Item',
+            filled: true,
+            onTap: () {},
+          ),
+          _QuickActionButton(
+            icon: Icons.sync,
+            label: 'Update\nPantry',
+            filled: false,
+            onTap: () {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Empty State: Your inventory is empty ──
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          // Dashed circle with bag icon
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppTheme.fieldBorderColor.withValues(alpha: 0.5),
+                width: 2,
+                strokeAlign: BorderSide.strokeAlignInside,
+              ),
+            ),
+            child: Icon(
+              Icons.shopping_bag_outlined,
+              size: 44,
+              color: AppTheme.subtitleGrey.withValues(alpha: 0.4),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Your inventory is empty',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.primaryGreen,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Add food items to see personalized recipe\nrecommendations and track expiry dates.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 13,
+              color: AppTheme.subtitleGrey,
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {},
+              child: const Text('Add Your First Item'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Recommended for You (when user has items) ──
+  Widget _buildRecommended() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Recommended for You',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primaryGreen,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {},
+                  child: const Text(
+                    'SEE ALL',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.subtitleGrey,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 220,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: const [
+                _RecipeCard(
+                  title: 'Rich Beef Stew',
+                  subtitle: 'Uses your Tomato Paste (Exp. today)',
+                  time: '45 min',
+                  difficulty: 'Medium',
+                  tag: 'EXPIRING INGREDIENT',
+                ),
+                SizedBox(width: 12),
+                _RecipeCard(
+                  title: 'Zesty Fruit Salad',
+                  subtitle: 'Uses 3 Bananas',
+                  time: '10 min',
+                  difficulty: 'Easy',
+                  tag: 'EXPIRING INGREDIENT',
+                ),
+                SizedBox(width: 20),
+              ],
             ),
           ),
         ],
@@ -264,52 +493,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-class _InsightCard extends StatelessWidget {
-  final String number;
-  final String label;
-  final String subtitle;
+// ═══════════════════════════════════════════════════
+//  Reusable Widgets
+// ═══════════════════════════════════════════════════
 
-  const _InsightCard({
-    required this.number,
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String value;
+  final String label;
+
+  const _StatCard({
+    required this.icon,
+    required this.iconColor,
+    required this.value,
     required this.label,
-    required this.subtitle,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
-        color: AppTheme.primaryGreen,
-        borderRadius: BorderRadius.circular(16),
+        color: AppTheme.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Icon(icon, color: iconColor, size: 22),
+          const SizedBox(height: 8),
           Text(
-            number,
+            value,
             style: const TextStyle(
               fontFamily: 'Roboto',
-              fontSize: 28,
+              fontSize: 24,
               fontWeight: FontWeight.w700,
-              color: AppTheme.white,
-            ),
-          ),
-          Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 13,
-              color: AppTheme.white,
+              color: AppTheme.primaryGreen,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            subtitle,
+            label,
             style: const TextStyle(
               fontFamily: 'Roboto',
-              fontSize: 11,
-              color: AppTheme.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.subtitleGrey,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -318,43 +555,198 @@ class _InsightCard extends StatelessWidget {
   }
 }
 
-class _QuickAction extends StatelessWidget {
+class _QuickActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
+  final bool filled;
+  final VoidCallback onTap;
 
-  const _QuickAction({required this.icon, required this.label});
+  const _QuickActionButton({
+    required this.icon,
+    required this.label,
+    required this.filled,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: AppTheme.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: filled
+                  ? AppTheme.white
+                  : AppTheme.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: AppTheme.primaryGreen, size: 26),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.primaryGreen,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecipeCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String time;
+  final String difficulty;
+  final String tag;
+
+  const _RecipeCard({
+    required this.title,
+    required this.subtitle,
+    required this.time,
+    required this.difficulty,
+    required this.tag,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 200,
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image placeholder with tag
+          Container(
+            height: 110,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryGreen.withValues(alpha: 0.15),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
               ),
-            ],
+            ),
+            child: Stack(
+              children: [
+                // Placeholder food icon
+                Center(
+                  child: Icon(
+                    Icons.restaurant,
+                    size: 40,
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.3),
+                  ),
+                ),
+                // Expiring tag
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE65100),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      tag,
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          child: Icon(icon, color: AppTheme.primaryGreen, size: 26),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontFamily: 'Roboto',
-            fontSize: 12,
-            color: AppTheme.primaryGreen,
+          // Details
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.primaryGreen,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 11,
+                    color: AppTheme.subtitleGrey,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.schedule, size: 14, color: AppTheme.subtitleGrey),
+                    const SizedBox(width: 4),
+                    Text(
+                      time,
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 11,
+                        color: AppTheme.subtitleGrey,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Icon(Icons.signal_cellular_alt, size: 14, color: AppTheme.subtitleGrey),
+                    const SizedBox(width: 4),
+                    Text(
+                      difficulty,
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 11,
+                        color: AppTheme.subtitleGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

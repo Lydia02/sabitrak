@@ -14,10 +14,10 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> _screens = [
     const DashboardScreen(),
-    const _PlaceholderScreen(label: 'Households'),
-    const _PlaceholderScreen(label: 'Add Item'),
-    const _PlaceholderScreen(label: 'Recipes'),
-    const _PlaceholderScreen(label: 'Profile'),
+    const _PlaceholderScreen(label: 'Inventory', icon: Icons.inventory_2_outlined),
+    const _PlaceholderScreen(label: 'Recipes', icon: Icons.restaurant_menu),
+    const _PlaceholderScreen(label: 'Analytics', icon: Icons.bar_chart),
+    const _PlaceholderScreen(label: 'Profile', icon: Icons.person_outline),
   ];
 
   @override
@@ -27,49 +27,56 @@ class _MainShellState extends State<MainShell> {
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: BottomAppBar(
-        color: AppTheme.white,
-        elevation: 8,
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8,
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            children: [
-              Expanded(
-                child: _NavItem(
-                  icon: Icons.home_outlined,
-                  activeIcon: Icons.home,
-                  label: 'Home',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 64,
+            child: Row(
+              children: [
+                _NavItem(
+                  icon: Icons.grid_view_outlined,
+                  activeIcon: Icons.grid_view,
+                  label: 'Dashboard',
                   index: 0,
                   currentIndex: _currentIndex,
                   onTap: () => setState(() => _currentIndex = 0),
                 ),
-              ),
-              Expanded(
-                child: _NavItem(
-                  icon: Icons.people_outline,
-                  activeIcon: Icons.people,
-                  label: 'Households',
+                _NavItem(
+                  icon: Icons.inventory_2_outlined,
+                  activeIcon: Icons.inventory_2,
+                  label: 'Inventory',
                   index: 1,
                   currentIndex: _currentIndex,
                   onTap: () => setState(() => _currentIndex = 1),
                 ),
-              ),
-              // Center FAB placeholder
-              const SizedBox(width: 56),
-              Expanded(
-                child: _NavItem(
-                  icon: Icons.menu_book_outlined,
-                  activeIcon: Icons.menu_book,
+                _NavItem(
+                  icon: Icons.restaurant_menu_outlined,
+                  activeIcon: Icons.restaurant_menu,
                   label: 'Recipes',
+                  index: 2,
+                  currentIndex: _currentIndex,
+                  onTap: () => setState(() => _currentIndex = 2),
+                ),
+                _NavItem(
+                  icon: Icons.bar_chart_outlined,
+                  activeIcon: Icons.bar_chart,
+                  label: 'Analytics',
                   index: 3,
                   currentIndex: _currentIndex,
                   onTap: () => setState(() => _currentIndex = 3),
                 ),
-              ),
-              Expanded(
-                child: _NavItem(
+                _NavItem(
                   icon: Icons.person_outline,
                   activeIcon: Icons.person,
                   label: 'Profile',
@@ -77,18 +84,11 @@ class _MainShellState extends State<MainShell> {
                   currentIndex: _currentIndex,
                   onTap: () => setState(() => _currentIndex = 4),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => setState(() => _currentIndex = 2),
-        backgroundColor: AppTheme.primaryGreen,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: AppTheme.white, size: 28),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
@@ -113,29 +113,30 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = index == currentIndex;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            isActive ? activeIcon : icon,
-            color: isActive ? AppTheme.primaryGreen : AppTheme.subtitleGrey,
-            size: 24,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 10,
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isActive ? activeIcon : icon,
               color: isActive ? AppTheme.primaryGreen : AppTheme.subtitleGrey,
-              fontWeight:
-                  isActive ? FontWeight.w600 : FontWeight.w400,
+              size: 24,
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 10,
+                color: isActive ? AppTheme.primaryGreen : AppTheme.subtitleGrey,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -143,21 +144,38 @@ class _NavItem extends StatelessWidget {
 
 class _PlaceholderScreen extends StatelessWidget {
   final String label;
-  const _PlaceholderScreen({required this.label});
+  final IconData icon;
+  const _PlaceholderScreen({required this.label, required this.icon});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: Center(
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontFamily: 'Roboto',
-            fontSize: 20,
-            color: AppTheme.primaryGreen,
-            fontWeight: FontWeight.w600,
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 48, color: AppTheme.subtitleGrey),
+            const SizedBox(height: 16),
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 20,
+                color: AppTheme.primaryGreen,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Coming soon',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 14,
+                color: AppTheme.subtitleGrey,
+              ),
+            ),
+          ],
         ),
       ),
     );
