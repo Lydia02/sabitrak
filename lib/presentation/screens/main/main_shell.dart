@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../config/theme/app_theme.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../inventory/inventory_screen.dart';
+import '../recipe/recipe_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -16,7 +17,7 @@ class _MainShellState extends State<MainShell> {
   final List<Widget> _screens = [
     const DashboardScreen(),
     const InventoryScreen(),
-    const _PlaceholderScreen(label: 'Recipes', icon: Icons.restaurant_menu),
+    const RecipeScreen(),
     const _PlaceholderScreen(label: 'Analytics', icon: Icons.bar_chart),
     const _PlaceholderScreen(label: 'Profile', icon: Icons.person_outline),
   ];
@@ -151,7 +152,7 @@ class _PlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: AppTheme.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

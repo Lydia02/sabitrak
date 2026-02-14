@@ -47,7 +47,7 @@ class _AddItemDialog extends StatelessWidget {
                   fontFamily: 'Roboto',
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: Colors.black,
+                  color: AppTheme.primaryGreen,
                 ),
               ),
               const SizedBox(height: 6),

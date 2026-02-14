@@ -18,7 +18,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       fontFamily: 'Roboto',
-      scaffoldBackgroundColor: backgroundColor,
+      scaffoldBackgroundColor: white,
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryGreen,
         primary: primaryGreen,
