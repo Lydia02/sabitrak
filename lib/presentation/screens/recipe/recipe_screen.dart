@@ -309,43 +309,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-
-          // Stock Your Pantry CTA
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: OutlinedButton.icon(
-                onPressed: () => AddItemOptionsScreen.show(context),
-                icon: const Icon(Icons.shopping_bag_outlined, size: 20),
-                label: const Text('Stock Your Pantry'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primaryGreen,
-                  side: const BorderSide(
-                    color: AppTheme.primaryGreen,
-                    width: 1.5,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Center(
-            child: Text(
-              'Add items to unlock personalized recipes!',
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 12,
-                color: AppTheme.subtitleGrey,
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
         ],
       ),
     );

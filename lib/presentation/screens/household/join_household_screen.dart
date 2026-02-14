@@ -76,7 +76,7 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
 
   Widget _buildJoinForm() {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -160,7 +160,7 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
 
   Widget _buildSuccess() {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -240,7 +240,7 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
 
   Widget _buildInvalidCode() {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Center(
           child: Padding(
