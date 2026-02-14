@@ -3,6 +3,7 @@ import '../../../config/theme/app_theme.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../inventory/inventory_screen.dart';
 import '../recipe/recipe_screen.dart';
+import '../analytics/analytics_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -18,7 +19,7 @@ class _MainShellState extends State<MainShell> {
     const DashboardScreen(),
     const InventoryScreen(),
     const RecipeScreen(),
-    const _PlaceholderScreen(label: 'Analytics', icon: Icons.bar_chart),
+    const AnalyticsScreen(),
     const _PlaceholderScreen(label: 'Profile', icon: Icons.person_outline),
   ];
 

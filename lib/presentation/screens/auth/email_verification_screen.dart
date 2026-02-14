@@ -196,7 +196,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppTheme.backgroundColor,
+        backgroundColor: AppTheme.white,
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
