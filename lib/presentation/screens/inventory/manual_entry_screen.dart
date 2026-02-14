@@ -35,10 +35,12 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   ];
 
   static const List<String> _storageLocations = [
-    'Counter',
     'Fridge',
     'Freezer',
-    'Pantry',
+    'Cupboard',
+    'Counter',
+    'Shelf',
+    'Bag/Basket',
   ];
 
   static const List<String> _units = [
@@ -54,10 +56,12 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   ];
 
   static const Map<String, IconData> _storageIcons = {
-    'Counter': Icons.countertops_outlined,
     'Fridge': Icons.kitchen_outlined,
     'Freezer': Icons.ac_unit,
-    'Pantry': Icons.shelves,
+    'Cupboard': Icons.door_sliding_outlined,
+    'Counter': Icons.countertops_outlined,
+    'Shelf': Icons.shelves,
+    'Bag/Basket': Icons.shopping_basket_outlined,
   };
 
   // Smart shelf life defaults (in days)
@@ -165,7 +169,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -319,52 +323,53 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: _storageLocations.map((loc) {
                         final isSelected = _selectedStorage == loc;
-                        return Expanded(
-                          child: GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedStorage = loc),
-                            child: Container(
-                              margin: const EdgeInsets.only(right: 8),
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
-                              decoration: BoxDecoration(
+                        return GestureDetector(
+                          onTap: () =>
+                              setState(() => _selectedStorage = loc),
+                          child: Container(
+                            width: (MediaQuery.of(context).size.width - 40 - 24) / 4,
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppTheme.primaryGreen
+                                  : AppTheme.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
                                 color: isSelected
                                     ? AppTheme.primaryGreen
-                                    : AppTheme.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AppTheme.primaryGreen
-                                      : AppTheme.fieldBorderColor,
-                                ),
+                                    : AppTheme.fieldBorderColor,
                               ),
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    _storageIcons[loc] ??
-                                        Icons.storage,
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  _storageIcons[loc] ??
+                                      Icons.storage,
+                                  color: isSelected
+                                      ? AppTheme.white
+                                      : AppTheme.subtitleGrey,
+                                  size: 22,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  loc,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
                                     color: isSelected
                                         ? AppTheme.white
-                                        : AppTheme.subtitleGrey,
-                                    size: 22,
+                                        : AppTheme.primaryGreen,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    loc,
-                                    style: TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                      color: isSelected
-                                          ? AppTheme.white
-                                          : AppTheme.primaryGreen,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         );

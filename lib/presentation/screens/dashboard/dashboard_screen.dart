@@ -103,7 +103,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: _loaded
             ? SingleChildScrollView(

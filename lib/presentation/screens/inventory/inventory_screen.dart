@@ -24,8 +24,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
     'All',
     'Fridge',
     'Freezer',
-    'Pantry',
+    'Cupboard',
     'Counter',
+    'Shelf',
+    'Bag/Basket',
   ];
 
   static const List<String> _statusFilters = [
@@ -101,7 +103,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -561,7 +563,9 @@ class _InventoryItemCard extends StatelessWidget {
                     const Text(
                       '\u2022',
                       style: TextStyle(
-                          fontSize: 10, color: AppTheme.subtitleGrey),
+                          fontFamily: 'Roboto',
+                          fontSize: 10,
+                          color: AppTheme.subtitleGrey),
                     ),
                     const SizedBox(width: 8),
                     Text(
