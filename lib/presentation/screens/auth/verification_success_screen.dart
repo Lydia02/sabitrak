@@ -53,7 +53,7 @@ class _VerificationSuccessScreenState extends State<VerificationSuccessScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Center(
           child: Padding(
