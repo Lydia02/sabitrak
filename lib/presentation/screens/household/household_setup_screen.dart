@@ -9,8 +9,11 @@ class HouseholdSetupScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+
     return Scaffold(
-      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -18,24 +21,24 @@ class HouseholdSetupScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 'Set up your household',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryGreen,
+                  color: textColor,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Share inventory and reduce waste together',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 14,
-                  color: AppTheme.subtitleGrey,
+                  color: subtitleColor,
                 ),
               ),
               const SizedBox(height: 48),
@@ -66,13 +69,13 @@ class HouseholdSetupScreen extends StatelessWidget {
                 child: const Text('Skip'),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'You can always set up a household later in Profile.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 13,
-                  color: AppTheme.subtitleGrey,
+                  color: subtitleColor,
                 ),
               ),
             ],
