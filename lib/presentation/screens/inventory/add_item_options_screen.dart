@@ -5,230 +5,226 @@ import 'manual_entry_screen.dart';
 class AddItemOptionsScreen extends StatelessWidget {
   const AddItemOptionsScreen({super.key});
 
+  /// Call this to show the Add Item dialog from anywhere.
+  static void show(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (_) => _AddItemDialog(parentContext: context),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ── Top Bar ──
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, color: AppTheme.primaryGreen),
-                  ),
-                  const Expanded(
-                    child: Text(
-                      'Add New Item',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryGreen,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 48),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Divider(height: 1, color: AppTheme.fieldBorderColor),
-            const SizedBox(height: 24),
-
-            // ── Options ──
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  // Scan Barcode — primary / highlighted
-                  _OptionCard(
-                    icon: Icons.qr_code_scanner,
-                    title: 'Scan Barcode',
-                    subtitle: 'Instant product lookup',
-                    badge: 'FASTEST',
-                    isPrimary: true,
-                    onTap: () {
-                      // TODO: Navigate to barcode scanner
-                    },
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Scan Expiry Date
-                  _OptionCard(
-                    icon: Icons.calendar_today_outlined,
-                    title: 'Scan Expiry Date',
-                    subtitle: 'AI-powered detection',
-                    badge: 'AI',
-                    isPrimary: false,
-                    onTap: () {
-                      // TODO: Navigate to AI expiry capture
-                    },
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Manual Entry
-                  _OptionCard(
-                    icon: Icons.edit_note,
-                    title: 'Manual Entry',
-                    subtitle: 'Traditional text input',
-                    badge: null,
-                    isPrimary: false,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ManualEntryScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 }
 
-class _OptionCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String? badge;
-  final bool isPrimary;
-  final VoidCallback onTap;
+class _AddItemDialog extends StatelessWidget {
+  final BuildContext parentContext;
 
-  const _OptionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.badge,
-    required this.isPrimary,
-    required this.onTap,
-  });
+  const _AddItemDialog({required this.parentContext});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        decoration: BoxDecoration(
-          color: isPrimary
-              ? AppTheme.primaryGreen.withValues(alpha: 0.06)
-              : AppTheme.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isPrimary
-                ? AppTheme.primaryGreen
-                : AppTheme.fieldBorderColor.withValues(alpha: 0.5),
-            width: isPrimary ? 1.5 : 1,
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.85,
+          decoration: BoxDecoration(
+            color: AppTheme.white,
+            borderRadius: BorderRadius.circular(20),
           ),
-        ),
-        child: Row(
-          children: [
-            // Icon container
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: isPrimary
-                    ? AppTheme.primaryGreen
-                    : AppTheme.fieldBorderColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Title
+              const Text(
+                'Add Item',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
               ),
-              child: Icon(
-                icon,
-                color: isPrimary ? AppTheme.white : AppTheme.subtitleGrey,
-                size: 24,
+              const SizedBox(height: 6),
+
+              // Subtitle
+              const Text(
+                'Choose an option below to add an item.',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 13,
+                  color: AppTheme.subtitleGrey,
+                ),
               ),
-            ),
-            const SizedBox(width: 14),
-            // Text
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+              const SizedBox(height: 24),
+
+              // ── Scan Barcode (filled green button) ──
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    // TODO: Navigate to barcode scanner
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryGreen,
+                    foregroundColor: AppTheme.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        title,
+                      const Text(
+                        'Scan Barcode',
                         style: TextStyle(
                           fontFamily: 'Roboto',
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: isPrimary
-                              ? AppTheme.primaryGreen
-                              : AppTheme.primaryGreen,
                         ),
                       ),
-                      if (badge != null && badge != 'FASTEST') ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            badge!,
-                            style: const TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryGreen,
-                            ),
-                          ),
-                        ),
-                      ],
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.qr_code,
+                        size: 20,
+                        color: AppTheme.white.withValues(alpha: 0.9),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 13,
-                      color: AppTheme.subtitleGrey,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Fastest for packaged foods.',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 12,
+                  color: AppTheme.subtitleGrey,
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              // ── Add Manually (outlined button) ──
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(parentContext).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ManualEntryScreen(),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryGreen,
+                    side: const BorderSide(
+                      color: AppTheme.primaryGreen,
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                ],
-              ),
-            ),
-            // Badge or arrow
-            if (badge == 'FASTEST')
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'FASTEST',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.white,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Add Manually',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.edit, size: 18),
+                    ],
                   ),
                 ),
-              )
-            else
-              const Icon(
-                Icons.chevron_right,
-                color: AppTheme.subtitleGrey,
-                size: 22,
               ),
-          ],
+              const SizedBox(height: 6),
+              const Text(
+                'For local or unpackaged foods.',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 12,
+                  color: AppTheme.subtitleGrey,
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              // ── Capture Expiry Date (outlined button) ──
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    // TODO: Navigate to AI expiry capture
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryGreen,
+                    side: const BorderSide(
+                      color: AppTheme.primaryGreen,
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Capture Expiry Date',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.camera_alt_outlined, size: 18),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Scan expiry label using camera.',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 12,
+                  color: AppTheme.subtitleGrey,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // ── Cancel ──
+              GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.subtitleGrey,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
