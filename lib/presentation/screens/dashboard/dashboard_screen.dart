@@ -1,6 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../data/models/food_item.dart';
+import '../../../data/repositories/inventory_repository.dart';
 import '../../../services/firebase_service.dart';
+import '../inventory/add_item_options_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -11,10 +15,14 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   String? _householdName;
+  String? _householdId;
   bool _loaded = false;
-  int _totalItems = 0;   // updated once inventory is built
-  int _expiringItems = 0; // updated once inventory is built
+  int _totalItems = 0;
+  int _expiringItems = 0;
   int _memberCount = 0;
+
+  final InventoryRepository _inventoryRepo = InventoryRepository();
+  StreamSubscription<List<FoodItem>>? _inventorySub;
 
   @override
   void initState() {
@@ -22,18 +30,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadDashboardData();
   }
 
+  @override
+  void dispose() {
+    _inventorySub?.cancel();
+    super.dispose();
+  }
+
   Future<void> _loadDashboardData() async {
     final firebaseService = FirebaseService();
     final name = await firebaseService.getHouseholdName();
-    // TODO: Replace with real inventory queries once inventory is built
     final uid = firebaseService.currentUser?.uid;
     int members = 1;
+    String? householdId;
     if (uid != null) {
       final query = await firebaseService.households
           .where('members', arrayContains: uid)
           .limit(1)
           .get();
       if (query.docs.isNotEmpty) {
+        householdId = query.docs.first.id;
         final data = query.docs.first.data() as Map<String, dynamic>;
         final memberList = data['members'] as List<dynamic>?;
         members = memberList?.length ?? 1;
@@ -42,12 +57,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (mounted) {
       setState(() {
         _householdName = name;
+        _householdId = householdId;
         _memberCount = members;
-        _totalItems = 0;
-        _expiringItems = 0;
         _loaded = true;
       });
+      // Listen to inventory changes in real-time
+      if (householdId != null) {
+        _inventorySub = _inventoryRepo.getFoodItems(householdId).listen((items) {
+          if (mounted) {
+            setState(() {
+              _totalItems = items.length;
+              _expiringItems = items.where((item) => item.isExpiringSoon || item.isExpired).length;
+            });
+          }
+        });
+      }
     }
+  }
+
+  void _navigateToAddItem() {
+    AddItemOptionsScreen.show(context);
   }
 
   String get _greetingName {
@@ -355,7 +384,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: Icons.add_circle_outline,
             label: 'Add Item',
             filled: true,
-            onTap: () {},
+            onTap: _navigateToAddItem,
           ),
           _QuickActionButton(
             icon: Icons.sync,
@@ -417,7 +446,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: _navigateToAddItem,
               child: const Text('Add Your First Item'),
             ),
           ),

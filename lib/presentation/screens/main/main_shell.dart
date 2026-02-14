@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../config/theme/app_theme.dart';
 import '../dashboard/dashboard_screen.dart';
+import '../inventory/inventory_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -14,7 +15,7 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> _screens = [
     const DashboardScreen(),
-    const _PlaceholderScreen(label: 'Inventory', icon: Icons.inventory_2_outlined),
+    const InventoryScreen(),
     const _PlaceholderScreen(label: 'Recipes', icon: Icons.restaurant_menu),
     const _PlaceholderScreen(label: 'Analytics', icon: Icons.bar_chart),
     const _PlaceholderScreen(label: 'Profile', icon: Icons.person_outline),
