@@ -76,9 +76,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _navigateToAddItem() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const AddItemOptionsScreen()),
-    );
+    AddItemOptionsScreen.show(context);
   }
 
   String get _greetingName {

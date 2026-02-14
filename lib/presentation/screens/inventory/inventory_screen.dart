@@ -95,9 +95,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   void _openAddItem() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const AddItemOptionsScreen()),
-    );
+    AddItemOptionsScreen.show(context);
   }
 
   @override
