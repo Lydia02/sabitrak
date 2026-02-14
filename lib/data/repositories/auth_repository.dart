@@ -111,6 +111,27 @@ class AuthRepository {
     await _firebaseService.auth.sendPasswordResetEmail(email: email);
   }
 
+  Future<void> signOut() async {
+    await _googleSignIn.signOut();
+    await _firebaseService.auth.signOut();
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _firebaseService.currentUser;
+    if (user == null) throw Exception('No user logged in');
+    if (user.email == null) throw Exception('No email associated with account');
+
+    final credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: currentPassword,
+    );
+    await user.reauthenticateWithCredential(credential);
+    await user.updatePassword(newPassword);
+  }
+
   Future<bool> userProfileExists(String uid) async {
     final doc = await _firebaseService.users.doc(uid).get();
     return doc.exists;

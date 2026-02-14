@@ -94,18 +94,24 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: _step == 1
-            ? _buildStep1()
+            ? _buildStep1(context)
             : _step == 2
-                ? _buildStep2()
-                : _buildSuccess(),
+                ? _buildStep2(context)
+                : _buildSuccess(context),
       ),
     );
   }
 
-  Widget _buildStep1() {
+  Widget _buildStep1(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : AppTheme.fieldBorderColor;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Form(
@@ -114,35 +120,35 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 40),
-            const Text(
+            Text(
               'Create Household – Step 1: Household Details',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.primaryGreen,
+                color: textColor,
               ),
             ),
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'Household Name',
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.primaryGreen,
+                color: textColor,
               ),
             ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _nameController,
+              style: TextStyle(color: textColor),
               decoration: InputDecoration(
                 hintText: 'Enter household name',
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide:
-                      const BorderSide(color: AppTheme.fieldBorderColor),
+                  borderSide: BorderSide(color: borderColor),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -165,12 +171,12 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
                   v == null || v.isEmpty ? 'Enter a household name' : null,
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'This name will be visible to all household members.',
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 12,
-                color: AppTheme.subtitleGrey,
+                color: subtitleColor,
               ),
             ),
             const SizedBox(height: 32),
@@ -195,48 +201,56 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
     );
   }
 
-  Widget _buildStep2() {
+  Widget _buildStep2(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : AppTheme.fieldBorderColor;
+    final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 40),
-          const Text(
+          Text(
             'Create Household - Step 2',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: AppTheme.primaryGreen,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Household Preferences',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppTheme.primaryGreen,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Select Household Type:',
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 14,
-              color: AppTheme.primaryGreen,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 8),
           ..._householdTypes.map((type) => RadioListTile<String>(
                 title: Text(type,
-                    style: const TextStyle(
-                        fontFamily: 'Roboto', color: AppTheme.primaryGreen)),
+                    style: TextStyle(
+                        fontFamily: 'Roboto', color: textColor)),
                 value: type,
                 groupValue: _householdType,
                 activeColor: AppTheme.primaryGreen,
@@ -244,27 +258,28 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
                 contentPadding: EdgeInsets.zero,
               )),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Default Expiry Alert (Optional):',
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 14,
-              color: AppTheme.primaryGreen,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             value: _expiryAlert,
+            dropdownColor: cardColor,
             hint: const Text('Select an option'),
             items: _expiryOptions
                 .map((o) => DropdownMenuItem(value: o, child: Text(o)))
                 .toList(),
             onChanged: (v) => setState(() => _expiryAlert = v),
+            style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: textColor),
             decoration: InputDecoration(
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide:
-                    const BorderSide(color: AppTheme.fieldBorderColor),
+                borderSide: BorderSide(color: borderColor),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -276,12 +291,12 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'The creator becomes the household admin.',
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 12,
-              color: AppTheme.subtitleGrey,
+              color: subtitleColor,
             ),
           ),
           const SizedBox(height: 32),
@@ -301,52 +316,62 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
     );
   }
 
-  Widget _buildSuccess() {
+  Widget _buildSuccess(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : AppTheme.fieldBorderColor;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: AppTheme.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            boxShadow: isDark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'Household Created!',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryGreen,
+                  color: textColor,
                 ),
               ),
               const SizedBox(height: 12),
               Text(
                 'Household Name: $_createdHouseholdName\nRole: Admin',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 14,
-                  color: AppTheme.subtitleGrey,
+                  color: subtitleColor,
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Invite Code:',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 13,
-                  color: AppTheme.subtitleGrey,
+                  color: subtitleColor,
                 ),
               ),
               const SizedBox(height: 8),
@@ -354,17 +379,17 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppTheme.backgroundColor,
+                  color: isDark ? AppTheme.darkSurface : AppTheme.backgroundColor,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppTheme.fieldBorderColor),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Text(
                   _inviteCode ?? '',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryGreen,
+                    color: textColor,
                     letterSpacing: 4,
                   ),
                 ),
@@ -403,12 +428,12 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
                 child: const Text('Invite Later'),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Inviting members is optional.',
                 style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,
-                    color: AppTheme.subtitleGrey),
+                    color: subtitleColor),
               ),
               const SizedBox(height: 16),
               ElevatedButton(

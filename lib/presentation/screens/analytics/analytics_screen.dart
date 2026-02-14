@@ -62,7 +62,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   bool get _isEmpty => _items.isEmpty;
 
-  // ── Computed stats ──
   int get _totalItems => _items.length;
   int get _expiredCount => _items.where((i) => i.isExpired).length;
   int get _expiringSoonCount => _items.where((i) => i.isExpiringSoon).length;
@@ -106,11 +105,20 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : AppTheme.fieldBorderColor;
+
     return Scaffold(
-      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: _loaded
-            ? (_isEmpty ? _buildEmptyState() : _buildActiveState())
+            ? (_isEmpty
+                ? _buildEmptyState(isDark, textColor, subtitleColor, cardColor, borderColor)
+                : _buildActiveState(isDark, textColor, subtitleColor, cardColor, borderColor))
             : const Center(
                 child: CircularProgressIndicator(
                   color: AppTheme.primaryGreen,
@@ -125,11 +133,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   //  EMPTY STATE
   // ═══════════════════════════════════════════════════
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isDark, Color textColor, Color subtitleColor,
+      Color cardColor, Color borderColor) {
     return SingleChildScrollView(
       child: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(isDark, textColor, subtitleColor, cardColor),
           const SizedBox(height: 32),
 
           Container(
@@ -138,37 +147,37 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppTheme.fieldBorderColor.withValues(alpha: 0.5),
+                color: borderColor.withValues(alpha: 0.5),
                 width: 2,
               ),
             ),
             child: Icon(
               Icons.bar_chart_rounded,
               size: 36,
-              color: AppTheme.subtitleGrey.withValues(alpha: 0.4),
+              color: subtitleColor.withValues(alpha: 0.4),
             ),
           ),
           const SizedBox(height: 20),
 
-          const Text(
+          Text(
             'No Analytics Yet',
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: AppTheme.primaryGreen,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 6),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 40),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
               'Start adding items to your pantry to see\ninsights about your food habits.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 13,
-                color: AppTheme.subtitleGrey,
+                color: subtitleColor,
               ),
             ),
           ),
@@ -195,18 +204,33 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   icon: Icons.eco_outlined,
                   title: 'Waste Saved',
                   subtitle: 'Track how much food you save from waste',
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
+                  borderColor: borderColor,
+                  isDark: isDark,
                 ),
                 const SizedBox(height: 12),
                 _buildPreviewCard(
                   icon: Icons.restaurant_outlined,
                   title: 'Consumption',
                   subtitle: 'See what you consume most',
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
+                  borderColor: borderColor,
+                  isDark: isDark,
                 ),
                 const SizedBox(height: 12),
                 _buildPreviewCard(
                   icon: Icons.inventory_2_outlined,
                   title: 'What\'s Left',
                   subtitle: 'Overview of remaining pantry items',
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
+                  borderColor: borderColor,
+                  isDark: isDark,
                 ),
               ],
             ),
@@ -221,14 +245,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     required IconData icon,
     required String title,
     required String subtitle,
+    required Color textColor,
+    required Color subtitleColor,
+    required Color cardColor,
+    required Color borderColor,
+    required bool isDark,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppTheme.fieldBorderColor.withValues(alpha: 0.4),
+          color: borderColor.withValues(alpha: 0.4),
         ),
       ),
       child: Row(
@@ -257,7 +286,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     fontFamily: 'Roboto',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.primaryGreen.withValues(alpha: 0.5),
+                    color: textColor.withValues(alpha: 0.5),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -266,7 +295,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,
-                    color: AppTheme.subtitleGrey.withValues(alpha: 0.6),
+                    color: subtitleColor.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -275,7 +304,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           Icon(
             Icons.lock_outline,
             size: 18,
-            color: AppTheme.subtitleGrey.withValues(alpha: 0.4),
+            color: subtitleColor.withValues(alpha: 0.4),
           ),
         ],
       ),
@@ -286,40 +315,31 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   //  ACTIVE STATE
   // ═══════════════════════════════════════════════════
 
-  Widget _buildActiveState() {
+  Widget _buildActiveState(bool isDark, Color textColor, Color subtitleColor,
+      Color cardColor, Color borderColor) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(),
+          _buildHeader(isDark, textColor, subtitleColor, cardColor),
           const SizedBox(height: 16),
-
-          // ── Waste Reduction Goal (circular) ──
-          _buildWasteReductionCard(),
+          _buildWasteReductionCard(isDark, textColor, subtitleColor, cardColor, borderColor),
           const SizedBox(height: 16),
-
-          // ── Overview Bar Chart: Saved vs Consumed vs Wasted ──
-          _buildOverviewBarChart(),
+          _buildOverviewBarChart(isDark, textColor, subtitleColor, cardColor, borderColor),
           const SizedBox(height: 16),
-
-          // ── What's Left — pantry status bars ──
-          _buildWhatsLeftSection(),
+          _buildWhatsLeftSection(isDark, textColor, subtitleColor, cardColor, borderColor),
           const SizedBox(height: 16),
-
-          // ── Category Consumption ──
-          _buildCategoryConsumption(),
+          _buildCategoryConsumption(isDark, textColor, subtitleColor, cardColor),
           const SizedBox(height: 16),
-
-          // ── Expiring Soon ──
-          _buildExpiringSoon(),
+          _buildExpiringSoon(isDark, textColor, subtitleColor, cardColor),
           const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  // ── Header ──
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isDark, Color textColor, Color subtitleColor,
+      Color cardColor) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
@@ -329,16 +349,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             height: 44,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.fieldBorderColor.withValues(alpha: 0.3),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : AppTheme.fieldBorderColor.withValues(alpha: 0.3),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.person,
-              color: AppTheme.subtitleGrey,
+              color: subtitleColor,
               size: 24,
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -348,7 +370,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     fontFamily: 'Roboto',
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryGreen,
+                    color: textColor,
                   ),
                 ),
                 Text(
@@ -356,7 +378,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 13,
-                    color: AppTheme.subtitleGrey,
+                    color: subtitleColor,
                   ),
                 ),
               ],
@@ -369,18 +391,20 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: cardColor,
+                boxShadow: isDark
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.notifications_outlined,
-                color: AppTheme.primaryGreen,
+                color: textColor,
                 size: 22,
               ),
             ),
@@ -390,26 +414,27 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  // ── Waste Reduction Goal ──
-  Widget _buildWasteReductionCard() {
+  Widget _buildWasteReductionCard(bool isDark, Color textColor,
+      Color subtitleColor, Color cardColor, Color borderColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppTheme.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Row(
           children: [
-            // Circular progress
             SizedBox(
               width: 72,
               height: 72,
@@ -419,8 +444,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   CircularProgressIndicator(
                     value: _wasteReductionPercent / 100,
                     strokeWidth: 6,
-                    backgroundColor:
-                        AppTheme.fieldBorderColor.withValues(alpha: 0.3),
+                    backgroundColor: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : AppTheme.fieldBorderColor.withValues(alpha: 0.3),
                     valueColor: AlwaysStoppedAnimation<Color>(
                       _wasteReductionPercent >= 70
                           ? const Color(0xFF2E7D32)
@@ -431,11 +457,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   ),
                   Text(
                     '${_wasteReductionPercent.round()}%',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryGreen,
+                      color: textColor,
                     ),
                   ),
                 ],
@@ -446,13 +472,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Waste Reduction Goal',
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryGreen,
+                      color: textColor,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -462,10 +488,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         : _wasteReductionPercent >= 50
                             ? 'Good progress! Keep reducing waste.'
                             : 'Use items before they expire to save more.',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 12,
-                      color: AppTheme.subtitleGrey,
+                      color: subtitleColor,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -493,8 +519,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  // ── Overview Bar Chart ──
-  Widget _buildOverviewBarChart() {
+  Widget _buildOverviewBarChart(bool isDark, Color textColor,
+      Color subtitleColor, Color cardColor, Color borderColor) {
     final saved = _freshCount + _expiringSoonCount;
     final wasted = _expiredCount;
     final maxVal = max(max(saved, wasted), 1);
@@ -504,15 +530,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppTheme.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -520,34 +548,34 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'PANTRY OVERVIEW',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.subtitleGrey,
+                    color: subtitleColor,
                     letterSpacing: 1.2,
                   ),
                 ),
                 Text(
                   '$_totalItems items total',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,
-                    color: AppTheme.subtitleGrey,
+                    color: subtitleColor,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
-
-            // Bar chart rows
             _ChartBar(
               label: 'Fresh',
               value: _freshCount,
               maxValue: maxVal,
               color: const Color(0xFF2E7D32),
+              textColor: textColor,
+              isDark: isDark,
             ),
             const SizedBox(height: 14),
             _ChartBar(
@@ -555,6 +583,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               value: _expiringSoonCount,
               maxValue: maxVal,
               color: const Color(0xFFE65100),
+              textColor: textColor,
+              isDark: isDark,
             ),
             const SizedBox(height: 14),
             _ChartBar(
@@ -562,6 +592,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               value: _expiredCount,
               maxValue: maxVal,
               color: const Color(0xFFC62828),
+              textColor: textColor,
+              isDark: isDark,
             ),
           ],
         ),
@@ -569,28 +601,28 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  // ── What's Left Section ──
-  Widget _buildWhatsLeftSection() {
+  Widget _buildWhatsLeftSection(bool isDark, Color textColor,
+      Color subtitleColor, Color cardColor, Color borderColor) {
     final storage = _storageBreakdown.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    final maxQty = storage.isNotEmpty
-        ? storage.first.value
-        : 1;
+    final maxQty = storage.isNotEmpty ? storage.first.value : 1;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppTheme.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -598,29 +630,27 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'WHAT\'S LEFT',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.subtitleGrey,
+                    color: subtitleColor,
                     letterSpacing: 1.2,
                   ),
                 ),
                 Text(
                   '$_totalQuantity units remaining',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,
-                    color: AppTheme.subtitleGrey,
+                    color: subtitleColor,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-
-            // Storage location bars
             ...storage.map((entry) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _StorageBar(
@@ -628,6 +658,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     quantity: entry.value,
                     maxQuantity: maxQty,
                     icon: _storageIcon(entry.key),
+                    textColor: textColor,
+                    isDark: isDark,
                   ),
                 )),
           ],
@@ -655,8 +687,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     }
   }
 
-  // ── Category Consumption ──
-  Widget _buildCategoryConsumption() {
+  Widget _buildCategoryConsumption(bool isDark, Color textColor,
+      Color subtitleColor, Color cardColor) {
     final categories = _categoryBreakdown.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     final topCategories = categories.take(5).toList();
@@ -667,32 +699,32 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppTheme.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'TOP CATEGORIES',
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.subtitleGrey,
+                color: subtitleColor,
                 letterSpacing: 1.2,
               ),
             ),
             const SizedBox(height: 20),
-
-            // Vertical bar chart
             SizedBox(
               height: 160,
               child: Row(
@@ -701,23 +733,25 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   ...topCategories.asMap().entries.map((entry) {
                     final index = entry.key;
                     final cat = entry.value;
-                    final barHeight = (cat.value / maxVal * 120).clamp(8.0, 120.0);
+                    final barHeight =
+                        (cat.value / maxVal * 120).clamp(8.0, 120.0);
                     return Expanded(
                       child: Padding(
                         padding: EdgeInsets.only(
                           left: index == 0 ? 0 : 4,
-                          right: index == topCategories.length - 1 ? 0 : 4,
+                          right:
+                              index == topCategories.length - 1 ? 0 : 4,
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Text(
                               '${cat.value}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Roboto',
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryGreen,
+                                color: textColor,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -736,10 +770,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                                   ? '${cat.key.substring(0, 7)}…'
                                   : cat.key,
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Roboto',
                                 fontSize: 10,
-                                color: AppTheme.subtitleGrey,
+                                color: subtitleColor,
                               ),
                             ),
                           ],
@@ -767,8 +801,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return colors[index % colors.length];
   }
 
-  // ── Expiring Soon ──
-  Widget _buildExpiringSoon() {
+  Widget _buildExpiringSoon(bool isDark, Color textColor, Color subtitleColor,
+      Color cardColor) {
     final expiringItems = _expiringNext7Days;
 
     return Padding(
@@ -776,15 +810,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppTheme.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -792,13 +828,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'EXPIRING SOON',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.subtitleGrey,
+                    color: subtitleColor,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -827,22 +863,22 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
             const SizedBox(height: 16),
             if (expiringItems.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.check_circle,
                       color: Color(0xFF2E7D32),
                       size: 20,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'Nothing expiring this week. Nice!',
                       style: TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 13,
-                        color: AppTheme.subtitleGrey,
+                        color: subtitleColor,
                       ),
                     ),
                   ],
@@ -851,18 +887,22 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             else
               ...expiringItems.take(5).map((item) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: _ExpiryRow(item: item),
+                    child: _ExpiryRow(
+                      item: item,
+                      textColor: textColor,
+                      subtitleColor: subtitleColor,
+                    ),
                   )),
             if (expiringItems.length > 5)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   '+${expiringItems.length - 5} more items',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: AppTheme.subtitleGrey,
+                    color: subtitleColor,
                   ),
                 ),
               ),
@@ -918,12 +958,16 @@ class _ChartBar extends StatelessWidget {
   final int value;
   final int maxValue;
   final Color color;
+  final Color textColor;
+  final bool isDark;
 
   const _ChartBar({
     required this.label,
     required this.value,
     required this.maxValue,
     required this.color,
+    required this.textColor,
+    required this.isDark,
   });
 
   @override
@@ -935,11 +979,11 @@ class _ChartBar extends StatelessWidget {
           width: 90,
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: AppTheme.primaryGreen,
+              color: textColor,
             ),
           ),
         ),
@@ -949,8 +993,9 @@ class _ChartBar extends StatelessWidget {
             child: LinearProgressIndicator(
               value: fraction,
               minHeight: 18,
-              backgroundColor:
-                  AppTheme.fieldBorderColor.withValues(alpha: 0.2),
+              backgroundColor: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : AppTheme.fieldBorderColor.withValues(alpha: 0.2),
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
@@ -979,12 +1024,16 @@ class _StorageBar extends StatelessWidget {
   final int quantity;
   final int maxQuantity;
   final IconData icon;
+  final Color textColor;
+  final bool isDark;
 
   const _StorageBar({
     required this.label,
     required this.quantity,
     required this.maxQuantity,
     required this.icon,
+    required this.textColor,
+    required this.isDark,
   });
 
   @override
@@ -992,17 +1041,17 @@ class _StorageBar extends StatelessWidget {
     final fraction = maxQuantity > 0 ? quantity / maxQuantity : 0.0;
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppTheme.primaryGreen),
+        Icon(icon, size: 18, color: textColor),
         const SizedBox(width: 8),
         SizedBox(
           width: 72,
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: AppTheme.primaryGreen,
+              color: textColor,
             ),
           ),
         ),
@@ -1012,8 +1061,9 @@ class _StorageBar extends StatelessWidget {
             child: LinearProgressIndicator(
               value: fraction,
               minHeight: 14,
-              backgroundColor:
-                  AppTheme.fieldBorderColor.withValues(alpha: 0.2),
+              backgroundColor: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : AppTheme.fieldBorderColor.withValues(alpha: 0.2),
               valueColor: const AlwaysStoppedAnimation<Color>(
                 Color(0xFF558B2F),
               ),
@@ -1023,11 +1073,11 @@ class _StorageBar extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '$quantity',
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Roboto',
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: AppTheme.primaryGreen,
+            color: textColor,
           ),
         ),
       ],
@@ -1037,8 +1087,14 @@ class _StorageBar extends StatelessWidget {
 
 class _ExpiryRow extends StatelessWidget {
   final FoodItem item;
+  final Color textColor;
+  final Color subtitleColor;
 
-  const _ExpiryRow({required this.item});
+  const _ExpiryRow({
+    required this.item,
+    required this.textColor,
+    required this.subtitleColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1067,19 +1123,19 @@ class _ExpiryRow extends StatelessWidget {
             children: [
               Text(
                 item.name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AppTheme.primaryGreen,
+                  color: textColor,
                 ),
               ),
               Text(
                 '${item.quantity} ${item.unit} · ${item.storageLocation}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 11,
-                  color: AppTheme.subtitleGrey,
+                  color: subtitleColor,
                 ),
               ),
             ],

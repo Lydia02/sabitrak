@@ -91,8 +91,11 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+
     return Scaffold(
-      backgroundColor: AppTheme.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -111,13 +114,13 @@ class _SplashScreenState extends State<SplashScreen>
                       height: 40,
                     ),
                     const SizedBox(width: 10),
-                    const Text(
+                    Text(
                       'SabiTrak',
                       style: TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 36,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryGreen,
+                        color: textColor,
                         height: 40 / 36,
                       ),
                     ),
@@ -131,13 +134,13 @@ class _SplashScreenState extends State<SplashScreen>
               position: _slideAnimation,
               child: FadeTransition(
                 opacity: _taglineFade,
-                child: const Text(
+                child: Text(
                   'Smart tracking. Less waste.',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
-                    color: AppTheme.subtitleGrey,
+                    color: subtitleColor,
                   ),
                 ),
               ),

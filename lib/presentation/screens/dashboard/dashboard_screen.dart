@@ -61,7 +61,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _memberCount = members;
         _loaded = true;
       });
-      // Listen to inventory changes in real-time
       if (householdId != null) {
         _inventorySub = _inventoryRepo.getFoodItems(householdId).listen((items) {
           if (mounted) {
@@ -102,35 +101,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
+
     return Scaffold(
-      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: _loaded
             ? SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Header ──
-                    _buildHeader(),
+                    _buildHeader(textColor, subtitleColor, cardColor, isDark),
                     const SizedBox(height: 16),
-
-                    // ── Stat Cards ──
-                    _buildStatCards(),
+                    _buildStatCards(textColor, subtitleColor, cardColor, isDark),
                     const SizedBox(height: 16),
-
-                    // ── Analytical Overview ──
-                    _buildAnalyticalOverview(),
+                    _buildAnalyticalOverview(textColor, subtitleColor, cardColor, isDark),
                     const SizedBox(height: 16),
-
-                    // ── Quick Actions ──
-                    _buildQuickActions(),
+                    _buildQuickActions(textColor, cardColor, isDark),
                     const SizedBox(height: 16),
-
-                    // ── Recommended / Empty State ──
                     if (_isEmpty)
-                      _buildEmptyState()
+                      _buildEmptyState(textColor, subtitleColor)
                     else
-                      _buildRecommended(),
+                      _buildRecommended(textColor, subtitleColor, cardColor, isDark),
                     const SizedBox(height: 16),
                   ],
                 ),
@@ -145,28 +139,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── Header: Avatar + Greeting + Notification bell ──
-  Widget _buildHeader() {
+  Widget _buildHeader(Color textColor, Color subtitleColor, Color cardColor, bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
         children: [
-          // Avatar
           Container(
             width: 44,
             height: 44,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.fieldBorderColor.withValues(alpha: 0.3),
+              color: isDark
+                  ? AppTheme.darkSurface
+                  : AppTheme.fieldBorderColor.withValues(alpha: 0.3),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.person,
-              color: AppTheme.subtitleGrey,
+              color: subtitleColor,
               size: 24,
             ),
           ),
           const SizedBox(width: 12),
-          // Greeting
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,27 +168,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   '$_timeGreeting, $_greetingName!',
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryGreen,
+                    color: textColor,
                   ),
                 ),
                 Text(
                   _isEmpty
                       ? 'Start tracking your food today.'
                       : 'You saved 0kg of food this month',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 13,
-                    color: AppTheme.subtitleGrey,
+                    color: subtitleColor,
                   ),
                 ),
               ],
             ),
           ),
-          // Notification bell
           GestureDetector(
             onTap: () {},
             child: Container(
@@ -203,18 +195,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.white,
+                color: cardColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.notifications_outlined,
-                color: AppTheme.primaryGreen,
+                color: textColor,
                 size: 22,
               ),
             ),
@@ -224,8 +216,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── 3 Stat Cards: Expiring, Total Items, Members ──
-  Widget _buildStatCards() {
+  Widget _buildStatCards(Color textColor, Color subtitleColor, Color cardColor, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
@@ -236,6 +227,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               iconColor: const Color(0xFFE65100),
               value: '$_expiringItems',
               label: 'EXPIRING',
+              textColor: textColor,
+              subtitleColor: subtitleColor,
+              cardColor: cardColor,
+              isDark: isDark,
             ),
           ),
           const SizedBox(width: 10),
@@ -245,6 +240,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               iconColor: AppTheme.primaryGreen,
               value: '$_totalItems',
               label: 'TOTAL ITEMS',
+              textColor: textColor,
+              subtitleColor: subtitleColor,
+              cardColor: cardColor,
+              isDark: isDark,
             ),
           ),
           const SizedBox(width: 10),
@@ -254,6 +253,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               iconColor: const Color(0xFF1565C0),
               value: '$_memberCount',
               label: 'MEMBERS',
+              textColor: textColor,
+              subtitleColor: subtitleColor,
+              cardColor: cardColor,
+              isDark: isDark,
             ),
           ),
         ],
@@ -261,22 +264,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── Analytical Overview: Waste Reduction Goal ──
-  Widget _buildAnalyticalOverview() {
+  Widget _buildAnalyticalOverview(Color textColor, Color subtitleColor, Color cardColor, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppTheme.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,13 +288,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'ANALYTICAL OVERVIEW',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.subtitleGrey,
+                    color: subtitleColor,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -304,7 +308,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                // Circular progress
                 SizedBox(
                   width: 56,
                   height: 56,
@@ -314,18 +317,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       CircularProgressIndicator(
                         value: _isEmpty ? 0.0 : 0.85,
                         strokeWidth: 5,
-                        backgroundColor: AppTheme.fieldBorderColor.withValues(alpha: 0.3),
+                        backgroundColor: isDark
+                            ? Colors.white.withValues(alpha: 0.1)
+                            : AppTheme.fieldBorderColor.withValues(alpha: 0.3),
                         valueColor: const AlwaysStoppedAnimation<Color>(
                           AppTheme.primaryGreen,
                         ),
                       ),
                       Text(
                         _isEmpty ? '0%' : '85%',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryGreen,
+                          color: textColor,
                         ),
                       ),
                     ],
@@ -336,13 +341,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Waste Reduction Goal',
                         style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryGreen,
+                          color: textColor,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -350,10 +355,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         _isEmpty
                             ? 'Start tracking your food to see your reduction progress.'
                             : 'You\'re doing great! Only 15% away from your monthly target.',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 12,
-                          color: AppTheme.subtitleGrey,
+                          color: subtitleColor,
                         ),
                       ),
                     ],
@@ -367,8 +372,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── Quick Actions: Scan, Add Item, Update Pantry ──
-  Widget _buildQuickActions() {
+  Widget _buildQuickActions(Color textColor, Color cardColor, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
@@ -377,19 +381,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _QuickActionButton(
             icon: Icons.qr_code_scanner,
             label: 'Scan',
-            filled: true,
+            textColor: textColor,
+            cardColor: cardColor,
+            isDark: isDark,
             onTap: () {},
           ),
           _QuickActionButton(
             icon: Icons.add_circle_outline,
             label: 'Add Item',
-            filled: true,
+            textColor: textColor,
+            cardColor: cardColor,
+            isDark: isDark,
             onTap: _navigateToAddItem,
           ),
           _QuickActionButton(
             icon: Icons.sync,
             label: 'Update\nPantry',
-            filled: false,
+            textColor: textColor,
+            cardColor: cardColor,
+            isDark: isDark,
             onTap: () {},
           ),
         ],
@@ -397,21 +407,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── Empty State: Your inventory is empty ──
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(Color textColor, Color subtitleColor) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
           const SizedBox(height: 8),
-          // Dashed circle with bag icon
           Container(
             width: 80,
             height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppTheme.fieldBorderColor.withValues(alpha: 0.5),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : AppTheme.fieldBorderColor.withValues(alpha: 0.5),
                 width: 2,
                 strokeAlign: BorderSide.strokeAlignInside,
               ),
@@ -419,27 +430,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Icon(
               Icons.shopping_bag_outlined,
               size: 36,
-              color: AppTheme.subtitleGrey.withValues(alpha: 0.4),
+              color: subtitleColor.withValues(alpha: 0.4),
             ),
           ),
           const SizedBox(height: 14),
-          const Text(
+          Text(
             'Your inventory is empty',
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: AppTheme.primaryGreen,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Add food items to see personalized recipe\nrecommendations and track expiry dates.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 13,
-              color: AppTheme.subtitleGrey,
+              color: subtitleColor,
             ),
           ),
           const SizedBox(height: 16),
@@ -455,8 +466,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── Recommended for You (when user has items) ──
-  Widget _buildRecommended() {
+  Widget _buildRecommended(Color textColor, Color subtitleColor, Color cardColor, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(left: 20),
       child: Column(
@@ -467,24 +477,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Recommended for You',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryGreen,
+                    color: textColor,
                   ),
                 ),
                 GestureDetector(
                   onTap: () {},
-                  child: const Text(
+                  child: Text(
                     'SEE ALL',
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.subtitleGrey,
+                      color: subtitleColor,
                     ),
                   ),
                 ),
@@ -496,23 +506,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
             height: 220,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              children: const [
+              children: [
                 _RecipeCard(
                   title: 'Rich Beef Stew',
                   subtitle: 'Uses your Tomato Paste (Exp. today)',
                   time: '45 min',
                   difficulty: 'Medium',
                   tag: 'EXPIRING INGREDIENT',
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
+                  isDark: isDark,
                 ),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 _RecipeCard(
                   title: 'Zesty Fruit Salad',
                   subtitle: 'Uses 3 Bananas',
                   time: '10 min',
                   difficulty: 'Easy',
                   tag: 'EXPIRING INGREDIENT',
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
+                  isDark: isDark,
                 ),
-                SizedBox(width: 20),
+                const SizedBox(width: 20),
               ],
             ),
           ),
@@ -522,21 +540,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// ═══════════════════════════════════════════════════
-//  Reusable Widgets
-// ═══════════════════════════════════════════════════
-
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String value;
   final String label;
+  final Color textColor;
+  final Color subtitleColor;
+  final Color cardColor;
+  final bool isDark;
 
   const _StatCard({
     required this.icon,
     required this.iconColor,
     required this.value,
     required this.label,
+    required this.textColor,
+    required this.subtitleColor,
+    required this.cardColor,
+    required this.isDark,
   });
 
   @override
@@ -544,15 +566,17 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
-        color: AppTheme.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         children: [
@@ -560,21 +584,21 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 24,
               fontWeight: FontWeight.w700,
-              color: AppTheme.primaryGreen,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 10,
               fontWeight: FontWeight.w500,
-              color: AppTheme.subtitleGrey,
+              color: subtitleColor,
               letterSpacing: 0.5,
             ),
           ),
@@ -587,13 +611,17 @@ class _StatCard extends StatelessWidget {
 class _QuickActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
-  final bool filled;
+  final Color textColor;
+  final Color cardColor;
+  final bool isDark;
   final VoidCallback onTap;
 
   const _QuickActionButton({
     required this.icon,
     required this.label,
-    required this.filled,
+    required this.textColor,
+    required this.cardColor,
+    required this.isDark,
     required this.onTap,
   });
 
@@ -607,29 +635,29 @@ class _QuickActionButton extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: filled
-                  ? AppTheme.white
-                  : AppTheme.white,
+              color: cardColor,
               borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              boxShadow: isDark
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
             ),
-            child: Icon(icon, color: AppTheme.primaryGreen, size: 26),
+            child: Icon(icon, color: textColor, size: 26),
           ),
           const SizedBox(height: 8),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 11,
               fontWeight: FontWeight.w500,
-              color: AppTheme.primaryGreen,
+              color: textColor,
             ),
           ),
         ],
@@ -644,6 +672,10 @@ class _RecipeCard extends StatelessWidget {
   final String time;
   final String difficulty;
   final String tag;
+  final Color textColor;
+  final Color subtitleColor;
+  final Color cardColor;
+  final bool isDark;
 
   const _RecipeCard({
     required this.title,
@@ -651,6 +683,10 @@ class _RecipeCard extends StatelessWidget {
     required this.time,
     required this.difficulty,
     required this.tag,
+    required this.textColor,
+    required this.subtitleColor,
+    required this.cardColor,
+    required this.isDark,
   });
 
   @override
@@ -658,20 +694,21 @@ class _RecipeCard extends StatelessWidget {
     return Container(
       width: 200,
       decoration: BoxDecoration(
-        color: AppTheme.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image placeholder with tag
           Container(
             height: 110,
             decoration: BoxDecoration(
@@ -682,7 +719,6 @@ class _RecipeCard extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                // Placeholder food icon
                 Center(
                   child: Icon(
                     Icons.restaurant,
@@ -690,7 +726,6 @@ class _RecipeCard extends StatelessWidget {
                     color: AppTheme.primaryGreen.withValues(alpha: 0.3),
                   ),
                 ),
-                // Expiring tag
                 Positioned(
                   top: 8,
                   left: 8,
@@ -717,7 +752,6 @@ class _RecipeCard extends StatelessWidget {
               ],
             ),
           ),
-          // Details
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -727,11 +761,11 @@ class _RecipeCard extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.primaryGreen,
+                    color: textColor,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -739,34 +773,34 @@ class _RecipeCard extends StatelessWidget {
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 11,
-                    color: AppTheme.subtitleGrey,
+                    color: subtitleColor,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.schedule, size: 14, color: AppTheme.subtitleGrey),
+                    Icon(Icons.schedule, size: 14, color: subtitleColor),
                     const SizedBox(width: 4),
                     Text(
                       time,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 11,
-                        color: AppTheme.subtitleGrey,
+                        color: subtitleColor,
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Icon(Icons.signal_cellular_alt, size: 14, color: AppTheme.subtitleGrey),
+                    Icon(Icons.signal_cellular_alt, size: 14, color: subtitleColor),
                     const SizedBox(width: 4),
                     Text(
                       difficulty,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 11,
-                        color: AppTheme.subtitleGrey,
+                        color: subtitleColor,
                       ),
                     ),
                   ],

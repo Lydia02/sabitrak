@@ -9,11 +9,16 @@ Future<void> showErrorModal(
   String buttonText = 'OK',
   VoidCallback? onPressed,
 }) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final dialogColor = isDark ? AppTheme.darkCard : AppTheme.white;
+  final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+  final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+
   return showDialog(
     context: context,
     barrierDismissible: false,
     builder: (ctx) => Dialog(
-      backgroundColor: AppTheme.white,
+      backgroundColor: dialogColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(28),
@@ -23,8 +28,10 @@ Future<void> showErrorModal(
             Container(
               width: 52,
               height: 52,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFFEEEE),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.red.withValues(alpha: 0.15)
+                    : const Color(0xFFFFEEEE),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.error_outline,
@@ -34,21 +41,21 @@ Future<void> showErrorModal(
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.primaryGreen,
+                color: textColor,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 14,
-                color: AppTheme.subtitleGrey,
+                color: subtitleColor,
               ),
             ),
             const SizedBox(height: 24),
@@ -74,11 +81,16 @@ Future<void> showSuccessModal(
   String buttonText = 'OK',
   VoidCallback? onPressed,
 }) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final dialogColor = isDark ? AppTheme.darkCard : AppTheme.white;
+  final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+  final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+
   return showDialog(
     context: context,
     barrierDismissible: false,
     builder: (ctx) => Dialog(
-      backgroundColor: AppTheme.white,
+      backgroundColor: dialogColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(28),
@@ -88,8 +100,10 @@ Future<void> showSuccessModal(
             Container(
               width: 52,
               height: 52,
-              decoration: const BoxDecoration(
-                color: Color(0xFFEEF7EE),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppTheme.primaryGreen.withValues(alpha: 0.15)
+                    : const Color(0xFFEEF7EE),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.check_circle_outline,
@@ -99,21 +113,21 @@ Future<void> showSuccessModal(
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.primaryGreen,
+                color: textColor,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 14,
-                color: AppTheme.subtitleGrey,
+                color: subtitleColor,
               ),
             ),
             const SizedBox(height: 24),

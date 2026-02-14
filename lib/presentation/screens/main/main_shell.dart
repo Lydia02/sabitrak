@@ -4,6 +4,7 @@ import '../dashboard/dashboard_screen.dart';
 import '../inventory/inventory_screen.dart';
 import '../recipe/recipe_screen.dart';
 import '../analytics/analytics_screen.dart';
+import '../profile/profile_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -20,11 +21,14 @@ class _MainShellState extends State<MainShell> {
     const InventoryScreen(),
     const RecipeScreen(),
     const AnalyticsScreen(),
-    const _PlaceholderScreen(label: 'Profile', icon: Icons.person_outline),
+    const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navBg = isDark ? AppTheme.darkSurface : AppTheme.white;
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -32,10 +36,10 @@ class _MainShellState extends State<MainShell> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppTheme.white,
+          color: navBg,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
               blurRadius: 12,
               offset: const Offset(0, -2),
             ),
@@ -116,6 +120,10 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = index == currentIndex;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final activeColor = AppTheme.primaryGreen;
+    final inactiveColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -125,7 +133,7 @@ class _NavItem extends StatelessWidget {
           children: [
             Icon(
               isActive ? activeIcon : icon,
-              color: isActive ? AppTheme.primaryGreen : AppTheme.subtitleGrey,
+              color: isActive ? activeColor : inactiveColor,
               size: 24,
             ),
             const SizedBox(height: 4),
@@ -134,48 +142,8 @@ class _NavItem extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 10,
-                color: isActive ? AppTheme.primaryGreen : AppTheme.subtitleGrey,
+                color: isActive ? activeColor : inactiveColor,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PlaceholderScreen extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  const _PlaceholderScreen({required this.label, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 48, color: AppTheme.subtitleGrey),
-            const SizedBox(height: 16),
-            Text(
-              label,
-              style: const TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 20,
-                color: AppTheme.primaryGreen,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Coming soon',
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 14,
-                color: AppTheme.subtitleGrey,
               ),
             ),
           ],
