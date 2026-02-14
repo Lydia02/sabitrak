@@ -85,204 +85,213 @@ class _SignInScreenState extends State<SignInScreen> {
               title: 'Sign In Failed', message: state.message);
         }
       },
-      child: Scaffold(
-        backgroundColor: AppTheme.white,
-        body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 16),
-                        GestureDetector(
-                          onTap: () => Navigator.of(context).pop(),
-                          child: const Icon(Icons.arrow_back,
-                              color: AppTheme.primaryGreen, size: 28),
-                        ),
-                        // Logo + Title
-                        Center(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: const BoxDecoration(
-                                  color: AppTheme.primaryGreen,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.eco,
-                                    color: AppTheme.white, size: 18),
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'SabiTrak',
-                                style: TextStyle(
-                                  fontFamily: 'Roboto',
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.primaryGreen,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        // Email
-                        const Text(
-                          'Email',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryGreen,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
-                            hintText: 'Enter your email',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!value.contains('@')) {
-                              return 'Please enter a valid email';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 24),
-                        // Password
-                        const Text(
-                          'Password',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryGreen,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          decoration: InputDecoration(
-                            hintText: 'Enter your password',
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                                color: AppTheme.subtitleGrey,
-                                size: 20,
-                              ),
-                              onPressed: () => setState(
-                                  () => _obscurePassword = !_obscurePassword),
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 32),
-                        // Sign In button
-                        BlocBuilder<AuthBloc, AuthState>(
-                          builder: (context, state) {
-                            final isLoading = state is AuthLoading;
-                            return ElevatedButton(
-                              onPressed: isLoading ? null : _onSignIn,
-                              child: isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: AppTheme.white,
-                                      ),
-                                    )
-                                  : const Text('Sign In'),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        // Continue with Google
-                        OutlinedButton.icon(
-                          onPressed: _onGoogleSignIn,
-                          icon: const Text('G',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w700, fontSize: 16)),
-                          label: const Text('Continue with Google'),
-                        ),
-                        const SizedBox(height: 24),
-                        // Forgot password + Create Account
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Builder(
+        builder: (context) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+          final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+
+          return Scaffold(
+            body: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            const SizedBox(height: 16),
                             GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (_) => BlocProvider(
-                                    create: (_) => AuthBloc(),
-                                    child: const ForgotPasswordScreen(),
-                                  ),
-                                ));
-                              },
-                              child: const Text(
-                                'Forgot Password?',
-                                style: TextStyle(
-                                  fontFamily: 'Roboto',
-                                  fontSize: 14,
-                                  color: AppTheme.primaryGreen,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                              onTap: () => Navigator.of(context).pop(),
+                              child: Icon(Icons.arrow_back,
+                                  color: textColor, size: 28),
                             ),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (_) => BlocProvider(
-                                      create: (_) => AuthBloc(),
-                                      child: const SignUpScreen(),
+                            // Logo + Title
+                            Center(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: const BoxDecoration(
+                                      color: AppTheme.primaryGreen,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.eco,
+                                        color: AppTheme.white, size: 18),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'SabiTrak',
+                                    style: TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w700,
+                                      color: textColor,
                                     ),
                                   ),
-                                );
-                              },
-                              child: const Text(
-                                'Create Account',
-                                style: TextStyle(
-                                  fontFamily: 'Roboto',
-                                  fontSize: 14,
-                                  color: AppTheme.primaryGreen,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                ],
                               ),
                             ),
+                            const SizedBox(height: 40),
+                            // Email
+                            Text(
+                              'Email',
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: textColor,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              style: TextStyle(color: textColor),
+                              decoration: const InputDecoration(
+                                hintText: 'Enter your email',
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your email';
+                                }
+                                if (!value.contains('@')) {
+                                  return 'Please enter a valid email';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                            // Password
+                            Text(
+                              'Password',
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: textColor,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: _passwordController,
+                              obscureText: _obscurePassword,
+                              style: TextStyle(color: textColor),
+                              decoration: InputDecoration(
+                                hintText: 'Enter your password',
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    color: subtitleColor,
+                                    size: 20,
+                                  ),
+                                  onPressed: () => setState(
+                                      () => _obscurePassword = !_obscurePassword),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your password';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 32),
+                            // Sign In button
+                            BlocBuilder<AuthBloc, AuthState>(
+                              builder: (context, state) {
+                                final isLoading = state is AuthLoading;
+                                return ElevatedButton(
+                                  onPressed: isLoading ? null : _onSignIn,
+                                  child: isLoading
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: AppTheme.white,
+                                          ),
+                                        )
+                                      : const Text('Sign In'),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            // Continue with Google
+                            OutlinedButton.icon(
+                              onPressed: _onGoogleSignIn,
+                              icon: const Text('G',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w700, fontSize: 16)),
+                              label: const Text('Continue with Google'),
+                            ),
+                            const SizedBox(height: 24),
+                            // Forgot password + Create Account
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (_) => BlocProvider(
+                                        create: (_) => AuthBloc(),
+                                        child: const ForgotPasswordScreen(),
+                                      ),
+                                    ));
+                                  },
+                                  child: Text(
+                                    'Forgot Password?',
+                                    style: TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 14,
+                                      color: textColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).pushReplacement(
+                                      MaterialPageRoute(
+                                        builder: (_) => BlocProvider(
+                                          create: (_) => AuthBloc(),
+                                          child: const SignUpScreen(),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    'Create Account',
+                                    style: TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 14,
+                                      color: textColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
                           ],
                         ),
-                        const SizedBox(height: 24),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

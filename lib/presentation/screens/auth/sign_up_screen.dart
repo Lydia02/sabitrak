@@ -77,190 +77,202 @@ class _SignUpScreenState extends State<SignUpScreen> {
           );
         }
       },
-      child: Scaffold(
-        backgroundColor: AppTheme.white,
-        body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 16),
-                        GestureDetector(
-                          onTap: () => Navigator.of(context).pop(),
-                          child: const Icon(
-                            Icons.arrow_back,
-                            color: AppTheme.primaryGreen,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        const Text(
-                          'Welcome to SabiTrak',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 26,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryGreen,
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        TextFormField(
-                          controller: _firstNameController,
-                          decoration: const InputDecoration(
-                            hintText: 'First Name',
-                          ),
-                          textCapitalization: TextCapitalization.words,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your first name';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _lastNameController,
-                          decoration: const InputDecoration(
-                            hintText: 'Last Name',
-                          ),
-                          textCapitalization: TextCapitalization.words,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your last name';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _emailController,
-                          decoration: const InputDecoration(
-                            hintText: 'Email',
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                .hasMatch(value.trim())) {
-                              return 'Please enter a valid email (e.g. name@example.com)';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Format: name@example.com',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: AppTheme.subtitleGrey,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        BlocBuilder<AuthBloc, AuthState>(
-                          builder: (context, state) {
-                            final isLoading = state is AuthLoading;
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                ElevatedButton(
-                                  onPressed: isLoading ? null : _onProceed,
-                                  child: isLoading
-                                      ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: AppTheme.white,
-                                          ),
-                                        )
-                                      : const Text('Proceed'),
-                                ),
-                                const SizedBox(height: 12),
-                                ElevatedButton(
-                                  onPressed: isLoading ? null : _onGoogleSignIn,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF4A5A2C),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        width: 24,
-                                        height: 24,
-                                        decoration: const BoxDecoration(
-                                          color: AppTheme.white,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Center(
-                                          child: Text(
-                                            'G',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppTheme.primaryGreen,
+      child: Builder(
+        builder: (context) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+          final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+
+          return Scaffold(
+            body: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 16),
+                            GestureDetector(
+                              onTap: () => Navigator.of(context).pop(),
+                              child: Icon(
+                                Icons.arrow_back,
+                                color: textColor,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              'Welcome to SabiTrak',
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 26,
+                                fontWeight: FontWeight.w700,
+                                color: textColor,
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            TextFormField(
+                              controller: _firstNameController,
+                              style: TextStyle(color: textColor),
+                              decoration: const InputDecoration(
+                                hintText: 'First Name',
+                              ),
+                              textCapitalization: TextCapitalization.words,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Please enter your first name';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _lastNameController,
+                              style: TextStyle(color: textColor),
+                              decoration: const InputDecoration(
+                                hintText: 'Last Name',
+                              ),
+                              textCapitalization: TextCapitalization.words,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Please enter your last name';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _emailController,
+                              style: TextStyle(color: textColor),
+                              decoration: const InputDecoration(
+                                hintText: 'Email',
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Please enter your email';
+                                }
+                                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                    .hasMatch(value.trim())) {
+                                  return 'Please enter a valid email (e.g. name@example.com)';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Format: name@example.com',
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: subtitleColor,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            BlocBuilder<AuthBloc, AuthState>(
+                              builder: (context, state) {
+                                final isLoading = state is AuthLoading;
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: isLoading ? null : _onProceed,
+                                      child: isLoading
+                                          ? const SizedBox(
+                                              height: 20,
+                                              width: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: AppTheme.white,
+                                              ),
+                                            )
+                                          : const Text('Proceed'),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    ElevatedButton(
+                                      onPressed: isLoading ? null : _onGoogleSignIn,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: isDark
+                                            ? AppTheme.darkCard
+                                            : const Color(0xFF4A5A2C),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Container(
+                                            width: 24,
+                                            height: 24,
+                                            decoration: const BoxDecoration(
+                                              color: AppTheme.white,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Center(
+                                              child: Text(
+                                                'G',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppTheme.primaryGreen,
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
+                                          const SizedBox(width: 12),
+                                          const Text('Continue with Google'),
+                                        ],
                                       ),
-                                      const SizedBox(width: 12),
-                                      const Text('Continue with Google'),
-                                    ],
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            Center(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Already have an account? ',
+                                    style: TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                      color: subtitleColor,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        Center(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text(
-                                'Already have an account? ',
-                                style: TextStyle(
-                                  fontFamily: 'Roboto',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w400,
-                                  color: AppTheme.subtitleGrey,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () => Navigator.of(context).pop(),
-                                child: const Text(
-                                  'Sign in',
-                                  style: TextStyle(
-                                    fontFamily: 'Roboto',
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.primaryGreen,
+                                  GestureDetector(
+                                    onTap: () => Navigator.of(context).pop(),
+                                    child: Text(
+                                      'Sign in',
+                                      style: TextStyle(
+                                        fontFamily: 'Roboto',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: textColor,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
                         ),
-                        const SizedBox(height: 24),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

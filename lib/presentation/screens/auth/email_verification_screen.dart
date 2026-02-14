@@ -105,9 +105,15 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   }
 
   void _showVerificationFailedDialog(String message) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogColor = isDark ? AppTheme.darkCard : AppTheme.white;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+
     showDialog(
       context: context,
       builder: (dialogContext) => Dialog(
+        backgroundColor: dialogColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -115,22 +121,22 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Verification Failed',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryGreen,
+                  color: textColor,
                 ),
               ),
               const SizedBox(height: 12),
               Text(
                 message,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 14,
-                  color: AppTheme.subtitleGrey,
+                  color: subtitleColor,
                 ),
               ),
               const SizedBox(height: 24),
@@ -195,161 +201,174 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
           _showVerificationFailedDialog(state.message);
         }
       },
-      child: Scaffold(
-        backgroundColor: AppTheme.white,
-        body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 28, vertical: 40),
-                decoration: BoxDecoration(
-                  color: AppTheme.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
+      child: Builder(
+        builder: (context) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+          final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+          final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
+          final borderColor = isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : AppTheme.fieldBorderColor;
+
+          return Scaffold(
+            body: SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 28, vertical: 40),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: isDark
+                          ? []
+                          : [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 20,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                     ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Leaf icon
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.primaryGreen,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.eco,
-                        color: AppTheme.white,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Email Verification',
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryGreen,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "We've sent a 4-digit verification code to your email.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 14,
-                        color: AppTheme.subtitleGrey,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    // 4 digit code input
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(4, (index) {
-                        return Container(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Leaf icon
+                        Container(
                           width: 56,
                           height: 56,
-                          margin: const EdgeInsets.symmetric(horizontal: 6),
-                          child: TextFormField(
-                            controller: _controllers[index],
-                            focusNode: _focusNodes[index],
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            maxLength: 1,
-                            style: const TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryGreen,
-                            ),
-                            decoration: InputDecoration(
-                              counterText: '',
-                              contentPadding: EdgeInsets.zero,
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                    color: AppTheme.fieldBorderColor,
-                                    width: 1.5),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                    color: AppTheme.primaryGreen, width: 2),
-                              ),
-                            ),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            onChanged: (value) {
-                              if (value.isNotEmpty && index < 3) {
-                                _focusNodes[index + 1].requestFocus();
-                              } else if (value.isEmpty && index > 0) {
-                                _focusNodes[index - 1].requestFocus();
-                              }
-                              // Auto-verify when all 4 digits entered
-                              if (index == 3 && value.isNotEmpty && _code.length == 4) {
-                                _onVerifyCode();
-                              }
-                            },
+                          decoration: const BoxDecoration(
+                            color: AppTheme.primaryGreen,
+                            shape: BoxShape.circle,
                           ),
-                        );
-                      }),
-                    ),
-                    const SizedBox(height: 32),
-                    // Verify button
-                    BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        final isLoading = state is AuthLoading;
-                        return ElevatedButton(
-                          onPressed: isLoading ? null : _onVerifyCode,
-                          child: isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppTheme.white,
-                                  ),
-                                )
-                              : const Text('Verify Code'),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    // Resend code
-                    GestureDetector(
-                      onTap: _resendCooldown > 0 ? null : _onResendCode,
-                      child: Text(
-                        _resendCooldown > 0
-                            ? 'Resend Code (${_resendCooldown}s)'
-                            : 'Resend Code',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: _resendCooldown > 0
-                              ? AppTheme.subtitleGrey
-                              : AppTheme.primaryGreen,
+                          child: const Icon(
+                            Icons.eco,
+                            color: AppTheme.white,
+                            size: 28,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Email Verification',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "We've sent a 4-digit verification code to your email.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 14,
+                            color: subtitleColor,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        // 4 digit code input
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(4, (index) {
+                            return Container(
+                              width: 56,
+                              height: 56,
+                              margin: const EdgeInsets.symmetric(horizontal: 6),
+                              child: TextFormField(
+                                controller: _controllers[index],
+                                focusNode: _focusNodes[index],
+                                keyboardType: TextInputType.number,
+                                textAlign: TextAlign.center,
+                                maxLength: 1,
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: textColor,
+                                ),
+                                decoration: InputDecoration(
+                                  counterText: '',
+                                  contentPadding: EdgeInsets.zero,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                        color: borderColor,
+                                        width: 1.5),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                        color: AppTheme.primaryGreen, width: 2),
+                                  ),
+                                ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                onChanged: (value) {
+                                  if (value.isNotEmpty && index < 3) {
+                                    _focusNodes[index + 1].requestFocus();
+                                  } else if (value.isEmpty && index > 0) {
+                                    _focusNodes[index - 1].requestFocus();
+                                  }
+                                  // Auto-verify when all 4 digits entered
+                                  if (index == 3 && value.isNotEmpty && _code.length == 4) {
+                                    _onVerifyCode();
+                                  }
+                                },
+                              ),
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 32),
+                        // Verify button
+                        BlocBuilder<AuthBloc, AuthState>(
+                          builder: (context, state) {
+                            final isLoading = state is AuthLoading;
+                            return ElevatedButton(
+                              onPressed: isLoading ? null : _onVerifyCode,
+                              child: isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppTheme.white,
+                                      ),
+                                    )
+                                  : const Text('Verify Code'),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        // Resend code
+                        GestureDetector(
+                          onTap: _resendCooldown > 0 ? null : _onResendCode,
+                          child: Text(
+                            _resendCooldown > 0
+                                ? 'Resend Code (${_resendCooldown}s)'
+                                : 'Resend Code',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: _resendCooldown > 0
+                                  ? subtitleColor
+                                  : AppTheme.primaryGreen,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

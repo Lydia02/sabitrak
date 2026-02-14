@@ -52,8 +52,10 @@ class _VerificationSuccessScreenState extends State<VerificationSuccessScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+
     return Scaffold(
-      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -87,13 +89,13 @@ class _VerificationSuccessScreenState extends State<VerificationSuccessScreen>
                       opacity: _fadeAnimation,
                       child: Column(
                         children: [
-                          const Text(
+                          Text(
                             'Email Verified Successfully!',
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryGreen,
+                              color: textColor,
                             ),
                           ),
                           const SizedBox(height: 40),
