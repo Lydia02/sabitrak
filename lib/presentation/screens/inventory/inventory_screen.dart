@@ -21,20 +21,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   static const List<String> _storageTabs = [
-    'All',
-    'Fridge',
-    'Freezer',
-    'Cupboard',
-    'Counter',
-    'Shelf',
-    'Bag/Basket',
+    'All', 'Fridge', 'Freezer', 'Cupboard', 'Counter', 'Shelf', 'Bag/Basket',
   ];
 
   static const List<String> _statusFilters = [
-    'All',
-    'Expiring Soon',
-    'Expired',
-    'Fresh',
+    'All', 'Expiring Soon', 'Expired', 'Fresh',
   ];
 
   @override
@@ -64,8 +55,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   List<FoodItem> _filterItems(List<FoodItem> items) {
     var filtered = items;
-
-    // Filter by storage location
     if (_selectedStorage != 'All') {
       filtered = filtered
           .where((item) =>
@@ -73,8 +62,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
               _selectedStorage.toLowerCase())
           .toList();
     }
-
-    // Filter by status
     if (_selectedStatus == 'Expiring Soon') {
       filtered = filtered.where((item) => item.isExpiringSoon).toList();
     } else if (_selectedStatus == 'Expired') {
@@ -84,15 +71,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
           .where((item) => !item.isExpired && !item.isExpiringSoon)
           .toList();
     }
-
-    // Filter by search
     if (_searchQuery.isNotEmpty) {
       filtered = filtered
           .where((item) =>
               item.name.toLowerCase().contains(_searchQuery.toLowerCase()))
           .toList();
     }
-
     return filtered;
   }
 
@@ -102,25 +86,30 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
+    final borderColor = isDark ? Colors.white.withValues(alpha: 0.12) : AppTheme.fieldBorderColor;
+
     return Scaffold(
-      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ──
+            // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Inventory',
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryGreen,
+                      color: textColor,
                     ),
                   ),
                   GestureDetector(
@@ -129,21 +118,19 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: AppTheme.white,
+                        color: cardColor,
                         borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        boxShadow: isDark
+                            ? []
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.06),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                       ),
-                      child: const Icon(
-                        Icons.tune,
-                        color: AppTheme.primaryGreen,
-                        size: 20,
-                      ),
+                      child: Icon(Icons.tune, color: textColor, size: 20),
                     ),
                   ),
                 ],
@@ -151,43 +138,46 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ── Search Bar ──
+            // Search Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppTheme.white,
+                  color: cardColor,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  boxShadow: isDark
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                 ),
                 child: TextField(
                   controller: _searchController,
                   onChanged: (val) => setState(() => _searchQuery = val),
-                  decoration: const InputDecoration(
+                  style: TextStyle(color: textColor),
+                  decoration: InputDecoration(
                     hintText: 'Search your inventory...',
                     hintStyle: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 14,
-                      color: AppTheme.fieldHintColor,
+                      color: isDark ? AppTheme.darkSubtitle : AppTheme.fieldHintColor,
                     ),
-                    prefixIcon: Icon(Icons.search, color: AppTheme.subtitleGrey),
+                    prefixIcon: Icon(Icons.search, color: subtitleColor),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 16),
 
-            // ── Storage Tabs ──
+            // Storage Tabs
             SizedBox(
               height: 36,
               child: ListView.separated(
@@ -203,13 +193,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       decoration: BoxDecoration(
-                        color:
-                            isSelected ? AppTheme.primaryGreen : AppTheme.white,
+                        color: isSelected
+                            ? AppTheme.primaryGreen
+                            : cardColor,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: isSelected
                               ? AppTheme.primaryGreen
-                              : AppTheme.fieldBorderColor,
+                              : borderColor,
                         ),
                       ),
                       alignment: Alignment.center,
@@ -221,7 +212,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           fontWeight: FontWeight.w500,
                           color: isSelected
                               ? AppTheme.white
-                              : AppTheme.primaryGreen,
+                              : textColor,
                         ),
                       ),
                     ),
@@ -231,7 +222,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ),
             const SizedBox(height: 12),
 
-            // ── Status Filter Chips ──
+            // Status Filter Chips
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Wrap(
@@ -241,26 +232,26 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     .map((status) {
                   final isSelected = _selectedStatus == status;
                   Color chipColor;
-                  Color textColor;
-                  Color borderColor;
+                  Color chipTextColor;
+                  Color chipBorderColor;
                   if (status == 'Expiring Soon') {
                     chipColor = isSelected
                         ? const Color(0xFFFFF3E0)
-                        : AppTheme.white;
-                    textColor = const Color(0xFFE65100);
-                    borderColor = const Color(0xFFE65100);
+                        : cardColor;
+                    chipTextColor = const Color(0xFFE65100);
+                    chipBorderColor = const Color(0xFFE65100);
                   } else if (status == 'Expired') {
                     chipColor = isSelected
                         ? const Color(0xFFFFEBEE)
-                        : AppTheme.white;
-                    textColor = const Color(0xFFC62828);
-                    borderColor = const Color(0xFFC62828);
+                        : cardColor;
+                    chipTextColor = const Color(0xFFC62828);
+                    chipBorderColor = const Color(0xFFC62828);
                   } else {
                     chipColor = isSelected
                         ? const Color(0xFFE8F5E9)
-                        : AppTheme.white;
-                    textColor = AppTheme.primaryGreen;
-                    borderColor = AppTheme.primaryGreen;
+                        : cardColor;
+                    chipTextColor = AppTheme.primaryGreen;
+                    chipBorderColor = AppTheme.primaryGreen;
                   }
                   return GestureDetector(
                     onTap: () => setState(() {
@@ -273,8 +264,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         color: chipColor,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color:
-                              isSelected ? borderColor : AppTheme.fieldBorderColor,
+                          color: isSelected ? chipBorderColor : borderColor,
                         ),
                       ),
                       child: Text(
@@ -283,7 +273,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           fontFamily: 'Roboto',
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: isSelected ? textColor : AppTheme.subtitleGrey,
+                          color: isSelected ? chipTextColor : subtitleColor,
                         ),
                       ),
                     ),
@@ -293,7 +283,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ── Items List or Empty State ──
+            // Items List or Empty State
             Expanded(
               child: _householdId == null
                   ? const Center(
@@ -318,7 +308,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         final items = _filterItems(snapshot.data ?? []);
 
                         if ((snapshot.data ?? []).isEmpty) {
-                          return _buildEmptyState();
+                          return _buildEmptyState(textColor, subtitleColor, isDark);
                         }
 
                         if (items.isEmpty) {
@@ -328,15 +318,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
                               children: [
                                 Icon(Icons.search_off,
                                     size: 48,
-                                    color: AppTheme.subtitleGrey
-                                        .withValues(alpha: 0.5)),
+                                    color: subtitleColor.withValues(alpha: 0.5)),
                                 const SizedBox(height: 12),
-                                const Text(
+                                Text(
                                   'No items match your filters',
                                   style: TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 15,
-                                    color: AppTheme.subtitleGrey,
+                                    color: subtitleColor,
                                   ),
                                 ),
                               ],
@@ -350,7 +339,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) =>
-                              _InventoryItemCard(item: items[index]),
+                              _InventoryItemCard(
+                                item: items[index],
+                                textColor: textColor,
+                                subtitleColor: subtitleColor,
+                                cardColor: cardColor,
+                                isDark: isDark,
+                              ),
                         );
                       },
                     ),
@@ -358,7 +353,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
           ],
         ),
       ),
-      // ── FAB ──
       floatingActionButton: FloatingActionButton(
         onPressed: _openAddItem,
         backgroundColor: AppTheme.primaryGreen,
@@ -368,7 +362,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(Color textColor, Color subtitleColor, bool isDark) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -381,7 +375,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppTheme.fieldBorderColor.withValues(alpha: 0.4),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : AppTheme.fieldBorderColor.withValues(alpha: 0.4),
                   width: 2,
                   strokeAlign: BorderSide.strokeAlignInside,
                 ),
@@ -389,27 +385,27 @@ class _InventoryScreenState extends State<InventoryScreen> {
               child: Icon(
                 Icons.shopping_bag_outlined,
                 size: 52,
-                color: AppTheme.subtitleGrey.withValues(alpha: 0.35),
+                color: subtitleColor.withValues(alpha: 0.35),
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Your inventory is empty',
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.primaryGreen,
+                color: textColor,
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
+            Text(
               'Add food items to see personalized recipe recommendations and track expiry dates.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 14,
-                color: AppTheme.subtitleGrey,
+                color: subtitleColor,
                 height: 1.4,
               ),
             ),
@@ -429,14 +425,20 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 }
 
-// ═══════════════════════════════════════════════════
-//  Inventory Item Card
-// ═══════════════════════════════════════════════════
-
 class _InventoryItemCard extends StatelessWidget {
   final FoodItem item;
+  final Color textColor;
+  final Color subtitleColor;
+  final Color cardColor;
+  final bool isDark;
 
-  const _InventoryItemCard({required this.item});
+  const _InventoryItemCard({
+    required this.item,
+    required this.textColor,
+    required this.subtitleColor,
+    required this.cardColor,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -447,7 +449,6 @@ class _InventoryItemCard extends StatelessWidget {
         ? ((days.clamp(0, totalShelfLife)) / totalShelfLife)
         : 0.0;
 
-    // Status badge
     String statusText;
     Color statusBgColor;
     Color statusTextColor;
@@ -478,19 +479,20 @@ class _InventoryItemCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Row(
         children: [
-          // Thumbnail
           Container(
             width: 56,
             height: 56,
@@ -505,7 +507,6 @@ class _InventoryItemCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          // Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -518,11 +519,11 @@ class _InventoryItemCard extends StatelessWidget {
                         item.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryGreen,
+                          color: textColor,
                         ),
                       ),
                     ),
@@ -549,46 +550,45 @@ class _InventoryItemCard extends StatelessWidget {
                 Row(
                   children: [
                     Icon(Icons.straighten,
-                        size: 13, color: AppTheme.subtitleGrey.withValues(alpha: 0.7)),
+                        size: 13, color: subtitleColor.withValues(alpha: 0.7)),
                     const SizedBox(width: 4),
                     Text(
                       '${item.quantity} ${item.unit}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 12,
-                        color: AppTheme.subtitleGrey,
+                        color: subtitleColor,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       '\u2022',
                       style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 10,
-                          color: AppTheme.subtitleGrey),
+                          color: subtitleColor),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       item.storageLocation,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 12,
-                        color: AppTheme.subtitleGrey,
+                        color: subtitleColor,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Shelf life bar
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       'SHELF LIFE',
                       style: TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.subtitleGrey,
+                        color: subtitleColor,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -610,8 +610,9 @@ class _InventoryItemCard extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: remaining.toDouble(),
                     minHeight: 5,
-                    backgroundColor:
-                        AppTheme.fieldBorderColor.withValues(alpha: 0.3),
+                    backgroundColor: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : AppTheme.fieldBorderColor.withValues(alpha: 0.3),
                     valueColor:
                         AlwaysStoppedAnimation<Color>(progressColor),
                   ),

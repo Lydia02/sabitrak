@@ -64,8 +64,15 @@ class _SoloSetupScreenState extends State<SoloSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : AppTheme.fieldBorderColor;
+    final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
+
     return Scaffold(
-      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -73,42 +80,42 @@ class _SoloSetupScreenState extends State<SoloSetupScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 40),
-              const Text(
+              Text(
                 'Set Your Preferences',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryGreen,
+                  color: textColor,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Personalise how SabiTrak works for you.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 14,
-                  color: AppTheme.subtitleGrey,
+                  color: subtitleColor,
                 ),
               ),
               const SizedBox(height: 32),
-              const Text(
+              Text(
                 'Apartment / Living Type:',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryGreen,
+                  color: textColor,
                 ),
               ),
               const SizedBox(height: 8),
               ..._householdTypes.map((type) => RadioListTile<String>(
                     title: Text(type,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontFamily: 'Roboto',
-                            color: AppTheme.primaryGreen)),
+                            color: textColor)),
                     value: type,
                     groupValue: _householdType,
                     activeColor: AppTheme.primaryGreen,
@@ -116,28 +123,29 @@ class _SoloSetupScreenState extends State<SoloSetupScreen> {
                     contentPadding: EdgeInsets.zero,
                   )),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Default Expiry Alert:',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryGreen,
+                  color: textColor,
                 ),
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _expiryAlert,
+                dropdownColor: cardColor,
                 hint: const Text('Select when to alert you'),
                 items: _expiryOptions
                     .map((o) => DropdownMenuItem(value: o, child: Text(o)))
                     .toList(),
                 onChanged: (v) => setState(() => _expiryAlert = v),
+                style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: textColor),
                 decoration: InputDecoration(
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        const BorderSide(color: AppTheme.fieldBorderColor),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -149,12 +157,12 @@ class _SoloSetupScreenState extends State<SoloSetupScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'You can change these settings anytime in Profile.',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 12,
-                  color: AppTheme.subtitleGrey,
+                  color: subtitleColor,
                 ),
               ),
               const SizedBox(height: 40),

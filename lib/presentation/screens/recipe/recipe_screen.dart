@@ -22,21 +22,20 @@ class _RecipeScreenState extends State<RecipeScreen> {
   String _selectedCategory = '';
 
   final List<String> _categories = [
-    'Rice & Grains',    // jollof, fried rice, rice & beans, porridge
-    'Noodles & Pasta',  // indomie, spaghetti, noodle stir-fry
-    'Soups & Stews',    // egusi, pepper soup, tomato stew
-    'Meat & Chicken',   // grilled chicken, suya, beef stew
-    'Fish',             // fried fish, fish stew, grilled tilapia
-    'Eggs',             // omelette, boiled eggs, egg sauce
-    'Beans & Legumes',  // porridge beans, moi moi, akara
-    'Bread & Snacks',   // toast, sandwiches, puff puff
-    'Veggies & Salad',  // veggie stir-fry, coleslaw, salad
-    'Swallow',          // eba, amala, pounded yam, fufu
-    'Quick Meals',      // under 15 mins, one-pot, microwave
-    'Budget Friendly',  // meals under ₦1,000
+    'Rice & Grains',
+    'Noodles & Pasta',
+    'Soups & Stews',
+    'Meat & Chicken',
+    'Fish',
+    'Eggs',
+    'Beans & Legumes',
+    'Bread & Snacks',
+    'Veggies & Salad',
+    'Swallow',
+    'Quick Meals',
+    'Budget Friendly',
   ];
 
-  // Sample recipe data — will be replaced with API/Firestore data
   final List<_RecipeData> _expiringRecipes = const [
     _RecipeData(
       title: 'Jollof Rice with Chicken',
@@ -130,13 +129,21 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
+    final bgColor = isDark ? AppTheme.darkSurface : AppTheme.backgroundColor;
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : AppTheme.fieldBorderColor;
+
     return Scaffold(
-      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: _loaded
             ? _hasItems
-                ? _buildActiveState()
-                : _buildEmptyState()
+                ? _buildActiveState(isDark, textColor, subtitleColor, cardColor, bgColor, borderColor)
+                : _buildEmptyState(isDark, textColor, subtitleColor, cardColor, bgColor, borderColor)
             : const Center(
                 child: CircularProgressIndicator(
                   color: AppTheme.primaryGreen,
@@ -148,35 +155,30 @@ class _RecipeScreenState extends State<RecipeScreen> {
   }
 
   // ══════════════════════════════════════════════════
-  //  EMPTY STATE — no items in pantry
+  //  EMPTY STATE
   // ══════════════════════════════════════════════════
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isDark, Color textColor, Color subtitleColor,
+      Color cardColor, Color bgColor, Color borderColor) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ──
-          _buildEmptyHeader(),
+          _buildEmptyHeader(textColor),
           const SizedBox(height: 16),
-
-          // ── Search Bar ──
-          _buildSearchBar(),
+          _buildSearchBar(isDark, subtitleColor, bgColor),
           const SizedBox(height: 24),
-
-          // ── Explore by Category ──
-          _buildCategorySection(),
+          _buildCategorySection(isDark, textColor, subtitleColor, cardColor, borderColor),
           const SizedBox(height: 28),
 
-          // ── Use It Before You Lose It — empty ──
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
               'Use It Before You Lose It',
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.primaryGreen,
+                color: textColor,
               ),
             ),
           ),
@@ -189,10 +191,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 32),
               decoration: BoxDecoration(
-                color: AppTheme.backgroundColor,
+                color: bgColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppTheme.fieldBorderColor.withValues(alpha: 0.5),
+                  color: borderColor.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),
@@ -212,13 +214,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Your inventory is empty. Add food\nitems to see personalized recipe\nrecommendations.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 13,
-                      color: AppTheme.subtitleGrey,
+                      color: subtitleColor,
                       height: 1.5,
                     ),
                   ),
@@ -250,28 +252,27 @@ class _RecipeScreenState extends State<RecipeScreen> {
             ),
           ),
           const SizedBox(height: 6),
-          const Center(
+          Center(
             child: Text(
               'Start tracking to discover recipes!',
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 12,
-                color: AppTheme.subtitleGrey,
+                color: subtitleColor,
               ),
             ),
           ),
           const SizedBox(height: 28),
 
-          // Quick & Easy header (empty teaser)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
               'Quick & Easy',
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.primaryGreen,
+                color: textColor,
               ),
             ),
           ),
@@ -284,24 +285,24 @@ class _RecipeScreenState extends State<RecipeScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
               decoration: BoxDecoration(
-                color: AppTheme.backgroundColor,
+                color: bgColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppTheme.fieldBorderColor.withValues(alpha: 0.5),
+                  color: borderColor.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),
-              child: const Column(
+              child: Column(
                 children: [
-                  Icon(Icons.bolt, color: AppTheme.subtitleGrey, size: 28),
-                  SizedBox(height: 10),
+                  Icon(Icons.bolt, color: subtitleColor, size: 28),
+                  const SizedBox(height: 10),
                   Text(
                     'Quick recipes will appear here\nbased on what\'s in your pantry.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 13,
-                      color: AppTheme.subtitleGrey,
+                      color: subtitleColor,
                       height: 1.5,
                     ),
                   ),
@@ -315,13 +316,11 @@ class _RecipeScreenState extends State<RecipeScreen> {
     );
   }
 
-  // ── Empty header: avatar + title + bell ──
-  Widget _buildEmptyHeader() {
+  Widget _buildEmptyHeader(Color textColor) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
         children: [
-          // Avatar
           Container(
             width: 36,
             height: 36,
@@ -331,7 +330,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
             ),
             child: const Icon(Icons.person, color: AppTheme.white, size: 20),
           ),
-          const Expanded(
+          Expanded(
             child: Center(
               child: Text(
                 'Recipes',
@@ -339,15 +338,14 @@ class _RecipeScreenState extends State<RecipeScreen> {
                   fontFamily: 'Roboto',
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryGreen,
+                  color: textColor,
                 ),
               ),
             ),
           ),
-          // Notification bell
-          const Icon(
+          Icon(
             Icons.notifications_outlined,
-            color: AppTheme.primaryGreen,
+            color: textColor,
             size: 24,
           ),
         ],
@@ -356,38 +354,32 @@ class _RecipeScreenState extends State<RecipeScreen> {
   }
 
   // ══════════════════════════════════════════════════
-  //  ACTIVE STATE — has items in pantry
+  //  ACTIVE STATE
   // ══════════════════════════════════════════════════
-  Widget _buildActiveState() {
+  Widget _buildActiveState(bool isDark, Color textColor, Color subtitleColor,
+      Color cardColor, Color bgColor, Color borderColor) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ──
-          _buildActiveHeader(),
+          _buildActiveHeader(isDark, textColor, bgColor, subtitleColor),
           const SizedBox(height: 16),
-
-          // ── Use It Before You Lose It ──
-          _buildExpiringSection(),
+          _buildExpiringSection(isDark, textColor, subtitleColor, cardColor),
           const SizedBox(height: 24),
-
-          // ── Quick & Easy ──
-          _buildQuickEasySection(),
+          _buildQuickEasySection(isDark, textColor, subtitleColor, cardColor),
           const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  // ── Active header: SabiTrak + search + icons ──
-  Widget _buildActiveHeader() {
+  Widget _buildActiveHeader(bool isDark, Color textColor, Color bgColor, Color subtitleColor) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Column(
         children: [
           Row(
             children: [
-              // Leaf icon
               Container(
                 width: 32,
                 height: 32,
@@ -399,48 +391,47 @@ class _RecipeScreenState extends State<RecipeScreen> {
                     const Icon(Icons.eco, color: AppTheme.white, size: 18),
               ),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'SabiTrak',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryGreen,
+                  color: textColor,
                 ),
               ),
               const Spacer(),
               GestureDetector(
                 onTap: () {},
-                child: const Icon(Icons.tune,
-                    color: AppTheme.primaryGreen, size: 22),
+                child: Icon(Icons.tune, color: textColor, size: 22),
               ),
               const SizedBox(width: 16),
               GestureDetector(
                 onTap: () {},
-                child: const Icon(Icons.notifications_outlined,
-                    color: AppTheme.primaryGreen, size: 24),
+                child: Icon(Icons.notifications_outlined,
+                    color: textColor, size: 24),
               ),
             ],
           ),
           const SizedBox(height: 14),
-          // Search bar
           Container(
             height: 44,
             decoration: BoxDecoration(
-              color: AppTheme.backgroundColor,
+              color: bgColor,
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextField(
               onChanged: (v) => setState(() => _searchQuery = v),
+              style: TextStyle(color: textColor),
               decoration: InputDecoration(
                 hintText: 'Search recipes or ingredients...',
-                hintStyle: const TextStyle(
+                hintStyle: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 14,
-                  color: AppTheme.fieldHintColor,
+                  color: subtitleColor,
                 ),
-                prefixIcon: const Icon(Icons.search,
-                    color: AppTheme.subtitleGrey, size: 20),
+                prefixIcon: Icon(Icons.search,
+                    color: subtitleColor, size: 20),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -453,27 +444,29 @@ class _RecipeScreenState extends State<RecipeScreen> {
     );
   }
 
-  // ── Shared search bar for empty state ──
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(bool isDark, Color subtitleColor, Color bgColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         height: 44,
         decoration: BoxDecoration(
-          color: AppTheme.backgroundColor,
+          color: bgColor,
           borderRadius: BorderRadius.circular(12),
         ),
         child: TextField(
           onChanged: (v) => setState(() => _searchQuery = v),
+          style: TextStyle(
+            color: isDark ? AppTheme.darkText : AppTheme.primaryGreen,
+          ),
           decoration: InputDecoration(
             hintText: 'Search recipes...',
-            hintStyle: const TextStyle(
+            hintStyle: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 14,
-              color: AppTheme.fieldHintColor,
+              color: subtitleColor,
             ),
             prefixIcon:
-                const Icon(Icons.search, color: AppTheme.subtitleGrey, size: 20),
+                Icon(Icons.search, color: subtitleColor, size: 20),
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
@@ -484,20 +477,20 @@ class _RecipeScreenState extends State<RecipeScreen> {
     );
   }
 
-  // ── Explore by Category chips ──
-  Widget _buildCategorySection() {
+  Widget _buildCategorySection(bool isDark, Color textColor, Color subtitleColor,
+      Color cardColor, Color borderColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
             'EXPLORE BY CATEGORY',
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppTheme.subtitleGrey,
+              color: subtitleColor,
               letterSpacing: 1,
             ),
           ),
@@ -525,12 +518,12 @@ class _RecipeScreenState extends State<RecipeScreen> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppTheme.primaryGreen
-                        : AppTheme.white,
+                        : cardColor,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isSelected
                           ? AppTheme.primaryGreen
-                          : AppTheme.fieldBorderColor,
+                          : borderColor,
                     ),
                   ),
                   child: Text(
@@ -541,7 +534,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                       fontWeight: FontWeight.w500,
                       color: isSelected
                           ? AppTheme.white
-                          : AppTheme.primaryGreen,
+                          : textColor,
                     ),
                   ),
                 ),
@@ -553,8 +546,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
     );
   }
 
-  // ── Use It Before You Lose It — horizontal cards ──
-  Widget _buildExpiringSection() {
+  Widget _buildExpiringSection(bool isDark, Color textColor, Color subtitleColor,
+      Color cardColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -562,28 +555,28 @@ class _RecipeScreenState extends State<RecipeScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             children: [
-              Icon(Icons.warning_amber_rounded,
-                  color: const Color(0xFFE65100), size: 20),
+              const Icon(Icons.warning_amber_rounded,
+                  color: Color(0xFFE65100), size: 20),
               const SizedBox(width: 6),
-              const Text(
+              Text(
                 'Use It Before You Lose It',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryGreen,
+                  color: textColor,
                 ),
               ),
               const Spacer(),
               GestureDetector(
                 onTap: () {},
-                child: const Text(
+                child: Text(
                   'See all',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: AppTheme.subtitleGrey,
+                    color: subtitleColor,
                   ),
                 ),
               ),
@@ -600,6 +593,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (_, i) => _ExpiringRecipeCard(
               recipe: _expiringRecipes[i],
+              isDark: isDark,
+              textColor: textColor,
+              subtitleColor: subtitleColor,
+              cardColor: cardColor,
             ),
           ),
         ),
@@ -607,8 +604,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
     );
   }
 
-  // ── Quick & Easy — 2-column grid ──
-  Widget _buildQuickEasySection() {
+  Widget _buildQuickEasySection(bool isDark, Color textColor,
+      Color subtitleColor, Color cardColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -616,27 +613,27 @@ class _RecipeScreenState extends State<RecipeScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             children: [
-              Icon(Icons.bolt, color: AppTheme.primaryGreen, size: 20),
+              Icon(Icons.bolt, color: textColor, size: 20),
               const SizedBox(width: 6),
-              const Text(
+              Text(
                 'Quick & Easy',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryGreen,
+                  color: textColor,
                 ),
               ),
               const Spacer(),
               GestureDetector(
                 onTap: () {},
-                child: const Text(
+                child: Text(
                   'View all',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: AppTheme.subtitleGrey,
+                    color: subtitleColor,
                   ),
                 ),
               ),
@@ -658,6 +655,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
             itemCount: _quickRecipes.length,
             itemBuilder: (_, i) => _QuickRecipeCard(
               recipe: _quickRecipes[i],
+              isDark: isDark,
+              textColor: textColor,
+              subtitleColor: subtitleColor,
+              cardColor: cardColor,
             ),
           ),
         ),
@@ -694,8 +695,18 @@ class _RecipeData {
 
 class _ExpiringRecipeCard extends StatelessWidget {
   final _RecipeData recipe;
+  final bool isDark;
+  final Color textColor;
+  final Color subtitleColor;
+  final Color cardColor;
 
-  const _ExpiringRecipeCard({required this.recipe});
+  const _ExpiringRecipeCard({
+    required this.recipe,
+    required this.isDark,
+    required this.textColor,
+    required this.subtitleColor,
+    required this.cardColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -704,27 +715,30 @@ class _ExpiringRecipeCard extends StatelessWidget {
       child: Container(
         width: 200,
         decoration: BoxDecoration(
-          color: AppTheme.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image area with match badge
             Stack(
               children: [
                 Container(
                   height: 120,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8D5B7),
+                    color: isDark
+                        ? const Color(0xFF3D3020)
+                        : const Color(0xFFE8D5B7),
                     borderRadius:
                         const BorderRadius.vertical(top: Radius.circular(16)),
                   ),
@@ -736,7 +750,6 @@ class _ExpiringRecipeCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Match percentage badge
                 if (recipe.matchPercent != null)
                   Positioned(
                     top: 8,
@@ -761,7 +774,6 @@ class _ExpiringRecipeCard extends StatelessWidget {
                   ),
               ],
             ),
-            // Details
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
               child: Column(
@@ -771,18 +783,18 @@ class _ExpiringRecipeCard extends StatelessWidget {
                     recipe.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryGreen,
+                      color: textColor,
                     ),
                   ),
                   if (recipe.subtitle != null) ...[
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        const Icon(Icons.eco,
+                        Icon(Icons.eco,
                             size: 12, color: AppTheme.primaryGreen),
                         const SizedBox(width: 4),
                         Expanded(
@@ -790,10 +802,10 @@ class _ExpiringRecipeCard extends StatelessWidget {
                             recipe.subtitle!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 11,
-                              color: AppTheme.subtitleGrey,
+                              color: subtitleColor,
                             ),
                           ),
                         ),
@@ -803,15 +815,15 @@ class _ExpiringRecipeCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.schedule,
-                          size: 14, color: AppTheme.subtitleGrey),
+                      Icon(Icons.schedule,
+                          size: 14, color: subtitleColor),
                       const SizedBox(width: 4),
                       Text(
                         recipe.time,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 12,
-                          color: AppTheme.subtitleGrey,
+                          color: subtitleColor,
                         ),
                       ),
                       if (recipe.rating != null) ...[
@@ -821,10 +833,10 @@ class _ExpiringRecipeCard extends StatelessWidget {
                         const SizedBox(width: 2),
                         Text(
                           recipe.rating!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Roboto',
                             fontSize: 12,
-                            color: AppTheme.subtitleGrey,
+                            color: subtitleColor,
                           ),
                         ),
                       ],
@@ -846,8 +858,18 @@ class _ExpiringRecipeCard extends StatelessWidget {
 
 class _QuickRecipeCard extends StatelessWidget {
   final _RecipeData recipe;
+  final bool isDark;
+  final Color textColor;
+  final Color subtitleColor;
+  final Color cardColor;
 
-  const _QuickRecipeCard({required this.recipe});
+  const _QuickRecipeCard({
+    required this.recipe,
+    required this.isDark,
+    required this.textColor,
+    required this.subtitleColor,
+    required this.cardColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -855,25 +877,28 @@ class _QuickRecipeCard extends StatelessWidget {
       onTap: () {},
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image area
             Expanded(
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE0E0E0),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : const Color(0xFFE0E0E0),
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(16)),
                 ),
@@ -881,12 +906,11 @@ class _QuickRecipeCard extends StatelessWidget {
                   child: Icon(
                     recipe.imageIcon,
                     size: 40,
-                    color: AppTheme.subtitleGrey.withValues(alpha: 0.5),
+                    color: subtitleColor.withValues(alpha: 0.5),
                   ),
                 ),
               ),
             ),
-            // Title + time
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
               child: Column(
@@ -896,25 +920,25 @@ class _QuickRecipeCard extends StatelessWidget {
                     recipe.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryGreen,
+                      color: textColor,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.schedule,
-                          size: 13, color: AppTheme.subtitleGrey),
+                      Icon(Icons.schedule,
+                          size: 13, color: subtitleColor),
                       const SizedBox(width: 4),
                       Text(
                         recipe.time,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 11,
-                          color: AppTheme.subtitleGrey,
+                          color: subtitleColor,
                         ),
                       ),
                     ],

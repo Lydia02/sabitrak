@@ -27,50 +27,51 @@ class _AddItemDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
+
     return Center(
       child: Material(
         color: Colors.transparent,
         child: Container(
           width: MediaQuery.of(context).size.width * 0.85,
           decoration: BoxDecoration(
-            color: AppTheme.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(20),
           ),
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Title
-              const Text(
+              Text(
                 'Add Item',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryGreen,
+                  color: textColor,
                 ),
               ),
               const SizedBox(height: 6),
-
-              // Subtitle
-              const Text(
+              Text(
                 'Choose an option below to add an item.',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 13,
-                  color: AppTheme.subtitleGrey,
+                  color: subtitleColor,
                 ),
               ),
               const SizedBox(height: 24),
 
-              // ── Scan Barcode (filled green button) ──
+              // Scan Barcode
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    // TODO: Navigate to barcode scanner
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGreen,
@@ -102,17 +103,17 @@ class _AddItemDialog extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Fastest for packaged foods.',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 12,
-                  color: AppTheme.subtitleGrey,
+                  color: subtitleColor,
                 ),
               ),
               const SizedBox(height: 18),
 
-              // ── Add Manually (outlined button) ──
+              // Add Manually
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -126,16 +127,18 @@ class _AddItemDialog extends StatelessWidget {
                     );
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.primaryGreen,
-                    side: const BorderSide(
-                      color: AppTheme.primaryGreen,
+                    foregroundColor: textColor,
+                    side: BorderSide(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.2)
+                          : AppTheme.primaryGreen,
                       width: 1.5,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
@@ -144,45 +147,47 @@ class _AddItemDialog extends StatelessWidget {
                           fontFamily: 'Roboto',
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
+                          color: textColor,
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.edit, size: 18),
+                      const SizedBox(width: 8),
+                      Icon(Icons.edit, size: 18, color: textColor),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'For local or unpackaged foods.',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 12,
-                  color: AppTheme.subtitleGrey,
+                  color: subtitleColor,
                 ),
               ),
               const SizedBox(height: 18),
 
-              // ── Capture Expiry Date (outlined button) ──
+              // Capture Expiry Date
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: OutlinedButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    // TODO: Navigate to AI expiry capture
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.primaryGreen,
-                    side: const BorderSide(
-                      color: AppTheme.primaryGreen,
+                    foregroundColor: textColor,
+                    side: BorderSide(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.2)
+                          : AppTheme.primaryGreen,
                       width: 1.5,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
@@ -191,35 +196,36 @@ class _AddItemDialog extends StatelessWidget {
                           fontFamily: 'Roboto',
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
+                          color: textColor,
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.camera_alt_outlined, size: 18),
+                      const SizedBox(width: 8),
+                      Icon(Icons.camera_alt_outlined, size: 18, color: textColor),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Scan expiry label using camera.',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 12,
-                  color: AppTheme.subtitleGrey,
+                  color: subtitleColor,
                 ),
               ),
               const SizedBox(height: 20),
 
-              // ── Cancel ──
+              // Cancel
               GestureDetector(
                 onTap: () => Navigator.of(context).pop(),
-                child: const Text(
+                child: Text(
                   'Cancel',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: AppTheme.subtitleGrey,
+                    color: subtitleColor,
                   ),
                 ),
               ),

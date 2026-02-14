@@ -64,7 +64,6 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     'Bag/Basket': Icons.shopping_basket_outlined,
   };
 
-  // Smart shelf life defaults (in days)
   static const Map<String, int> _shelfLifeDefaults = {
     'Fruits': 5,
     'Vegetables': 5,
@@ -143,12 +142,11 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
         title: 'Item Added!',
         message: '$name has been added to your inventory.',
       );
-      // Wait a moment then pop back
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
-          Navigator.of(context).pop(); // close modal
-          Navigator.of(context).pop(); // back to add options
-          Navigator.of(context).pop(); // back to inventory
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
         }
       });
     } catch (e) {
@@ -168,22 +166,28 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : AppTheme.fieldBorderColor;
+
     return Scaffold(
-      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Column(
           children: [
-            // ── Top Bar ──
+            // Top Bar
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
               child: Row(
                 children: [
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back,
-                        color: AppTheme.primaryGreen),
+                    icon: Icon(Icons.arrow_back, color: textColor),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Add Item',
                       textAlign: TextAlign.center,
@@ -191,7 +195,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                         fontFamily: 'Roboto',
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryGreen,
+                        color: textColor,
                       ),
                     ),
                   ),
@@ -201,7 +205,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
             ),
             const SizedBox(height: 8),
 
-            // ── Form ──
+            // Form
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -211,35 +215,36 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                     const SizedBox(height: 16),
 
                     // Food Name
-                    const Text(
+                    Text(
                       'FOOD NAME',
                       style: TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.subtitleGrey,
+                        color: subtitleColor,
                         letterSpacing: 1,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: AppTheme.white,
+                        color: cardColor,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color: AppTheme.fieldBorderColor),
+                        border: Border.all(color: borderColor),
                       ),
                       child: TextField(
                         controller: _nameController,
                         textCapitalization: TextCapitalization.words,
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: textColor),
+                        decoration: InputDecoration(
                           hintText: 'Enter food name',
+                          hintStyle: TextStyle(color: subtitleColor),
                           border: InputBorder.none,
                           enabledBorder: InputBorder.none,
                           focusedBorder: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
+                          contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 14),
-                          suffixIcon: Icon(Icons.auto_awesome,
+                          suffixIcon: const Icon(Icons.auto_awesome,
                               color: AppTheme.primaryGreen, size: 20),
                         ),
                       ),
@@ -247,7 +252,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                     const SizedBox(height: 24),
 
                     // Category
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
@@ -256,11 +261,11 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                             fontFamily: 'Roboto',
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.subtitleGrey,
+                            color: subtitleColor,
                             letterSpacing: 1,
                           ),
                         ),
-                        Text(
+                        const Text(
                           'AI SUGGESTION',
                           style: TextStyle(
                             fontFamily: 'Roboto',
@@ -286,12 +291,12 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? AppTheme.primaryGreen
-                                  : AppTheme.white,
+                                  : cardColor,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: isSelected
                                     ? AppTheme.primaryGreen
-                                    : AppTheme.fieldBorderColor,
+                                    : borderColor,
                               ),
                             ),
                             child: Text(
@@ -302,7 +307,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                                 fontWeight: FontWeight.w500,
                                 color: isSelected
                                     ? AppTheme.white
-                                    : AppTheme.primaryGreen,
+                                    : textColor,
                               ),
                             ),
                           ),
@@ -312,13 +317,13 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                     const SizedBox(height: 24),
 
                     // Storage Location
-                    const Text(
+                    Text(
                       'STORAGE LOCATION',
                       style: TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.subtitleGrey,
+                        color: subtitleColor,
                         letterSpacing: 1,
                       ),
                     ),
@@ -338,22 +343,21 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? AppTheme.primaryGreen
-                                  : AppTheme.white,
+                                  : cardColor,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected
                                     ? AppTheme.primaryGreen
-                                    : AppTheme.fieldBorderColor,
+                                    : borderColor,
                               ),
                             ),
                             child: Column(
                               children: [
                                 Icon(
-                                  _storageIcons[loc] ??
-                                      Icons.storage,
+                                  _storageIcons[loc] ?? Icons.storage,
                                   color: isSelected
                                       ? AppTheme.white
-                                      : AppTheme.subtitleGrey,
+                                      : subtitleColor,
                                   size: 22,
                                 ),
                                 const SizedBox(height: 4),
@@ -366,7 +370,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                                     fontWeight: FontWeight.w500,
                                     color: isSelected
                                         ? AppTheme.white
-                                        : AppTheme.primaryGreen,
+                                        : textColor,
                                   ),
                                 ),
                               ],
@@ -381,15 +385,17 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppTheme.white,
+                        color: cardColor,
                         borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        boxShadow: isDark
+                            ? []
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                       ),
                       child: Row(
                         children: [
@@ -400,22 +406,22 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Smart Shelf Life',
                                   style: TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: AppTheme.primaryGreen,
+                                    color: textColor,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   'Suggested for $_selectedCategory\nTypical Freshness',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 12,
-                                    color: AppTheme.subtitleGrey,
+                                    color: subtitleColor,
                                   ),
                                 ),
                               ],
@@ -448,10 +454,10 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                       padding: const EdgeInsets.only(left: 4),
                       child: Text(
                         'Based on standard ${_selectedStorage.toLowerCase()} storage.',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 11,
-                          color: AppTheme.subtitleGrey,
+                          color: subtitleColor,
                         ),
                       ),
                     ),
@@ -462,25 +468,27 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
-                        color: AppTheme.white,
+                        color: cardColor,
                         borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        boxShadow: isDark
+                            ? []
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                       ),
                       child: Row(
                         children: [
-                          const Text(
+                          Text(
                             'Quantity',
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: AppTheme.primaryGreen,
+                              color: textColor,
                             ),
                           ),
                           const Spacer(),
@@ -496,21 +504,20 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                               height: 32,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(
-                                    color: AppTheme.fieldBorderColor),
+                                border: Border.all(color: borderColor),
                               ),
-                              child: const Icon(Icons.remove,
-                                  size: 18, color: AppTheme.subtitleGrey),
+                              child: Icon(Icons.remove,
+                                  size: 18, color: subtitleColor),
                             ),
                           ),
                           const SizedBox(width: 16),
                           Text(
                             '$_quantity',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryGreen,
+                              color: textColor,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -518,11 +525,12 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                           DropdownButton<String>(
                             value: _selectedUnit,
                             underline: const SizedBox(),
-                            style: const TextStyle(
+                            dropdownColor: cardColor,
+                            style: TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: AppTheme.primaryGreen,
+                              color: textColor,
                             ),
                             items: _units
                                 .map((u) => DropdownMenuItem(

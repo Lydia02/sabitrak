@@ -63,8 +63,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+
     return Scaffold(
-      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -74,14 +76,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               // Headline
               FadeTransition(
                 opacity: _textFade,
-                child: const Text(
+                child: Text(
                   'Track your food. Reduce waste.\nSave money.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryGreen,
+                    color: textColor,
                     height: 1.3,
                   ),
                 ),
@@ -136,7 +138,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4A5A2C),
+                          backgroundColor: isDark
+                              ? AppTheme.darkCard
+                              : const Color(0xFF4A5A2C),
                         ),
                         child: const Text('Log In'),
                       ),
