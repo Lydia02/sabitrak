@@ -112,26 +112,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     // ── Header ──
                     _buildHeader(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
                     // ── Stat Cards ──
                     _buildStatCards(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
                     // ── Analytical Overview ──
                     _buildAnalyticalOverview(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // ── Quick Actions ──
                     _buildQuickActions(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // ── Recommended / Empty State ──
                     if (_isEmpty)
                       _buildEmptyState()
                     else
                       _buildRecommended(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                   ],
                 ),
               )
@@ -403,11 +403,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           // Dashed circle with bag icon
           Container(
-            width: 100,
-            height: 100,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
@@ -418,11 +418,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             child: Icon(
               Icons.shopping_bag_outlined,
-              size: 44,
+              size: 36,
               color: AppTheme.subtitleGrey.withValues(alpha: 0.4),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           const Text(
             'Your inventory is empty',
             style: TextStyle(
@@ -432,7 +432,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: AppTheme.primaryGreen,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           const Text(
             'Add food items to see personalized recipe\nrecommendations and track expiry dates.',
             textAlign: TextAlign.center,
@@ -442,7 +442,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: AppTheme.subtitleGrey,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(

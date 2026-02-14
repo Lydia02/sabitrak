@@ -94,7 +94,7 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: _step == 1
             ? _buildStep1()
