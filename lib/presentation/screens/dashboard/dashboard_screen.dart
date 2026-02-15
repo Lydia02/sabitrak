@@ -21,6 +21,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _totalItems = 0;
   int _expiringItems = 0;
   int _memberCount = 0;
+  bool _popupShown = false;
 
   final InventoryRepository _inventoryRepo = InventoryRepository();
   StreamSubscription<List<FoodItem>>? _inventorySub;
@@ -29,6 +30,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _loadDashboardData();
+  }
+
+  void _showPantryCheckPopup() {
+    if (_popupShown) return;
+    _popupShown = true;
+    // Delay slightly so the dashboard renders first
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        barrierColor: Colors.black.withValues(alpha: 0.45),
+        builder: (ctx) => const _PantryCheckDialog(),
+      );
+    });
   }
 
   @override
@@ -69,6 +85,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _totalItems = items.length;
               _expiringItems = items.where((item) => item.isExpiringSoon || item.isExpired).length;
             });
+            if (items.isNotEmpty) _showPantryCheckPopup();
           }
         });
       }
@@ -404,7 +421,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             textColor: textColor,
             cardColor: cardColor,
             isDark: isDark,
-            onTap: () {},
+            onTap: () => MainShell.switchTab(1),
           ),
         ],
       ),
@@ -813,6 +830,96 @@ class _RecipeCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Pantry Check Popup ───────────────────────────────────────────────────────
+class _PantryCheckDialog extends StatelessWidget {
+  const _PantryCheckDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
+
+    return Dialog(
+      backgroundColor: cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 36),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.checklist_rounded,
+                color: AppTheme.primaryGreen,
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Pantry Check?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Did you use something without logging it? Keep your inventory accurate for better recipe matches.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 13,
+                color: subtitleColor,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 28),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  MainShell.switchTab(1);
+                },
+                child: const Text('Update Now'),
+              ),
+            ),
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Text(
+                  'MAYBE LATER',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                    color: subtitleColor,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
