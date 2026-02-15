@@ -50,7 +50,7 @@ class _SoloSetupScreenState extends State<SoloSetupScreen> {
 
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainShell()),
+        MaterialPageRoute(builder: (_) => MainShell(key: MainShell.shellKey)),
         (route) => false,
       );
     } catch (e) {
