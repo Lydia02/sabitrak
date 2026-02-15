@@ -4,8 +4,10 @@ import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
 import '../../../data/repositories/inventory_repository.dart';
 import '../../../services/firebase_service.dart';
+import '../../../services/notification_service.dart';
 import '../inventory/add_item_options_screen.dart';
 import '../main/main_shell.dart';
+import '../profile/notification_inbox_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -22,6 +24,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _expiringItems = 0;
   int _memberCount = 0;
   bool _popupShown = false;
+  int _unreadNotifications = 0;
 
   final InventoryRepository _inventoryRepo = InventoryRepository();
   StreamSubscription<List<FoodItem>>? _inventorySub;
@@ -30,6 +33,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _loadDashboardData();
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    final svc = NotificationService();
+    final notifications = await svc.fetchNotifications();
+    final lastRead = await svc.getLastReadAt();
+    final unread = notifications
+        .where((n) => lastRead == null || n.createdAt.isAfter(lastRead))
+        .length;
+    if (mounted) setState(() => _unreadNotifications = unread);
+  }
+
+  void _openNotifications() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(
+            builder: (_) => const NotificationInboxScreen()))
+        .then((_) => _loadUnreadCount());
   }
 
   void _showPantryCheckPopup() {
@@ -207,26 +228,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           GestureDetector(
-            onTap: () {},
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: cardColor,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+            onTap: _openNotifications,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: cardColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Icon(
-                Icons.notifications_outlined,
-                color: textColor,
-                size: 22,
-              ),
+                  child: Icon(
+                    Icons.notifications_outlined,
+                    color: textColor,
+                    size: 22,
+                  ),
+                ),
+                if (_unreadNotifications > 0)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$_unreadNotifications',
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
@@ -308,14 +358,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'ANALYTICAL OVERVIEW',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: subtitleColor,
-                    letterSpacing: 1.2,
+                Expanded(
+                  child: Text(
+                    'ANALYTICAL OVERVIEW',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: subtitleColor,
+                      letterSpacing: 1.2,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Icon(
