@@ -51,7 +51,7 @@ class _SignInScreenState extends State<SignInScreen> {
     final nav = Navigator.of(context);
     if (hasHousehold) {
       nav.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainShell()),
+        MaterialPageRoute(builder: (_) => MainShell(key: MainShell.shellKey)),
         (route) => false,
       );
     } else {

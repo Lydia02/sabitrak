@@ -234,7 +234,7 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
                   ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const MainShell()),
+                        MaterialPageRoute(builder: (_) => MainShell(key: MainShell.shellKey)),
                         (route) => false,
                       );
                     },

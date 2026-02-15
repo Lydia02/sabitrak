@@ -9,12 +9,23 @@ import '../profile/profile_screen.dart';
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
+  static final GlobalKey<_MainShellState> shellKey =
+      GlobalKey<_MainShellState>();
+
+  static void switchTab(int index) {
+    shellKey.currentState?.switchTab(index);
+  }
+
   @override
   State<MainShell> createState() => _MainShellState();
 }
 
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
+
+  void switchTab(int index) {
+    setState(() => _currentIndex = index);
+  }
 
   final List<Widget> _screens = [
     const DashboardScreen(),

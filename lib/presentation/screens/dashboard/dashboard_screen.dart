@@ -5,6 +5,7 @@ import '../../../data/models/food_item.dart';
 import '../../../data/repositories/inventory_repository.dart';
 import '../../../services/firebase_service.dart';
 import '../inventory/add_item_options_screen.dart';
+import '../main/main_shell.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -267,12 +268,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildAnalyticalOverview(Color textColor, Color subtitleColor, Color cardColor, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: isDark
+      child: GestureDetector(
+        onTap: () => MainShell.switchTab(3),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: isDark
               ? []
               : [
                   BoxShadow(
@@ -368,6 +371,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
