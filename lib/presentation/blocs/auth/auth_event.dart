@@ -124,3 +124,31 @@ class ForgotPasswordSubmitted extends AuthEvent {
 class RegistrationStepBack extends AuthEvent {}
 
 class RegistrationReset extends AuthEvent {}
+
+// ── Forgot password OTP flow ──────────────────────────────────────────────────
+
+class ForgotPasswordOtpRequested extends AuthEvent {
+  final String email;
+  const ForgotPasswordOtpRequested({required this.email});
+  @override
+  List<Object?> get props => [email];
+}
+
+class ForgotPasswordOtpVerified extends AuthEvent {
+  final String email;
+  final String otp;
+  const ForgotPasswordOtpVerified({required this.email, required this.otp});
+  @override
+  List<Object?> get props => [email, otp];
+}
+
+/// Step 3a: user entered new password in our UI after OTP — trigger Firebase reset email
+class ForgotPasswordReset extends AuthEvent {
+  final String email;
+  final String newPassword;
+  final String resetToken;
+  const ForgotPasswordReset({required this.email, required this.newPassword, required this.resetToken});
+  @override
+  List<Object?> get props => [email, newPassword, resetToken];
+}
+
