@@ -46,6 +46,13 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Node modules (Firebase Cloud Functions, etc.)
+**/node_modules/
+
+# Firebase
+.firebase/
+.firebaserc
+
 # Firebase
 google-services.json
 GoogleService-Info.plist

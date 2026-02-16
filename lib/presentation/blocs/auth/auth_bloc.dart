@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/models/registration_data.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../services/verification_service.dart';
+import '../../../services/password_reset_service.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -11,9 +12,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final VerificationService _verificationService;
   RegistrationData _registrationData = const RegistrationData();
 
-  AuthBloc({AuthRepository? authRepository, VerificationService? verificationService})
-      : _authRepository = authRepository ?? AuthRepository(),
+  final PasswordResetService _passwordResetService;
+
+  AuthBloc({
+    AuthRepository? authRepository,
+    VerificationService? verificationService,
+    PasswordResetService? passwordResetService,
+  })  : _authRepository = authRepository ?? AuthRepository(),
         _verificationService = verificationService ?? VerificationService(),
+        _passwordResetService = passwordResetService ?? PasswordResetService(),
         super(AuthInitial()) {
     on<SignUpInfoSubmitted>(_onSignUpInfoSubmitted);
     on<ProfileDetailsSubmitted>(_onProfileDetailsSubmitted);
@@ -25,6 +32,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<ResendVerificationCode>(_onResendVerificationCode);
     on<SignInSubmitted>(_onSignInSubmitted);
     on<ForgotPasswordSubmitted>(_onForgotPasswordSubmitted);
+    on<ForgotPasswordOtpRequested>(_onForgotPasswordOtpRequested);
+    on<ForgotPasswordOtpVerified>(_onForgotPasswordOtpVerified);
+    on<ForgotPasswordReset>(_onForgotPasswordReset);
     on<RegistrationStepBack>(_onRegistrationStepBack);
     on<RegistrationReset>(_onRegistrationReset);
   }
@@ -261,6 +271,66 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthError(e.toString()));
     }
   }
+
+  // Step 1 — send OTP email
+  Future<void> _onForgotPasswordOtpRequested(
+    ForgotPasswordOtpRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _passwordResetService.sendOtp(email: event.email);
+      emit(ForgotPasswordOtpSent(email: event.email));
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
+  }
+
+  // Step 2 — verify OTP
+  Future<void> _onForgotPasswordOtpVerified(
+    ForgotPasswordOtpVerified event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final valid = await _passwordResetService.verifyOtp(
+        email: event.email,
+        code: event.otp,
+      );
+      if (valid) {
+        emit(ForgotPasswordOtpVerifiedState(email: event.email, otp: event.otp));
+      } else {
+        emit(ForgotPasswordOtpFailed(
+          message: 'Invalid or expired code. Please try again.',
+          email: event.email,
+        ));
+      }
+    } catch (e) {
+      emit(ForgotPasswordOtpFailed(
+        message: 'Verification failed. Please try again.',
+        email: event.email,
+      ));
+    }
+  }
+
+  // Step 3 — call Cloud Function to update password after OTP is verified
+  Future<void> _onForgotPasswordReset(
+    ForgotPasswordReset event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _passwordResetService.resetPassword(
+        email: event.email,
+        newPassword: event.newPassword,
+        resetToken: event.resetToken,
+      );
+      emit(ForgotPasswordResetSuccess());
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
+  }
+
 
   String _mapSignInError(String code) {
     switch (code) {

@@ -72,6 +72,35 @@ class SignInSuccess extends AuthState {
 
 class ForgotPasswordSuccess extends AuthState {}
 
+// OTP sent — move to OTP entry screen
+class ForgotPasswordOtpSent extends AuthState {
+  final String email;
+  const ForgotPasswordOtpSent({required this.email});
+  @override
+  List<Object?> get props => [email];
+}
+
+// OTP verified — move to reset password screen
+class ForgotPasswordOtpVerifiedState extends AuthState {
+  final String email;
+  final String otp;
+  const ForgotPasswordOtpVerifiedState({required this.email, required this.otp});
+  @override
+  List<Object?> get props => [email, otp];
+}
+
+// OTP wrong / expired
+class ForgotPasswordOtpFailed extends AuthState {
+  final String message;
+  final String email;
+  const ForgotPasswordOtpFailed({required this.message, required this.email});
+  @override
+  List<Object?> get props => [message, email];
+}
+
+// Firebase reset email triggered — user needs to click the link
+class ForgotPasswordResetSuccess extends AuthState {}
+
 class VerificationSuccess extends AuthState {}
 
 class VerificationFailed extends AuthState {
