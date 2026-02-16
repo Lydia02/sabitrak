@@ -1,0 +1,12 @@
+{
+  "name": "sabitrak-functions",
+  "description": "SabiTrak Cloud Functions",
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^13.6.1",
+    "firebase-functions": "^7.0.5"
+  }
+}

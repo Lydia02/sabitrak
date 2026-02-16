@@ -4,7 +4,9 @@ import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
 import '../../../data/repositories/inventory_repository.dart';
 import '../../../services/firebase_service.dart';
+import '../../../services/notification_service.dart';
 import '../inventory/add_item_options_screen.dart';
+import '../profile/notification_inbox_screen.dart';
 
 class RecipeScreen extends StatefulWidget {
   const RecipeScreen({super.key});
@@ -20,6 +22,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   bool _loaded = false;
   String _searchQuery = '';
   String _selectedCategory = '';
+  int _unreadCount = 0;
 
   final List<String> _categories = [
     'Rice & Grains',
@@ -90,6 +93,23 @@ class _RecipeScreenState extends State<RecipeScreen> {
   void initState() {
     super.initState();
     _loadInventory();
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    final svc = NotificationService();
+    final notifications = await svc.fetchNotifications();
+    final lastRead = await svc.getLastReadAt();
+    final unread = notifications
+        .where((n) => lastRead == null || n.createdAt.isAfter(lastRead))
+        .length;
+    if (mounted) setState(() => _unreadCount = unread);
+  }
+
+  void _openNotifications() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const NotificationInboxScreen()))
+        .then((_) => _loadUnreadCount());
   }
 
   @override
@@ -343,10 +363,20 @@ class _RecipeScreenState extends State<RecipeScreen> {
               ),
             ),
           ),
-          Icon(
-            Icons.notifications_outlined,
-            color: textColor,
-            size: 24,
+          GestureDetector(
+            onTap: _openNotifications,
+            child: Stack(clipBehavior: Clip.none, children: [
+              Icon(Icons.notifications_outlined, color: textColor, size: 24),
+              if (_unreadCount > 0)
+                Positioned(
+                  right: -3, top: -3,
+                  child: Container(
+                    width: 14, height: 14,
+                    decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                    child: Center(child: Text('$_unreadCount', style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w700, color: Colors.white))),
+                  ),
+                ),
+            ]),
           ),
         ],
       ),
@@ -407,9 +437,19 @@ class _RecipeScreenState extends State<RecipeScreen> {
               ),
               const SizedBox(width: 16),
               GestureDetector(
-                onTap: () {},
-                child: Icon(Icons.notifications_outlined,
-                    color: textColor, size: 24),
+                onTap: _openNotifications,
+                child: Stack(clipBehavior: Clip.none, children: [
+                  Icon(Icons.notifications_outlined, color: textColor, size: 24),
+                  if (_unreadCount > 0)
+                    Positioned(
+                      right: -3, top: -3,
+                      child: Container(
+                        width: 14, height: 14,
+                        decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                        child: Center(child: Text('$_unreadCount', style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w700, color: Colors.white))),
+                      ),
+                    ),
+                ]),
               ),
             ],
           ),
