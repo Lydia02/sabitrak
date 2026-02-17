@@ -282,7 +282,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                             ),
                                             const SizedBox(height: 10),
                                             SizedBox(
-                                              height: 100,
+                                              height: 110,
                                               child: ListView.separated(
                                                 scrollDirection:
                                                     Axis.horizontal,
@@ -567,7 +567,7 @@ class _SmartInsightChip extends StatelessWidget {
 
     return Container(
       width: 160,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(14),
@@ -577,15 +577,15 @@ class _SmartInsightChip extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 30,
-            height: 30,
+            width: 28,
+            height: 28,
             decoration: BoxDecoration(
               color: card.iconColor.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: Icon(card.icon, color: card.iconColor, size: 16),
+            child: Icon(card.icon, color: card.iconColor, size: 15),
           ),
-          const SizedBox(height: 8),
+          const Spacer(),
           Text(
             card.title,
             maxLines: 1,

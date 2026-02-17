@@ -5,7 +5,18 @@ import '../../../services/firebase_service.dart';
 import '../../widgets/error_modal.dart';
 
 class ManualEntryScreen extends StatefulWidget {
-  const ManualEntryScreen({super.key});
+  final String? prefilledName;
+  final String? prefilledCategory;
+  final String? prefilledBarcode;
+  final String? prefilledImageUrl;
+
+  const ManualEntryScreen({
+    super.key,
+    this.prefilledName,
+    this.prefilledCategory,
+    this.prefilledBarcode,
+    this.prefilledImageUrl,
+  });
 
   @override
   State<ManualEntryScreen> createState() => _ManualEntryScreenState();
@@ -84,6 +95,13 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   void initState() {
     super.initState();
     _loadHouseholdId();
+    if (widget.prefilledName != null) {
+      _nameController.text = widget.prefilledName!;
+    }
+    if (widget.prefilledCategory != null &&
+        _categories.contains(widget.prefilledCategory)) {
+      _selectedCategory = widget.prefilledCategory!;
+    }
   }
 
   Future<void> _loadHouseholdId() async {
@@ -122,13 +140,14 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
       final item = FoodItem(
         id: '',
         name: name,
-        barcode: '',
+        barcode: widget.prefilledBarcode ?? '',
         category: _selectedCategory,
         quantity: _quantity,
         unit: _selectedUnit,
         purchaseDate: now,
         expiryDate: expiryDate,
         storageLocation: _selectedStorage,
+        imageUrl: widget.prefilledImageUrl,
         householdId: _householdId!,
         addedBy: uid,
         createdAt: now,
@@ -189,7 +208,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                   ),
                   Expanded(
                     child: Text(
-                      'Add Item',
+                      widget.prefilledBarcode != null ? 'Scanned Item' : 'Add Item',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: 'Roboto',
