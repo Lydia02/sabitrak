@@ -38,7 +38,8 @@ class PasswordResetService {
       'used': false,
     });
 
-    final url = Uri.parse('https://api.emailjs.com/api/v1.0/email/send');
+    // Send via Cloud Function proxy (EmailJS blocks non-browser calls)
+    final url = Uri.parse('https://us-central1-sabitrak-63dc2.cloudfunctions.net/sendEmail');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -55,7 +56,7 @@ class PasswordResetService {
     );
     if (response.statusCode != 200) {
       throw Exception(
-          'EmailJS error (${response.statusCode}): ${response.body}');
+          'Email error (${response.statusCode}): ${response.body}');
     }
   }
 

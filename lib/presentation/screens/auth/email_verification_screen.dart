@@ -213,8 +213,23 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
           return Scaffold(
             body: SafeArea(
-              child: Center(
-                child: SingleChildScrollView(
+              child: Stack(
+                children: [
+                  // Back arrow
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(
+                        Icons.arrow_back,
+                        color: textColor,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -366,8 +381,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   ),
                 ),
               ),
-            ),
-          );
+            ],
+          ),
+        ),
+      );
         },
       ),
     );

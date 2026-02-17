@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../config/theme/app_theme.dart';
+import 'barcode_scanner_screen.dart';
 import 'manual_entry_screen.dart';
 
 class AddItemOptionsScreen extends StatelessWidget {
@@ -72,6 +73,11 @@ class _AddItemDialog extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pop();
+                    Navigator.of(parentContext).push(
+                      MaterialPageRoute(
+                        builder: (_) => const BarcodeScannerScreen(),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGreen,
