@@ -50,13 +50,13 @@ class VerificationService {
     );
   }
 
-  /// Send email using EmailJS REST API
+  /// Send email via Cloud Function proxy (EmailJS blocks non-browser calls)
   Future<void> _sendEmailViaEmailJS({
     required String toEmail,
     required String toName,
     required String verificationCode,
   }) async {
-    final url = Uri.parse('https://api.emailjs.com/api/v1.0/email/send');
+    final url = Uri.parse('https://us-central1-sabitrak-63dc2.cloudfunctions.net/sendEmail');
 
     final response = await http.post(
       url,

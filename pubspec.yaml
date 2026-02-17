@@ -41,6 +41,10 @@ dependencies:
   # Barcode Scanning
   mobile_scanner: ^3.5.2
 
+  # OCR Label Scanning
+  google_mlkit_text_recognition: ^0.14.0
+  camera: ^0.11.0+2
+
   # HTTP & API
   http: ^1.1.0
   dio: ^5.4.0
