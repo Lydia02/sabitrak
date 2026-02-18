@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme/app_theme.dart';
+import '../main/main_shell.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../welcome/welcome_screen.dart';
 
@@ -72,15 +74,23 @@ class _SplashScreenState extends State<SplashScreen>
 
     if (!mounted) return;
 
-    // Check if onboarding has been completed
     final prefs = await SharedPreferences.getInstance();
     final onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
+    final currentUser = FirebaseAuth.instance.currentUser;
 
     if (!mounted) return;
 
-    final destination = onboardingComplete
-        ? const WelcomeScreen()
-        : const OnboardingScreen();
+    // If already logged in → go straight to main app
+    // If signed up before (onboarding done) but not logged in → welcome/login
+    // If never signed up → show onboarding
+    final Widget destination;
+    if (currentUser != null) {
+      destination = const MainShell();
+    } else if (onboardingComplete) {
+      destination = const WelcomeScreen();
+    } else {
+      destination = const OnboardingScreen();
+    }
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
