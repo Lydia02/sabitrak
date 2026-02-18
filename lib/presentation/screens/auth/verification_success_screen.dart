@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme/app_theme.dart';
 
 class VerificationSuccessScreen extends StatefulWidget {
@@ -46,7 +47,11 @@ class _VerificationSuccessScreenState extends State<VerificationSuccessScreen>
     super.dispose();
   }
 
-  void _onContinueToLogin() {
+  Future<void> _onContinueToLogin() async {
+    // Mark onboarding as complete — user has successfully signed up
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_complete', true);
+    if (!mounted) return;
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 

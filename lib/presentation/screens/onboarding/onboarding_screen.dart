@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme/app_theme.dart';
 import '../welcome/welcome_screen.dart';
 
@@ -14,11 +13,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  Future<void> _completeOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_complete', true);
-
-    if (!mounted) return;
+  void _completeOnboarding() {
+    // Do NOT mark onboarding complete here — only mark it after the user signs up
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => const WelcomeScreen(),
