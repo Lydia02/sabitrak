@@ -450,9 +450,12 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
       _pendingNavigation = null;
       setState(() => _isProcessing = false);
       if (nav != null) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => nav),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => nav),
+          );
+        });
       }
     });
   }

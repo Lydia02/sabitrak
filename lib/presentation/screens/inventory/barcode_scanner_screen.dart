@@ -288,9 +288,12 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
         _lastScannedCode = null;
       });
       if (nav != null) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => nav),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => nav),
+          );
+        });
       }
     });
   }
@@ -564,9 +567,12 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
         _lastScannedCode = null;
       });
       if (nav != null) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => nav),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => nav),
+          );
+        });
       }
     });
   }

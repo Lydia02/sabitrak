@@ -40,13 +40,14 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is RegistrationSuccess) {
+        if (state is VerificationCodeSentSuccess) {
+          final authBloc = context.read<AuthBloc>();
           final email = state.email;
           final firstName = state.firstName;
-          Navigator.of(context).pushAndRemoveUntil(
+          Navigator.of(context).push(
             PageRouteBuilder(
-              pageBuilder: (_, __, ___) => BlocProvider(
-                create: (_) => AuthBloc(),
+              pageBuilder: (_, __, ___) => BlocProvider.value(
+                value: authBloc,
                 child: EmailVerificationScreen(
                   email: email,
                   firstName: firstName,
@@ -56,7 +57,6 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
                   FadeTransition(opacity: animation, child: child),
               transitionDuration: const Duration(milliseconds: 300),
             ),
-            (route) => route.isFirst,
           );
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
