@@ -79,27 +79,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       return;
     }
 
+    // Save password but do NOT create account yet — wait for email verification
     _registrationData = _registrationData.copyWith(password: event.password);
 
     emit(AuthLoading());
 
     try {
-      await _authRepository.registerWithEmailAndPassword(_registrationData);
-      final email = _registrationData.email;
-      final firstName = _registrationData.firstName;
-      _registrationData = const RegistrationData();
-      emit(RegistrationSuccess(email: email, firstName: firstName));
-    } on FirebaseAuthException catch (e) {
-      emit(AuthError(_mapFirebaseError(e.code),
-          registrationData: _registrationData));
+      // Send OTP — account creation happens AFTER verification succeeds
+      await _verificationService.sendVerificationCode(
+        email: _registrationData.email,
+        firstName: _registrationData.firstName,
+      );
+      emit(VerificationCodeSentSuccess(
+        email: _registrationData.email,
+        firstName: _registrationData.firstName,
+      ));
     } catch (e) {
-      final message = e.toString();
-      if (e is FirebaseException) {
-        emit(AuthError(_mapFirebaseError(e.code),
-            registrationData: _registrationData));
-      } else {
-        emit(AuthError(message, registrationData: _registrationData));
-      }
+      emit(AuthError('Failed to send verification code: $e',
+          registrationData: _registrationData));
     }
   }
 
@@ -199,7 +196,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (isValid) {
-        emit(VerificationSuccess());
+        // OTP verified — now create the Firebase account if password is set
+        if (_registrationData.password.isNotEmpty) {
+          try {
+            await _authRepository.registerWithEmailAndPassword(_registrationData);
+            final email = _registrationData.email;
+            final firstName = _registrationData.firstName;
+            _registrationData = const RegistrationData();
+            emit(RegistrationSuccess(email: email, firstName: firstName));
+          } on FirebaseAuthException catch (e) {
+            emit(AuthError(_mapFirebaseError(e.code)));
+          } catch (e) {
+            emit(AuthError('Account creation failed: $e'));
+          }
+        } else {
+          // No password means this is just a standalone verification (not signup)
+          emit(VerificationSuccess());
+        }
       } else {
         emit(VerificationFailed(
           message: 'Code is invalid or expired. Please check or request a new one.',

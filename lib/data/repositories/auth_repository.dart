@@ -56,6 +56,8 @@ class AuthRepository {
   }
 
   Future<({User user, bool isNewUser})> _signInWithGoogleNative() async {
+    // Sign out first to clear cached account and always show account picker
+    await _googleSignIn.signOut();
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
     if (googleUser == null) {
       throw Exception('Google Sign-In was cancelled');

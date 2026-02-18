@@ -77,17 +77,19 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
   }
 
   Future<void> _shareViaWhatsApp(String code) async {
-    final message = Uri.encodeComponent(
-        'Join my SabiTrak household! Use this invite code: $code');
-    final url = Uri.parse('https://wa.me/?text=$message');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
-        showErrorModal(context,
-            title: 'WhatsApp Not Found',
-            message: 'Could not open WhatsApp. Please share the code manually.');
-      }
+    final message = 'Join my SabiTrak household! Use this invite code: $code';
+
+    // Try WhatsApp directly first (works on Android with package declared in manifest)
+    final waUrl = Uri.parse('whatsapp://send?text=${Uri.encodeComponent(message)}');
+    if (await canLaunchUrl(waUrl)) {
+      await launchUrl(waUrl, mode: LaunchMode.externalApplication);
+      return;
+    }
+
+    // Fallback: plain SMS/text share intent via url_launcher
+    final smsUrl = Uri.parse('sms:?body=${Uri.encodeComponent(message)}');
+    if (await canLaunchUrl(smsUrl)) {
+      await launchUrl(smsUrl, mode: LaunchMode.externalApplication);
     }
   }
 
