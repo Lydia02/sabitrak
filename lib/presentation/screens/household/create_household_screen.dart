@@ -77,17 +77,22 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
   }
 
   Future<void> _shareViaWhatsApp(String code) async {
-    final message = Uri.encodeComponent(
-        'Join my SabiTrak household! Use this invite code: $code');
-    final url = Uri.parse('https://wa.me/?text=$message');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
-        showErrorModal(context,
-            title: 'WhatsApp Not Found',
-            message: 'Could not open WhatsApp. Please share the code manually.');
-      }
+    final message = 'Join my SabiTrak household! Use this invite code: $code';
+    final encoded = Uri.encodeComponent(message);
+
+    // Android intent that opens WhatsApp's share/forward screen directly (no phone number needed)
+    final intentUrl = Uri.parse(
+      'intent://send?text=$encoded#Intent;action=android.intent.action.SEND;type=text/plain;package=com.whatsapp;end',
+    );
+    if (await canLaunchUrl(intentUrl)) {
+      await launchUrl(intentUrl, mode: LaunchMode.externalApplication);
+      return;
+    }
+
+    // Fallback: SMS
+    final smsUrl = Uri.parse('sms:?body=$encoded');
+    if (await canLaunchUrl(smsUrl)) {
+      await launchUrl(smsUrl, mode: LaunchMode.externalApplication);
     }
   }
 
