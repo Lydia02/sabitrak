@@ -80,7 +80,7 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
     final message = 'Join my SabiTrak household! Use this invite code: $code';
     final encoded = Uri.encodeComponent(message);
 
-    // Android intent that opens WhatsApp's share/forward screen directly (no phone number needed)
+    // Android intent — opens WhatsApp share screen directly (no phone number needed)
     final intentUrl = Uri.parse(
       'intent://send?text=$encoded#Intent;action=android.intent.action.SEND;type=text/plain;package=com.whatsapp;end',
     );

@@ -185,7 +185,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
               backgroundColor: AppTheme.primaryGreen,
             ),
           );
-        } else if (state is VerificationSuccess) {
+        } else if (state is VerificationSuccess || state is RegistrationSuccess) {
           Navigator.of(context).pushReplacement(
             PageRouteBuilder(
               pageBuilder: (_, __, ___) => BlocProvider.value(
