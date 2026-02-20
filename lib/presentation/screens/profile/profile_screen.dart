@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../config/theme/theme_notifier.dart';
 import '../../../data/models/user_model.dart';
@@ -100,27 +102,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final code =
         (doc.data() as Map<String, dynamic>)['inviteCode'] as String? ?? '';
     if (!mounted) return;
-    showDialog(
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
+    final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
+
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Invite Code',
-            style: TextStyle(
-                fontFamily: 'Roboto',
-                fontWeight: FontWeight.w700,
-                color: AppTheme.primaryGreen)),
-        content: Column(
+      backgroundColor: cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Share this code with others to join your household:',
-                style: TextStyle(fontFamily: 'Roboto', fontSize: 14)),
-            const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text('Share Invite Code',
+                style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: textColor)),
+            const SizedBox(height: 8),
+            Text('Share this code with others to join your household',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 13,
+                    color: isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey)),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               decoration: BoxDecoration(
                 color: AppTheme.primaryGreen.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: SelectableText(
+              child: Text(
                 code,
                 style: const TextStyle(
                   fontFamily: 'Roboto',
@@ -131,16 +157,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: code));
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Code copied!'),
+                            backgroundColor: AppTheme.primaryGreen),
+                      );
+                    },
+                    icon: const Icon(Icons.copy, size: 18),
+                    label: const Text('Copy Code'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      final message =
+                          'Join my SabiTrak household! Use this invite code: $code';
+                      final encoded = Uri.encodeComponent(message);
+                      final waUrl = Uri.parse('https://wa.me/?text=$encoded');
+                      if (await canLaunchUrl(waUrl)) {
+                        await launchUrl(waUrl,
+                            mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    icon: const Icon(Icons.send, size: 18),
+                    label: const Text('WhatsApp'),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close',
-                style: TextStyle(
-                    fontFamily: 'Roboto', color: AppTheme.primaryGreen)),
-          ),
-        ],
       ),
     );
   }

@@ -4,6 +4,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
+import '../../widgets/sabitrak_logo.dart';
 import 'profile_details_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -38,7 +39,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void _onGoogleSignIn() {
-    context.read<AuthBloc>().add(GoogleSignInRequested());
+    context.read<AuthBloc>().add(const GoogleSignInRequested(isSignUp: true));
   }
 
   void _navigateToProfileDetails({bool isGoogleUser = false}) {
@@ -68,6 +69,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
           _navigateToProfileDetails(isGoogleUser: true);
         } else if (state is RegistrationSuccess) {
           Navigator.of(context).popUntil((route) => route.isFirst);
+        } else if (state is GoogleAccountAlreadyExists) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Account Already Exists',
+                  style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w700, color: AppTheme.primaryGreen)),
+              content: const Text(
+                'An account with this Google account already exists. Please log in instead.',
+                style: TextStyle(fontFamily: 'Roboto'),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel', style: TextStyle(color: AppTheme.subtitleGrey)),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.of(context).pop(); // back to welcome screen
+                  },
+                  child: const Text('Go to Login', style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          );
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -107,13 +133,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ),
                             ),
                             const SizedBox(height: 24),
+                            const Center(child: SabiTrakLogo(fontSize: 26, iconSize: 32)),
+                            const SizedBox(height: 8),
                             Text(
-                              'Welcome to SabiTrak',
+                              'Create your account',
                               style: TextStyle(
                                 fontFamily: 'Roboto',
-                                fontSize: 26,
-                                fontWeight: FontWeight.w700,
-                                color: textColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                color: subtitleColor,
                               ),
                             ),
                             const SizedBox(height: 32),

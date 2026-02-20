@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../services/firebase_service.dart';
 import '../main/main_shell.dart';
@@ -232,7 +233,10 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('household_setup_done', true);
+                      if (!context.mounted) return;
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (_) => MainShell(key: MainShell.shellKey)),
                         (route) => false,
