@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../data/models/registration_data.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../services/verification_service.dart';
@@ -117,14 +118,35 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         email: user.email ?? '',
       );
 
-      if (result.isNewUser ||
-          !(await _authRepository.userProfileExists(user.uid))) {
-        emit(GoogleSignInSuccess(_registrationData));
+      final profileExists = await _authRepository.userProfileExists(user.uid);
+
+      if (event.isSignUp) {
+        // Called from the signup screen
+        if (!result.isNewUser && profileExists) {
+          // Account already fully registered — tell user to log in
+          // Delete the newly created Firebase session (don't keep them logged in)
+          await _authRepository.signOut();
+          _registrationData = const RegistrationData();
+          emit(const GoogleAccountAlreadyExists());
+        } else {
+          // New Google user — store pending UID so splash can clean up if abandoned
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('pending_google_uid', user.uid);
+          emit(GoogleSignInSuccess(_registrationData));
+        }
       } else {
-        final email = _registrationData.email;
-        final firstName = _registrationData.firstName;
-        _registrationData = const RegistrationData();
-        emit(RegistrationSuccess(email: email, firstName: firstName));
+        // Called from sign-in screen — existing user logging in
+        if (profileExists) {
+          final email = _registrationData.email;
+          final firstName = _registrationData.firstName;
+          _registrationData = const RegistrationData();
+          emit(SignInSuccess(displayName: firstName.isNotEmpty ? firstName : email));
+        } else {
+          // Google account exists in Firebase Auth but no profile yet — collect details
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('pending_google_uid', user.uid);
+          emit(GoogleSignInSuccess(_registrationData));
+        }
       }
     } catch (e) {
       emit(AuthError(e.toString()));
@@ -152,6 +174,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         country: _registrationData.country,
         photoUrl: user.photoURL,
       );
+      // Profile saved — clear pending flag (Google signup is now complete)
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('pending_google_uid');
       final email = _registrationData.email;
       final firstName = _registrationData.firstName;
       _registrationData = const RegistrationData();

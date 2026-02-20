@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../blocs/auth/auth_bloc.dart';
+import '../../widgets/sabitrak_logo.dart';
 import '../auth/sign_in_screen.dart';
 import '../auth/sign_up_screen.dart';
 
@@ -72,8 +73,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             children: [
-              const Spacer(flex: 3),
-              // Headline
+              const Spacer(flex: 2),
+              // Logo
+              FadeTransition(
+                opacity: _textFade,
+                child: const Center(child: SabiTrakLogo(fontSize: 32, iconSize: 36)),
+              ),
+              const SizedBox(height: 16),
+              // Tagline
               FadeTransition(
                 opacity: _textFade,
                 child: Text(
@@ -81,10 +88,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Roboto',
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
                     color: textColor,
-                    height: 1.3,
+                    height: 1.4,
                   ),
                 ),
               ),

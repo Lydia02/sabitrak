@@ -48,7 +48,14 @@ class SecuritySetupSubmitted extends AuthEvent {
   List<Object?> get props => [password, confirmPassword];
 }
 
-class GoogleSignInRequested extends AuthEvent {}
+class GoogleSignInRequested extends AuthEvent {
+  /// true = triggered from the Sign Up screen, false = from Sign In screen
+  final bool isSignUp;
+  const GoogleSignInRequested({this.isSignUp = false});
+
+  @override
+  List<Object?> get props => [isSignUp];
+}
 
 class GoogleProfileDetailsSubmitted extends AuthEvent {
   final String occupation;

@@ -34,13 +34,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   @override
   void initState() {
     super.initState();
-    // Send verification code when screen loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AuthBloc>().add(VerificationCodeSent(
-            email: widget.email,
-            firstName: widget.firstName,
-          ));
-    });
+    // Code was already sent by the BLoC before navigating here — just start cooldown.
+    // Resend is only triggered by the user tapping "Resend Code".
+    _startResendCooldown();
   }
 
   @override

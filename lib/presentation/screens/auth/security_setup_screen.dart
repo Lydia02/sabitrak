@@ -4,6 +4,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
+import '../../widgets/sabitrak_logo.dart';
 import 'email_verification_screen.dart';
 
 class SecuritySetupScreen extends StatefulWidget {
@@ -97,6 +98,8 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
                               ),
                             ),
                             const SizedBox(height: 24),
+                            const Center(child: SabiTrakLogo(fontSize: 24, iconSize: 28)),
+                            const SizedBox(height: 12),
                             Text(
                               'Security Setup',
                               style: TextStyle(
