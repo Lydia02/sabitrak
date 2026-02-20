@@ -4,8 +4,9 @@ import '../../../config/theme/app_theme.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
-import 'email_verification_screen.dart';
+import '../../widgets/sabitrak_logo.dart';
 import 'security_setup_screen.dart';
+import 'verification_success_screen.dart';
 
 class ProfileDetailsScreen extends StatefulWidget {
   final bool isGoogleUser;
@@ -82,23 +83,19 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         if (state is ProfileDetailsCollected) {
           _navigateToSecuritySetup();
         } else if (state is RegistrationSuccess) {
-          final email = state.email;
-          final firstName = state.firstName;
-          Navigator.of(context).pushAndRemoveUntil(
-            PageRouteBuilder(
-              pageBuilder: (_, __, ___) => BlocProvider(
-                create: (_) => AuthBloc(),
-                child: EmailVerificationScreen(
-                  email: email,
-                  firstName: firstName,
-                ),
+          if (widget.isGoogleUser) {
+            // Google already verified the email — skip OTP, go straight to success
+            Navigator.of(context).pushAndRemoveUntil(
+              PageRouteBuilder(
+                pageBuilder: (_, __, ___) => const VerificationSuccessScreen(),
+                transitionsBuilder: (_, animation, __, child) =>
+                    FadeTransition(opacity: animation, child: child),
+                transitionDuration: const Duration(milliseconds: 300),
               ),
-              transitionsBuilder: (_, animation, __, child) =>
-                  FadeTransition(opacity: animation, child: child),
-              transitionDuration: const Duration(milliseconds: 300),
-            ),
-            (route) => route.isFirst,
-          );
+              (route) => false,
+            );
+          }
+          // For email users: EmailVerificationScreen (already on stack) handles RegistrationSuccess itself
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -138,7 +135,9 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                               size: 28,
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 12),
+                          const Center(child: SabiTrakLogo(fontSize: 24, iconSize: 28)),
+                          const SizedBox(height: 20),
                           Container(
                             padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(

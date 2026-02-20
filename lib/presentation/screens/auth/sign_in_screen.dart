@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../services/firebase_service.dart';
 import '../../blocs/auth/auth_bloc.dart';
@@ -42,11 +43,17 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void _onGoogleSignIn() {
-    context.read<AuthBloc>().add(GoogleSignInRequested());
+    context.read<AuthBloc>().add(const GoogleSignInRequested(isSignUp: false));
   }
 
   Future<void> _routeAfterSignIn(BuildContext ctx) async {
     final hasHousehold = await FirebaseService().hasHousehold();
+    final prefs = await SharedPreferences.getInstance();
+    // Returning users who sign in are verified — mark flags accordingly
+    await prefs.setBool('email_verified', true);
+    if (hasHousehold) {
+      await prefs.setBool('household_setup_done', true);
+    }
     if (!mounted) return;
     final nav = Navigator.of(context);
     if (hasHousehold) {

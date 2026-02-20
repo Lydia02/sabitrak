@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../widgets/sabitrak_logo.dart';
+import '../household/household_setup_screen.dart';
 
 class VerificationSuccessScreen extends StatefulWidget {
   const VerificationSuccessScreen({super.key});
@@ -47,12 +49,16 @@ class _VerificationSuccessScreenState extends State<VerificationSuccessScreen>
     super.dispose();
   }
 
-  Future<void> _onContinueToLogin() async {
-    // Mark onboarding as complete — user has successfully signed up
+  Future<void> _onContinue() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_complete', true);
+    await prefs.setBool('email_verified', true);
     if (!mounted) return;
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    // Go to household setup — they must choose Create / Join / Solo before Dashboard
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const HouseholdSetupScreen()),
+      (route) => false,
+    );
   }
 
   @override
@@ -71,6 +77,8 @@ class _VerificationSuccessScreenState extends State<VerificationSuccessScreen>
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    const SabiTrakLogo(fontSize: 26, iconSize: 32),
+                    const SizedBox(height: 32),
                     // Animated checkmark
                     ScaleTransition(
                       scale: _scaleAnimation,
@@ -105,8 +113,8 @@ class _VerificationSuccessScreenState extends State<VerificationSuccessScreen>
                           ),
                           const SizedBox(height: 40),
                           ElevatedButton(
-                            onPressed: _onContinueToLogin,
-                            child: const Text('Continue to Login'),
+                            onPressed: _onContinue,
+                            child: const Text('Continue'),
                           ),
                         ],
                       ),

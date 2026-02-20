@@ -37,6 +37,11 @@ class GoogleSignInSuccess extends AuthState {
   List<Object?> get props => [registrationData];
 }
 
+// Emitted when a Google account already exists in Firebase — user should log in instead
+class GoogleAccountAlreadyExists extends AuthState {
+  const GoogleAccountAlreadyExists();
+}
+
 class AuthLoading extends AuthState {}
 
 class RegistrationSuccess extends AuthState {
