@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
 import '../../../services/firebase_service.dart';
 import '../../../services/food_image_service.dart';
+import '../../../services/food_intelligence_service.dart';
 import '../../widgets/error_modal.dart';
 
 class ManualEntryScreen extends StatefulWidget {
@@ -31,6 +33,12 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   String _selectedUnit = 'Pieces';
   bool _isLoading = false;
   String? _householdId;
+
+  final _intelligenceService = FoodIntelligenceService();
+  FoodSuggestion? _currentSuggestion;
+  Timer? _nameSuggestionDebounce;
+  bool _userOverrodeCategory = false;
+  bool _userOverrodeStorage = false;
 
   static const List<String> _categories = [
     'Fruits',
@@ -90,7 +98,14 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     'Other': 14,
   };
 
-  int get _suggestedDays => _shelfLifeDefaults[_selectedCategory] ?? 14;
+  int get _suggestedDays =>
+      _currentSuggestion?.shelfLifeDays ??
+      _shelfLifeDefaults[_selectedCategory] ??
+      14;
+
+  String get _shelfLifeLabel =>
+      _currentSuggestion?.shelfLifeLabel ??
+      '${_suggestedDays}d';
 
   @override
   void initState() {
@@ -98,11 +113,42 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     _loadHouseholdId();
     if (widget.prefilledName != null) {
       _nameController.text = widget.prefilledName!;
+      // Apply suggestion immediately for pre-filled names
+      _applyNameSuggestion(widget.prefilledName!);
     }
     if (widget.prefilledCategory != null &&
         _categories.contains(widget.prefilledCategory)) {
       _selectedCategory = widget.prefilledCategory!;
+      _userOverrodeCategory = true;
     }
+    // Listen to name changes and auto-suggest
+    _nameController.addListener(_onNameChanged);
+  }
+
+  void _onNameChanged() {
+    _nameSuggestionDebounce?.cancel();
+    _nameSuggestionDebounce =
+        Timer(const Duration(milliseconds: 350), () {
+      _applyNameSuggestion(_nameController.text);
+    });
+  }
+
+  void _applyNameSuggestion(String name) {
+    if (name.trim().isEmpty) {
+      if (mounted) setState(() => _currentSuggestion = null);
+      return;
+    }
+    final suggestion = _intelligenceService.suggest(name);
+    if (!mounted) return;
+    setState(() {
+      _currentSuggestion = suggestion;
+      if (!_userOverrodeCategory) {
+        _selectedCategory = suggestion.category;
+      }
+      if (!_userOverrodeStorage) {
+        _selectedStorage = suggestion.storageLocation;
+      }
+    });
   }
 
   Future<void> _loadHouseholdId() async {
@@ -188,6 +234,8 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
 
   @override
   void dispose() {
+    _nameSuggestionDebounce?.cancel();
+    _nameController.removeListener(_onNameChanged);
     _nameController.dispose();
     super.dispose();
   }
@@ -293,15 +341,29 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                             letterSpacing: 1,
                           ),
                         ),
-                        const Text(
-                          'AI SUGGESTION',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryGreen,
+                        if (_currentSuggestion != null)
+                          GestureDetector(
+                            onTap: () => setState(
+                                () => _userOverrodeCategory = false),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.auto_awesome,
+                                    color: AppTheme.primaryGreen, size: 12),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _userOverrodeCategory
+                                      ? 'TAP TO RESTORE AI'
+                                      : 'AI SUGGESTED',
+                                  style: const TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.primaryGreen,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -311,8 +373,10 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                       children: _categories.map((cat) {
                         final isSelected = _selectedCategory == cat;
                         return GestureDetector(
-                          onTap: () =>
-                              setState(() => _selectedCategory = cat),
+                          onTap: () => setState(() {
+                            _selectedCategory = cat;
+                            _userOverrodeCategory = true;
+                          }),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 10),
@@ -345,15 +409,43 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                     const SizedBox(height: 24),
 
                     // Storage Location
-                    Text(
-                      'STORAGE LOCATION',
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: subtitleColor,
-                        letterSpacing: 1,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'STORAGE LOCATION',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: subtitleColor,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        if (_currentSuggestion != null)
+                          GestureDetector(
+                            onTap: () => setState(
+                                () => _userOverrodeStorage = false),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.auto_awesome,
+                                    color: AppTheme.primaryGreen, size: 12),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _userOverrodeStorage
+                                      ? 'TAP TO RESTORE AI'
+                                      : 'AI SUGGESTED',
+                                  style: const TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.primaryGreen,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 10),
                     Wrap(
@@ -362,8 +454,10 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                       children: _storageLocations.map((loc) {
                         final isSelected = _selectedStorage == loc;
                         return GestureDetector(
-                          onTap: () =>
-                              setState(() => _selectedStorage = loc),
+                          onTap: () => setState(() {
+                            _selectedStorage = loc;
+                            _userOverrodeStorage = true;
+                          }),
                           child: Container(
                             width: (MediaQuery.of(context).size.width - 40 - 24) / 4,
                             padding:
@@ -445,7 +539,10 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Suggested for $_selectedCategory\nTypical Freshness',
+                                  _currentSuggestion != null &&
+                                          _currentSuggestion!.tip.isNotEmpty
+                                      ? _currentSuggestion!.tip
+                                      : 'Suggested for $_selectedCategory',
                                   style: TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 12,
@@ -455,6 +552,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                               ],
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 8),
@@ -463,7 +561,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
-                              '+$_suggestedDays\nDAYS',
+                              _shelfLifeLabel,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontFamily: 'Roboto',
