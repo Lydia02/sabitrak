@@ -133,7 +133,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ),
                             ),
                             const SizedBox(height: 24),
-                            const Center(child: SabiTrakLogo(fontSize: 26, iconSize: 32)),
+                            const Center(child: SabiTrakLogo(iconSize: 40, showText: false)),
                             const SizedBox(height: 8),
                             Text(
                               'Create your account',
