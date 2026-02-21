@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
 import '../../../data/repositories/inventory_repository.dart';
 import '../../../services/firebase_service.dart';
 import 'add_item_options_screen.dart';
+import 'update_pantry_sheet.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -12,17 +14,25 @@ class InventoryScreen extends StatefulWidget {
   State<InventoryScreen> createState() => _InventoryScreenState();
 }
 
-class _InventoryScreenState extends State<InventoryScreen> {
+class _InventoryScreenState extends State<InventoryScreen>
+    with SingleTickerProviderStateMixin {
   final InventoryRepository _repo = InventoryRepository();
   String? _householdId;
-  String _selectedCategory = 'All';
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
-  static const List<String> _categories = [
-    'All', 'Grains', 'Spices', 'Canned', 'Dairy', 'Fruits', 'Vegetables',
-    'Meat', 'Beverages', 'Snacks', 'Frozen',
+  // Storage location tabs
+  static const List<String> _storageTabs = [
+    'All',
+    'Fridge',
+    'Freezer',
+    'Pantry',
   ];
+  int _selectedTabIndex = 0;
+
+  // Status filter chips
+  static const List<String> _statusFilters = ['All', 'Expiring Soon', 'Expired', 'Fresh'];
+  String _selectedStatus = 'All';
 
   @override
   void initState() {
@@ -51,18 +61,41 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   List<FoodItem> _filterItems(List<FoodItem> items) {
     var filtered = items;
-    if (_selectedCategory != 'All') {
-      filtered = filtered
-          .where((item) =>
-              item.category.toLowerCase().contains(_selectedCategory.toLowerCase()))
-          .toList();
+
+    // Storage tab filter
+    if (_selectedTabIndex != 0) {
+      final tab = _storageTabs[_selectedTabIndex].toLowerCase();
+      filtered = filtered.where((item) {
+        final loc = item.storageLocation.toLowerCase();
+        if (tab == 'pantry') {
+          // Pantry = anything not fridge/freezer
+          return !loc.contains('fridge') && !loc.contains('freezer');
+        }
+        return loc.contains(tab);
+      }).toList();
     }
+
+    // Status chip filter
+    switch (_selectedStatus) {
+      case 'Expiring Soon':
+        filtered = filtered.where((i) => i.isExpiringSoon && !i.isExpired).toList();
+        break;
+      case 'Expired':
+        filtered = filtered.where((i) => i.isExpired).toList();
+        break;
+      case 'Fresh':
+        filtered = filtered.where((i) => !i.isExpiringSoon && !i.isExpired).toList();
+        break;
+    }
+
+    // Search
     if (_searchQuery.isNotEmpty) {
       filtered = filtered
           .where((item) =>
               item.name.toLowerCase().contains(_searchQuery.toLowerCase()))
           .toList();
     }
+
     return filtered;
   }
 
@@ -70,77 +103,25 @@ class _InventoryScreenState extends State<InventoryScreen> {
     AddItemOptionsScreen.show(context);
   }
 
-  /// Derive "Smart Insights" from actual inventory data
-  List<_InsightCard> _buildInsights(List<FoodItem> items) {
-    final insights = <_InsightCard>[];
-
-    // Expiring soon items
-    final expiringSoon =
-        items.where((i) => i.isExpiringSoon && !i.isExpired).toList();
-    for (final item in expiringSoon.take(2)) {
-      insights.add(_InsightCard(
-        icon: Icons.warning_amber_rounded,
-        iconColor: const Color(0xFFD97706),
-        bgColor: const Color(0xFFFFF7ED),
-        darkBgColor: const Color(0xFF3D2A00),
-        borderColor: const Color(0xFFFED7AA),
-        darkBorderColor: const Color(0xFF7C4A00),
-        title: '${item.name} low?',
-        subtitle: 'Expiring in ${item.daysUntilExpiry} day${item.daysUntilExpiry == 1 ? '' : 's'}',
-      ));
-    }
-
-    // Low quantity items (qty <= 1)
-    final lowQty =
-        items.where((i) => i.quantity <= 1 && !i.isExpired).toList();
-    for (final item in lowQty.take(2)) {
-      if (insights.length >= 3) break;
-      insights.add(_InsightCard(
-        icon: Icons.auto_awesome,
-        iconColor: AppTheme.primaryGreen,
-        bgColor: AppTheme.primaryGreen.withValues(alpha: 0.06),
-        darkBgColor: AppTheme.primaryGreen.withValues(alpha: 0.12),
-        borderColor: AppTheme.primaryGreen.withValues(alpha: 0.15),
-        darkBorderColor: AppTheme.primaryGreen.withValues(alpha: 0.2),
-        title: '${item.quantity} ${item.name} left?',
-        subtitle: 'Consider restocking soon',
-      ));
-    }
-
-    // Fallback if inventory is empty or no insights
-    if (insights.isEmpty) {
-      insights.add(_InsightCard(
-        icon: Icons.auto_awesome,
-        iconColor: AppTheme.primaryGreen,
-        bgColor: AppTheme.primaryGreen.withValues(alpha: 0.06),
-        darkBgColor: AppTheme.primaryGreen.withValues(alpha: 0.12),
-        borderColor: AppTheme.primaryGreen.withValues(alpha: 0.15),
-        darkBorderColor: AppTheme.primaryGreen.withValues(alpha: 0.2),
-        title: 'Pantry looks good!',
-        subtitle: 'No urgent items right now',
-      ));
-    }
-
-    return insights;
-  }
-
-  int _progressPercent(List<FoodItem> items) {
-    if (items.isEmpty) return 0;
-    final fresh = items.where((i) => !i.isExpired && !i.isExpiringSoon).length;
-    return ((fresh / items.length) * 100).round();
+  void _openUpdateSheet(FoodItem item) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => UpdatePantrySheet(item: item, repo: _repo),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
-    final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
-    final surfaceColor = isDark ? AppTheme.darkSurface : const Color(0xFFF7F7F6);
-    final borderColor =
-        isDark ? Colors.white.withValues(alpha: 0.08) : AppTheme.primaryGreen.withValues(alpha: 0.1);
+    final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5);
+    final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
+    final subtitleColor = isDark ? Colors.white60 : Colors.black45;
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
 
     return Scaffold(
+      backgroundColor: scaffoldBg,
       body: SafeArea(
         child: _householdId == null
             ? const Center(
@@ -154,102 +135,209 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 builder: (context, snapshot) {
                   final allItems = snapshot.data ?? [];
                   final filteredItems = _filterItems(allItems);
-                  final insights = _buildInsights(allItems);
-                  final progress = _progressPercent(allItems);
 
                   return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ── Header ──────────────────────────────────────────
+                      // ── Top bar ───────────────────────────────────────────
                       Container(
-                        color: isDark ? AppTheme.darkSurface : AppTheme.white,
+                        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-                              child: Row(
-                                children: [
-                                  IconButton(
-                                    icon: Icon(Icons.arrow_back,
-                                        color: textColor, size: 24),
-                                    onPressed: () => Navigator.of(context).maybePop(),
+                            Row(
+                              children: [
+                                Text(
+                                  'My Inventory',
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w700,
+                                    color: textColor,
                                   ),
-                                  Expanded(
-                                    child: Text(
-                                      'Smart Inventory',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontFamily: 'Roboto',
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w700,
-                                        color: textColor,
-                                      ),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryGreen
+                                        .withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    '${allItems.length} items',
+                                    style: const TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.primaryGreen,
                                     ),
                                   ),
-                                  IconButton(
-                                    icon: Icon(Icons.more_vert,
-                                        color: textColor, size: 24),
-                                    onPressed: () {},
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                            // Progress bar section
+                            const SizedBox(height: 12),
+
+                            // Search bar
                             Container(
-                              color: isDark ? AppTheme.darkCard : AppTheme.white,
-                              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'PANTRY REFRESH PROGRESS',
-                                        style: TextStyle(
-                                          fontFamily: 'Roboto',
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 1.2,
-                                          color: textColor.withValues(alpha: 0.6),
-                                        ),
-                                      ),
-                                      Text(
-                                        '$progress%',
-                                        style: TextStyle(
-                                          fontFamily: 'Roboto',
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700,
-                                          color: textColor,
-                                        ),
-                                      ),
-                                    ],
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF2A2A2A)
+                                    : const Color(0xFFF0F0F0),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: TextField(
+                                controller: _searchController,
+                                onChanged: (val) =>
+                                    setState(() => _searchQuery = val),
+                                style: TextStyle(color: textColor, fontSize: 14),
+                                decoration: InputDecoration(
+                                  hintText: 'Search food items...',
+                                  hintStyle: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 14,
+                                    color: subtitleColor,
                                   ),
-                                  const SizedBox(height: 6),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: LinearProgressIndicator(
-                                      value: progress / 100,
-                                      minHeight: 6,
-                                      backgroundColor: AppTheme.primaryGreen
-                                          .withValues(alpha: 0.1),
-                                      valueColor:
-                                          const AlwaysStoppedAnimation<Color>(
-                                              AppTheme.primaryGreen),
-                                    ),
-                                  ),
-                                ],
+                                  prefixIcon: Icon(Icons.search,
+                                      color: subtitleColor, size: 20),
+                                  suffixIcon: _searchQuery.isNotEmpty
+                                      ? GestureDetector(
+                                          onTap: () {
+                                            _searchController.clear();
+                                            setState(() => _searchQuery = '');
+                                          },
+                                          child: Icon(Icons.close,
+                                              color: subtitleColor, size: 18),
+                                        )
+                                      : null,
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  contentPadding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                ),
                               ),
                             ),
-                            Divider(
-                              height: 1,
-                              color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                            const SizedBox(height: 12),
+
+                            // Storage tabs
+                            Row(
+                              children: List.generate(_storageTabs.length, (i) {
+                                final isSelected = _selectedTabIndex == i;
+                                return Expanded(
+                                  child: GestureDetector(
+                                    onTap: () =>
+                                        setState(() => _selectedTabIndex = i),
+                                    child: Container(
+                                      margin: EdgeInsets.only(
+                                          right: i < _storageTabs.length - 1
+                                              ? 8
+                                              : 0),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AppTheme.primaryGreen
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? AppTheme.primaryGreen
+                                              : (isDark
+                                                  ? Colors.white24
+                                                  : Colors.black12),
+                                        ),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        _storageTabs[i],
+                                        style: TextStyle(
+                                          fontFamily: 'Roboto',
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : subtitleColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
                             ),
+                            const SizedBox(height: 10),
+
+                            // Status filter chips
+                            SizedBox(
+                              height: 32,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _statusFilters.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(width: 8),
+                                itemBuilder: (_, i) {
+                                  final f = _statusFilters[i];
+                                  final isSelected = _selectedStatus == f;
+                                  Color chipColor;
+                                  if (f == 'Expiring Soon') {
+                                    chipColor = const Color(0xFFD97706);
+                                  } else if (f == 'Expired') {
+                                    chipColor = const Color(0xFFDC2626);
+                                  } else if (f == 'Fresh') {
+                                    chipColor = AppTheme.primaryGreen;
+                                  } else {
+                                    chipColor = isDark
+                                        ? Colors.white54
+                                        : Colors.black54;
+                                  }
+                                  return GestureDetector(
+                                    onTap: () =>
+                                        setState(() => _selectedStatus = f),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 14, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? chipColor.withValues(alpha: 0.15)
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? chipColor
+                                              : (isDark
+                                                  ? Colors.white24
+                                                  : Colors.black12),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        f.toUpperCase(),
+                                        style: TextStyle(
+                                          fontFamily: 'Roboto',
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.5,
+                                          color: isSelected
+                                              ? chipColor
+                                              : subtitleColor,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 12),
                           ],
                         ),
                       ),
 
-                      // ── Scrollable body ─────────────────────────────────
+                      // ── List ────────────────────────────────────────────
                       Expanded(
-                        child: (snapshot.connectionState == ConnectionState.waiting)
+                        child: snapshot.connectionState ==
+                                ConnectionState.waiting
                             ? const Center(
                                 child: CircularProgressIndicator(
                                   color: AppTheme.primaryGreen,
@@ -257,201 +345,38 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                 ),
                               )
                             : allItems.isEmpty
-                                ? _buildEmptyState(
-                                    textColor, subtitleColor, isDark)
-                                : ListView(
-                                    children: [
-                                      // Smart Insights
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            16, 16, 16, 0),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'SMART INSIGHTS',
-                                              style: TextStyle(
-                                                fontFamily: 'Roboto',
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w700,
-                                                letterSpacing: 1.5,
-                                                color: textColor
-                                                    .withValues(alpha: 0.6),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 10),
-                                            SizedBox(
-                                              height: 110,
-                                              child: ListView.separated(
-                                                scrollDirection:
-                                                    Axis.horizontal,
-                                                itemCount: insights.length,
-                                                separatorBuilder: (_, __) =>
-                                                    const SizedBox(width: 10),
-                                                itemBuilder: (ctx, i) =>
-                                                    _SmartInsightChip(
-                                                  card: insights[i],
-                                                  isDark: isDark,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-
-                                      const SizedBox(height: 14),
-
-                                      // Search Bar
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 16),
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: cardColor,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            boxShadow: isDark
-                                                ? []
-                                                : [
-                                                    BoxShadow(
-                                                      color: Colors.black
-                                                          .withValues(
-                                                              alpha: 0.05),
-                                                      blurRadius: 8,
-                                                      offset:
-                                                          const Offset(0, 2),
-                                                    ),
-                                                  ],
-                                          ),
-                                          child: TextField(
-                                            controller: _searchController,
-                                            onChanged: (val) => setState(
-                                                () => _searchQuery = val),
-                                            style:
-                                                TextStyle(color: textColor),
-                                            decoration: InputDecoration(
-                                              hintText:
-                                                  'Search pantry items...',
-                                              hintStyle: TextStyle(
-                                                fontFamily: 'Roboto',
-                                                fontSize: 14,
-                                                color: textColor
-                                                    .withValues(alpha: 0.4),
-                                              ),
-                                              prefixIcon: Icon(Icons.search,
-                                                  color: subtitleColor,
-                                                  size: 22),
-                                              border: InputBorder.none,
-                                              enabledBorder: InputBorder.none,
-                                              focusedBorder: InputBorder.none,
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                      vertical: 14),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-
-                                      const SizedBox(height: 12),
-
-                                      // Category Filter
-                                      SizedBox(
-                                        height: 40,
-                                        child: ListView.separated(
-                                          scrollDirection: Axis.horizontal,
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 16),
-                                          itemCount: _categories.length,
-                                          separatorBuilder: (_, __) =>
-                                              const SizedBox(width: 10),
-                                          itemBuilder: (ctx, i) {
-                                            final cat = _categories[i];
-                                            final isSelected =
-                                                _selectedCategory == cat;
-                                            return GestureDetector(
-                                              onTap: () => setState(() =>
-                                                  _selectedCategory = cat),
-                                              child: Container(
-                                                padding: const EdgeInsets
-                                                    .symmetric(horizontal: 20),
-                                                decoration: BoxDecoration(
-                                                  color: isSelected
-                                                      ? AppTheme.primaryGreen
-                                                      : AppTheme.primaryGreen
-                                                          .withValues(
-                                                              alpha: 0.1),
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          20),
-                                                ),
-                                                alignment: Alignment.center,
-                                                child: Text(
-                                                  cat,
-                                                  style: TextStyle(
-                                                    fontFamily: 'Roboto',
-                                                    fontSize: 13,
-                                                    fontWeight:
-                                                        FontWeight.w600,
-                                                    color: isSelected
-                                                        ? AppTheme.white
-                                                        : textColor,
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-
-                                      const SizedBox(height: 16),
-
-                                      // Items List
-                                      if (filteredItems.isEmpty)
-                                        Padding(
+                                ? _buildEmptyState(textColor, subtitleColor)
+                                : filteredItems.isEmpty
+                                    ? Center(
+                                        child: Padding(
                                           padding: const EdgeInsets.all(40),
-                                          child: Center(
-                                            child: Text(
-                                              'No items match your filter',
-                                              style: TextStyle(
-                                                fontFamily: 'Roboto',
-                                                fontSize: 14,
-                                                color: subtitleColor,
-                                              ),
-                                            ),
-                                          ),
-                                        )
-                                      else
-                                        ...filteredItems.map(
-                                          (item) => Padding(
-                                            padding: const EdgeInsets.fromLTRB(
-                                                16, 0, 16, 12),
-                                            child: _SmartItemCard(
-                                              item: item,
-                                              textColor: textColor,
-                                              subtitleColor: subtitleColor,
-                                              cardColor: cardColor,
-                                              surfaceColor: surfaceColor,
-                                              borderColor: borderColor,
-                                              isDark: isDark,
+                                          child: Text(
+                                            'No items match your filter',
+                                            style: TextStyle(
+                                              fontFamily: 'Roboto',
+                                              fontSize: 14,
+                                              color: subtitleColor,
                                             ),
                                           ),
                                         ),
-
-                                      // Verify All button
-                                      Padding(
+                                      )
+                                    : ListView.separated(
                                         padding: const EdgeInsets.fromLTRB(
-                                            16, 4, 16, 24),
-                                        child: ElevatedButton.icon(
-                                          onPressed: () {},
-                                          icon: const Icon(Icons.done_all,
-                                              size: 20),
-                                          label: const Text(
-                                              'Verify All Predicted Changes'),
+                                            16, 12, 16, 100),
+                                        itemCount: filteredItems.length,
+                                        separatorBuilder: (_, __) =>
+                                            const SizedBox(height: 12),
+                                        itemBuilder: (_, i) =>
+                                            _InventoryItemCard(
+                                          item: filteredItems[i],
+                                          isDark: isDark,
+                                          cardColor: cardColor,
+                                          textColor: textColor,
+                                          subtitleColor: subtitleColor,
+                                          onTap: () => _openUpdateSheet(
+                                              filteredItems[i]),
                                         ),
                                       ),
-                                    ],
-                                  ),
                       ),
                     ],
                   );
@@ -462,38 +387,21 @@ class _InventoryScreenState extends State<InventoryScreen> {
         onPressed: _openAddItem,
         backgroundColor: AppTheme.primaryGreen,
         shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: AppTheme.white, size: 28),
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
     );
   }
 
-  Widget _buildEmptyState(
-      Color textColor, Color subtitleColor, bool isDark) {
+  Widget _buildEmptyState(Color textColor, Color subtitleColor) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.15)
-                      : AppTheme.fieldBorderColor.withValues(alpha: 0.4),
-                  width: 2,
-                ),
-              ),
-              child: Icon(
-                Icons.shopping_bag_outlined,
-                size: 52,
-                color: subtitleColor.withValues(alpha: 0.35),
-              ),
-            ),
-            const SizedBox(height: 24),
+            Icon(Icons.inventory_2_outlined,
+                size: 72, color: subtitleColor.withValues(alpha: 0.4)),
+            const SizedBox(height: 20),
             Text(
               'Your inventory is empty',
               style: TextStyle(
@@ -503,15 +411,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 color: textColor,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
-              'Add food items to track expiry dates and get smart insights.',
+              'Add food items to track expiry dates and get recipe suggestions.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 14,
                 color: subtitleColor,
-                height: 1.4,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 28),
@@ -530,315 +438,94 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 }
 
-// ── Data class for insight cards ────────────────────────────────────────────
-class _InsightCard {
-  final IconData icon;
-  final Color iconColor;
-  final Color bgColor;
-  final Color darkBgColor;
-  final Color borderColor;
-  final Color darkBorderColor;
-  final String title;
-  final String subtitle;
-
-  const _InsightCard({
-    required this.icon,
-    required this.iconColor,
-    required this.bgColor,
-    required this.darkBgColor,
-    required this.borderColor,
-    required this.darkBorderColor,
-    required this.title,
-    required this.subtitle,
-  });
-}
-
-// ── Smart Insight Chip ───────────────────────────────────────────────────────
-class _SmartInsightChip extends StatelessWidget {
-  final _InsightCard card;
-  final bool isDark;
-
-  const _SmartInsightChip({required this.card, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = isDark ? card.darkBgColor : card.bgColor;
-    final border = isDark ? card.darkBorderColor : card.borderColor;
-
-    return Container(
-      width: 160,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: card.iconColor.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(card.icon, color: card.iconColor, size: 15),
-          ),
-          const Spacer(),
-          Text(
-            card.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: card.iconColor,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            card.subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 10,
-              color: card.iconColor.withValues(alpha: 0.65),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Smart Item Card ──────────────────────────────────────────────────────────
-class _SmartItemCard extends StatelessWidget {
+// ── Item Card ─────────────────────────────────────────────────────────────────
+class _InventoryItemCard extends StatelessWidget {
   final FoodItem item;
+  final bool isDark;
+  final Color cardColor;
   final Color textColor;
   final Color subtitleColor;
-  final Color cardColor;
-  final Color surfaceColor;
-  final Color borderColor;
-  final bool isDark;
+  final VoidCallback onTap;
 
-  const _SmartItemCard({
+  const _InventoryItemCard({
     required this.item,
+    required this.isDark,
+    required this.cardColor,
     required this.textColor,
     required this.subtitleColor,
-    required this.cardColor,
-    required this.surfaceColor,
-    required this.borderColor,
-    required this.isDark,
+    required this.onTap,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    // Status
-    String statusText;
-    Color statusBg;
-    Color statusFg;
-    bool isLowStock = false;
-
-    if (item.isExpired) {
-      statusText = 'EXPIRED';
-      statusBg = const Color(0xFFFFEBEE);
-      statusFg = const Color(0xFFC62828);
-    } else if (item.isExpiringSoon) {
-      statusText = 'LOW STOCK';
-      statusBg = const Color(0xFFFFF7ED);
-      statusFg = const Color(0xFFD97706);
-      isLowStock = true;
-    } else if (item.quantity <= 1) {
-      statusText = 'LOW STOCK';
-      statusBg = const Color(0xFFFFF7ED);
-      statusFg = const Color(0xFFD97706);
-      isLowStock = true;
-    } else if (item.quantity >= 5) {
-      statusText = 'FULL';
-      statusBg = const Color(0xFFE8F5E9);
-      statusFg = AppTheme.primaryGreen;
-    } else {
-      statusText = 'STEADY';
-      statusBg = const Color(0xFFE8F5E9);
-      statusFg = AppTheme.primaryGreen;
-    }
-
-    // Predicted text
-    String predicted;
-    Color predictedColor;
-    if (item.isExpiringSoon || item.isExpired) {
-      predicted = '-1 unit';
-      predictedColor = Colors.red;
-    } else {
-      predicted = 'No change';
-      predictedColor = subtitleColor;
-    }
-    final isPredictedNegative = item.isExpiringSoon || item.isExpired;
-
-    // Card border: thicker for low stock
-    final cardBorder = isLowStock
-        ? Border.all(
-            color: AppTheme.primaryGreen.withValues(alpha: 0.2), width: 2)
-        : Border.all(color: borderColor, width: 1);
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: cardBorder,
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Row(
-        children: [
-          // Icon / image
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryGreen.withValues(alpha: 0.07),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: item.imageUrl != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      item.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
-                        _categoryIcon(item.category),
-                        color: AppTheme.primaryGreen.withValues(alpha: 0.45),
-                        size: 30,
-                      ),
-                    ),
-                  )
-                : Icon(
-                    _categoryIcon(item.category),
-                    color: AppTheme.primaryGreen.withValues(alpha: 0.45),
-                    size: 30,
-                  ),
-          ),
-          const SizedBox(width: 14),
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: textColor,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? statusFg.withValues(alpha: 0.15)
-                            : statusBg,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        statusText,
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: statusFg,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Predicted change
-                    isPredictedNegative
-                        ? RichText(
-                            text: TextSpan(
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: textColor,
-                              ),
-                              children: [
-                                const TextSpan(text: 'Predicted: '),
-                                TextSpan(
-                                  text: predicted,
-                                  style: const TextStyle(
-                                      color: Colors.red),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Text(
-                            'Predicted: $predicted',
-                            style: TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 10,
-                              fontStyle: FontStyle.italic,
-                              color: predictedColor,
-                            ),
-                          ),
-                    // Check button
-                    GestureDetector(
-                      onTap: () {},
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: isLowStock
-                              ? AppTheme.primaryGreen
-                              : AppTheme.primaryGreen.withValues(alpha: 0.07),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isLowStock ? Icons.check : Icons.check_circle_outline,
-                          size: 17,
-                          color: isLowStock
-                              ? AppTheme.white
-                              : AppTheme.primaryGreen,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  // Determine shelf life fraction remaining (0.0 – 1.0)
+  double get _shelfFraction {
+    final total = item.expiryDate.difference(item.purchaseDate).inDays;
+    if (total <= 0) return 0;
+    final remaining = item.expiryDate.difference(DateTime.now()).inDays;
+    return (remaining / total).clamp(0.0, 1.0);
   }
 
-  IconData _categoryIcon(String category) {
-    switch (category.toLowerCase()) {
+  // Percentage of shelf life remaining
+  int get _shelfPercent => (_shelfFraction * 100).round();
+
+  Color get _shelfBarColor {
+    if (item.isExpired) return const Color(0xFFDC2626);
+    if (item.isExpiringSoon) return const Color(0xFFD97706);
+    if (_shelfFraction > 0.5) return AppTheme.primaryGreen;
+    return const Color(0xFFEAB308); // yellow for 20–50%
+  }
+
+  // Status chip
+  ({String label, Color bg, Color fg}) get _statusChip {
+    if (item.isExpired) {
+      return (
+        label: 'EXPIRED',
+        bg: const Color(0xFFFFEBEE),
+        fg: const Color(0xFFDC2626),
+      );
+    } else if (item.isExpiringSoon) {
+      return (
+        label: 'EXPIRING SOON',
+        bg: const Color(0xFFFFF3CD),
+        fg: const Color(0xFFD97706),
+      );
+    } else {
+      return (
+        label: 'FRESH',
+        bg: const Color(0xFFDCFCE7),
+        fg: AppTheme.primaryGreen,
+      );
+    }
+  }
+
+  // Display quantity string (handles kg decimals)
+  String get _qtyDisplay {
+    final unit = item.unit;
+    final qty = item.quantity;
+    // Show decimal only for weight units if needed
+    final isWeight =
+        unit.toLowerCase() == 'kg' || unit.toLowerCase() == 'grams';
+    if (isWeight && qty < 1000) {
+      // qty is stored as grams internally if unit=Grams
+      return '$qty';
+    }
+    return '$qty';
+  }
+
+  // Storage location icon
+  IconData _storageIcon(String loc) {
+    final l = loc.toLowerCase();
+    if (l.contains('fridge')) return Icons.kitchen_outlined;
+    if (l.contains('freezer')) return Icons.ac_unit;
+    if (l.contains('cupboard') || l.contains('shelf')) return Icons.shelves;
+    if (l.contains('counter')) return Icons.countertops_outlined;
+    if (l.contains('bag') || l.contains('basket')) {
+      return Icons.shopping_basket_outlined;
+    }
+    return Icons.inventory_2_outlined;
+  }
+
+  IconData _categoryIcon(String cat) {
+    switch (cat.toLowerCase()) {
       case 'fruits':
         return Icons.apple;
       case 'vegetables':
@@ -849,23 +536,230 @@ class _SmartItemCard extends StatelessWidget {
       case 'meat':
         return Icons.set_meal_outlined;
       case 'grains':
-      case 'grains & cereals':
         return Icons.grain;
       case 'canned':
-      case 'canned goods':
         return Icons.inventory_2_outlined;
       case 'beverages':
         return Icons.local_cafe_outlined;
       case 'snacks':
         return Icons.cookie_outlined;
       case 'frozen':
-      case 'frozen foods':
         return Icons.ac_unit;
       case 'spices':
-      case 'spices & condiments':
         return Icons.spa_outlined;
       default:
         return Icons.fastfood_outlined;
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final chip = _statusChip;
+    final fraction = _shelfFraction;
+    final barColor = _shelfBarColor;
+    final chipBg = isDark ? chip.fg.withValues(alpha: 0.18) : chip.bg;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Thumbnail ───────────────────────────────────────────
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: item.imageUrl != null && item.imageUrl!.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: CachedNetworkImage(
+                        imageUrl: item.imageUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Icon(
+                          _categoryIcon(item.category),
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.4),
+                          size: 32,
+                        ),
+                        errorWidget: (_, __, ___) => Icon(
+                          _categoryIcon(item.category),
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.4),
+                          size: 32,
+                        ),
+                      ),
+                    )
+                  : Icon(
+                      _categoryIcon(item.category),
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.4),
+                      size: 32,
+                    ),
+            ),
+            const SizedBox(width: 14),
+
+            // ── Info ─────────────────────────────────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Name + status chip
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.name,
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: textColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: chipBg,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          chip.label,
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: chip.fg,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+
+                  // Quantity + storage location
+                  Row(
+                    children: [
+                      Text(
+                        '$_qtyDisplay ${item.unit}',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: textColor.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Icon(_storageIcon(item.storageLocation),
+                          size: 13, color: subtitleColor),
+                      const SizedBox(width: 4),
+                      Text(
+                        item.storageLocation,
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 12,
+                          color: subtitleColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Shelf life progress bar
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Shelf life',
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 10,
+                                    color: subtitleColor,
+                                  ),
+                                ),
+                                Text(
+                                  item.isExpired
+                                      ? 'Expired'
+                                      : '${item.daysUntilExpiry}d left',
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: barColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: LinearProgressIndicator(
+                                value: fraction,
+                                minHeight: 6,
+                                backgroundColor: isDark
+                                    ? Colors.white12
+                                    : Colors.black.withValues(alpha: 0.07),
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(barColor),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // % badge
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: barColor.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '$_shelfPercent%',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: barColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -42,6 +42,12 @@ class GoogleAccountAlreadyExists extends AuthState {
   const GoogleAccountAlreadyExists();
 }
 
+// Emitted on the sign-in screen when a Google account has no SabiTrak profile —
+// user must sign up first before they can log in.
+class GoogleSignUpRequired extends AuthState {
+  const GoogleSignUpRequired();
+}
+
 class AuthLoading extends AuthState {}
 
 class RegistrationSuccess extends AuthState {

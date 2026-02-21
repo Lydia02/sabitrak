@@ -9,6 +9,7 @@ import '../../../services/firebase_service.dart';
 import '../../../services/notification_service.dart';
 import '../../../services/recipe_service.dart';
 import '../../../services/snack_service.dart';
+import '../../../services/food_image_service.dart';
 import '../inventory/add_item_options_screen.dart';
 import '../profile/notification_inbox_screen.dart';
 import 'recipe_detail_screen.dart';
@@ -125,15 +126,74 @@ class _RecipeScreenState extends State<RecipeScreen> {
         _snackService.getSuggestions(_inventoryItems),
       ]);
       if (mounted) {
+        final recs = results[0] as RecipeRecommendationResult;
+        final snacks = results[1] as List<SnackSuggestion>;
         setState(() {
-          _recommendations = results[0] as RecipeRecommendationResult;
-          _snackSuggestions = results[1] as List<SnackSuggestion>;
+          _recommendations = recs;
+          _snackSuggestions = snacks;
           _recipesLoading = false;
         });
+        // Option D: silently back-fill imageUrl on pantry items that have none
+        _backfillPantryImages(recs.quickMatch);
       }
     } catch (_) {
       if (mounted) setState(() => _recipesLoading = false);
     }
+  }
+
+  /// Option D — for every matched recipe with a thumbnail, find the pantry
+  /// items that contributed to the match and write the thumbnail URL back to
+  /// Firestore if the item doesn't already have an image.
+  /// Runs entirely in the background; never throws or mutates UI state.
+  void _backfillPantryImages(List<MatchedRecipe> recipes) {
+    Future(() async {
+      // Build a map: lowercase pantry name → FoodItem (only items missing imageUrl)
+      final needsImage = {
+        for (final item in _inventoryItems)
+          if (item.imageUrl == null || item.imageUrl!.isEmpty)
+            item.name.toLowerCase().trim(): item
+      };
+      if (needsImage.isEmpty) return;
+
+      // Track which item IDs we've already updated this session
+      final updated = <String>{};
+
+      for (final recipe in recipes) {
+        if (recipe.thumbnailUrl.isEmpty) continue;
+
+        for (final matchedIngredient in recipe.matchedPantryItems) {
+          final key = matchedIngredient.toLowerCase().trim();
+          final pantryItem = needsImage[key];
+          if (pantryItem == null || updated.contains(pantryItem.id)) continue;
+
+          try {
+            await _inventoryRepo.updateFoodItem(
+              pantryItem.id,
+              {'imageUrl': recipe.thumbnailUrl},
+            );
+            updated.add(pantryItem.id);
+          } catch (_) {
+            // Best-effort — ignore failures
+          }
+        }
+      }
+
+      // For any items still missing an image, try FoodImageService as a last resort
+      final stillMissing = needsImage.values
+          .where((item) => !updated.contains(item.id))
+          .toList();
+      for (final item in stillMissing) {
+        final imgUrl = await FoodImageService.findImageUrl(item.name);
+        if (imgUrl != null && imgUrl.isNotEmpty) {
+          try {
+            await _inventoryRepo.updateFoodItem(
+              item.id,
+              {'imageUrl': imgUrl},
+            );
+          } catch (_) {}
+        }
+      }
+    });
   }
 
   void _onSearchChanged(String query) {
@@ -365,51 +425,33 @@ class _RecipeScreenState extends State<RecipeScreen> {
                   const SizedBox(height: 28),
                 ],
 
-                // ── Quick & Easy (recipes + snacks merged) ─────────────────
-                if (_recommendations.quickEasy.isNotEmpty ||
-                    _snackSuggestions.isNotEmpty) ...[
+                // ── Quick & Easy (snacks & no-cook items only) ─────────────
+                if (_snackSuggestions.isNotEmpty) ...[
                   _buildSectionHeader(
                     icon: Icons.bolt,
                     iconColor: const Color(0xFFF9A825),
                     title: 'Quick & Easy',
                     subtitle:
-                        '${_recommendations.quickEasy.length + _snackSuggestions.length} quick bites & fast recipes',
+                        '${_snackSuggestions.length} snacks & no-cook bites from your pantry',
                     textColor: textColor,
                     subtitleColor: subtitleColor,
                   ),
                   const SizedBox(height: 12),
                   SizedBox(
-                    height: 248,
+                    height: 220,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      // snack cards first, then quick recipes
-                      itemCount: _snackSuggestions.length +
-                          _recommendations.quickEasy.length,
+                      itemCount: _snackSuggestions.length,
                       separatorBuilder: (_, __) =>
                           const SizedBox(width: 12),
-                      itemBuilder: (_, i) {
-                        if (i < _snackSuggestions.length) {
-                          return _SnackCard(
-                            suggestion: _snackSuggestions[i],
-                            isDark: isDark,
-                            cardColor: cardColor,
-                            textColor: textColor,
-                            subtitleColor: subtitleColor,
-                          );
-                        }
-                        final ri = i - _snackSuggestions.length;
-                        return _RecipeCard(
-                          recipe: _recommendations.quickEasy[ri],
-                          isDark: isDark,
-                          textColor: textColor,
-                          subtitleColor: subtitleColor,
-                          cardColor: cardColor,
-                          showExpiryBadge: false,
-                          onTap: () =>
-                              _openDetail(_recommendations.quickEasy[ri]),
-                        );
-                      },
+                      itemBuilder: (_, i) => _SnackCard(
+                        suggestion: _snackSuggestions[i],
+                        isDark: isDark,
+                        cardColor: cardColor,
+                        textColor: textColor,
+                        subtitleColor: subtitleColor,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 28),

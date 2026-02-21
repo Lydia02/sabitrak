@@ -142,10 +142,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           _registrationData = const RegistrationData();
           emit(SignInSuccess(displayName: firstName.isNotEmpty ? firstName : email));
         } else {
-          // Google account exists in Firebase Auth but no profile yet — collect details
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('pending_google_uid', user.uid);
-          emit(GoogleSignInSuccess(_registrationData));
+          // Google account exists in Firebase Auth but has NO SabiTrak profile —
+          // they never completed signup. Sign them out and prompt to create an account.
+          await _authRepository.signOut();
+          _registrationData = const RegistrationData();
+          emit(const GoogleSignUpRequired());
         }
       }
     } catch (e) {
