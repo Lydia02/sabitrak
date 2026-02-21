@@ -9,6 +9,7 @@ import '../../blocs/auth/auth_state.dart';
 import '../household/household_setup_screen.dart';
 import '../main/main_shell.dart';
 import '../../widgets/error_modal.dart';
+import '../../widgets/sabitrak_logo.dart';
 import 'forgot_password_screen.dart';
 import 'profile_details_screen.dart';
 import 'sign_up_screen.dart';
@@ -44,6 +45,121 @@ class _SignInScreenState extends State<SignInScreen> {
 
   void _onGoogleSignIn() {
     context.read<AuthBloc>().add(const GoogleSignInRequested(isSignUp: false));
+  }
+
+  void _showSignUpRequiredSheet(BuildContext ctx) {
+    final isDark = Theme.of(ctx).brightness == Brightness.dark;
+    final sheetBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : AppTheme.primaryGreen;
+    final subtitleColor = isDark ? Colors.white60 : AppTheme.subtitleGrey;
+
+    showModalBottomSheet(
+      context: ctx,
+      backgroundColor: sheetBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white24 : Colors.black12,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Icon
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.person_add_outlined,
+                color: AppTheme.primaryGreen,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Account Not Found',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'No SabiTrak account is linked to this Google account.\nPlease sign up first to create your account.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 14,
+                color: subtitleColor,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 28),
+            // Sign Up button
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop(); // close sheet
+                  Navigator.of(ctx).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider(
+                        create: (_) => AuthBloc(),
+                        child: const SignUpScreen(),
+                      ),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryGreen,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'Create Account',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Dismiss
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                'Try a different account',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 14,
+                  color: subtitleColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _routeAfterSignIn(BuildContext ctx) async {
@@ -87,6 +203,8 @@ class _SignInScreenState extends State<SignInScreen> {
             transitionsBuilder: (_, animation, __, child) =>
                 FadeTransition(opacity: animation, child: child),
           ));
+        } else if (state is GoogleSignUpRequired) {
+          _showSignUpRequiredSheet(context);
         } else if (state is AuthError) {
           showErrorModal(context,
               title: 'Sign In Failed', message: state.message);
@@ -118,34 +236,8 @@ class _SignInScreenState extends State<SignInScreen> {
                               child: Icon(Icons.arrow_back,
                                   color: textColor, size: 28),
                             ),
-                            // Logo + Title
-                            Center(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: const BoxDecoration(
-                                      color: AppTheme.primaryGreen,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.eco,
-                                        color: AppTheme.white, size: 18),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'SabiTrak',
-                                    style: TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.w700,
-                                      color: textColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            // Logo only (no text on auth screens)
+                            const Center(child: SabiTrakLogo(iconSize: 40, showText: false)),
                             const SizedBox(height: 40),
                             // Email
                             Text(

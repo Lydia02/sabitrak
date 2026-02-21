@@ -1,13 +1,17 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
+import '../../../data/models/matched_recipe.dart';
 import '../../../data/repositories/inventory_repository.dart';
 import '../../../services/firebase_service.dart';
 import '../../../services/notification_service.dart';
+import '../../../services/recipe_service.dart';
 import '../inventory/add_item_options_screen.dart';
 import '../main/main_shell.dart';
 import '../profile/notification_inbox_screen.dart';
+import '../recipe/recipe_detail_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -27,7 +31,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _unreadNotifications = 0;
 
   final InventoryRepository _inventoryRepo = InventoryRepository();
+  final RecipeService _recipeService = RecipeService();
   StreamSubscription<List<FoodItem>>? _inventorySub;
+  List<FoodItem> _inventoryItems = [];
+  List<MatchedRecipe> _recommendedRecipes = [];
 
   @override
   void initState() {
@@ -102,15 +109,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (householdId != null) {
         _inventorySub = _inventoryRepo.getFoodItems(householdId).listen((items) {
           if (mounted) {
+            final changed = items.length != _inventoryItems.length;
             setState(() {
+              _inventoryItems = items;
               _totalItems = items.length;
               _expiringItems = items.where((item) => item.isExpiringSoon || item.isExpired).length;
             });
             if (items.isNotEmpty) _showPantryCheckPopup();
+            if (changed || _recommendedRecipes.isEmpty) _fetchDashboardRecipes(items);
           }
         });
       }
     }
+  }
+
+  Future<void> _fetchDashboardRecipes(List<FoodItem> items) async {
+    if (items.isEmpty) return;
+    final result = await _recipeService.getRecommendations(items);
+    if (!mounted) return;
+    // Show expiring-first, fallback to quickMatch
+    final recipes = result.expiring.isNotEmpty ? result.expiring : result.quickMatch;
+    setState(() => _recommendedRecipes = recipes.take(6).toList());
   }
 
   void _navigateToAddItem() {
@@ -561,7 +580,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () {},
+                  onTap: () => MainShell.switchTab(2),
                   child: Text(
                     'SEE ALL',
                     style: TextStyle(
@@ -576,38 +595,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          SizedBox(
-            height: 220,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _RecipeCard(
-                  title: 'Rich Beef Stew',
-                  subtitle: 'Uses your Tomato Paste (Exp. today)',
-                  time: '45 min',
-                  difficulty: 'Medium',
-                  tag: 'EXPIRING INGREDIENT',
-                  textColor: textColor,
-                  subtitleColor: subtitleColor,
-                  cardColor: cardColor,
-                  isDark: isDark,
+          _recommendedRecipes.isEmpty
+              ? SizedBox(
+                  height: 100,
+                  child: Center(
+                    child: Text(
+                      'Finding recipes from your pantry…',
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 13,
+                        color: subtitleColor,
+                      ),
+                    ),
+                  ),
+                )
+              : SizedBox(
+                  height: 220,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.only(right: 20),
+                    itemCount: _recommendedRecipes.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    itemBuilder: (_, i) {
+                      final recipe = _recommendedRecipes[i];
+                      return _DashRecipeCard(
+                        recipe: recipe,
+                        isDark: isDark,
+                        textColor: textColor,
+                        subtitleColor: subtitleColor,
+                        cardColor: cardColor,
+                        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => RecipeDetailScreen(recipe: recipe),
+                        )),
+                      );
+                    },
+                  ),
                 ),
-                const SizedBox(width: 12),
-                _RecipeCard(
-                  title: 'Zesty Fruit Salad',
-                  subtitle: 'Uses 3 Bananas',
-                  time: '10 min',
-                  difficulty: 'Easy',
-                  tag: 'EXPIRING INGREDIENT',
-                  textColor: textColor,
-                  subtitleColor: subtitleColor,
-                  cardColor: cardColor,
-                  isDark: isDark,
-                ),
-                const SizedBox(width: 20),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -740,149 +763,173 @@ class _QuickActionButton extends StatelessWidget {
   }
 }
 
-class _RecipeCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String time;
-  final String difficulty;
-  final String tag;
+class _DashRecipeCard extends StatelessWidget {
+  final MatchedRecipe recipe;
+  final bool isDark;
   final Color textColor;
   final Color subtitleColor;
   final Color cardColor;
-  final bool isDark;
+  final VoidCallback onTap;
 
-  const _RecipeCard({
-    required this.title,
-    required this.subtitle,
-    required this.time,
-    required this.difficulty,
-    required this.tag,
+  const _DashRecipeCard({
+    required this.recipe,
+    required this.isDark,
     required this.textColor,
     required this.subtitleColor,
     required this.cardColor,
-    required this.isDark,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 200,
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 110,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryGreen.withValues(alpha: 0.15),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-            ),
-            child: Stack(
-              children: [
-                Center(
-                  child: Icon(
-                    Icons.restaurant,
-                    size: 40,
-                    color: AppTheme.primaryGreen.withValues(alpha: 0.3),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 200,
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
+                ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Recipe image ─────────────────────────────────────────────────
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: recipe.thumbnailUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: recipe.thumbnailUrl,
+                          height: 110,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Container(
+                            height: 110,
+                            color: isDark
+                                ? const Color(0xFF2A2A2A)
+                                : const Color(0xFFE8D5B7),
+                            child: const Center(
+                              child: SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    color: AppTheme.primaryGreen,
+                                    strokeWidth: 2),
+                              ),
+                            ),
+                          ),
+                          errorWidget: (_, __, ___) => Container(
+                            height: 110,
+                            color: isDark
+                                ? const Color(0xFF2A2A2A)
+                                : const Color(0xFFE8D5B7),
+                            child: Icon(Icons.restaurant,
+                                size: 36,
+                                color: AppTheme.primaryGreen
+                                    .withValues(alpha: 0.4)),
+                          ),
+                        )
+                      : Container(
+                          height: 110,
+                          color: isDark
+                              ? const Color(0xFF2A2A2A)
+                              : const Color(0xFFE8D5B7),
+                          child: Icon(Icons.restaurant,
+                              size: 36,
+                              color:
+                                  AppTheme.primaryGreen.withValues(alpha: 0.4)),
+                        ),
                 ),
+                // Badge: expiring or match %
                 Positioned(
                   top: 8,
                   left: 8,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
+                        horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE65100),
+                      color: recipe.usesExpiringItem
+                          ? const Color(0xFFE65100)
+                          : AppTheme.primaryGreen,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      tag,
+                      recipe.usesExpiringItem
+                          ? 'EXPIRING INGREDIENT'
+                          : '${recipe.matchPercent} MATCH',
                       style: const TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.white,
+                        color: Colors.white,
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 11,
-                    color: subtitleColor,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.schedule, size: 14, color: subtitleColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      time,
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 11,
-                        color: subtitleColor,
-                      ),
+            // ── Info ─────────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    recipe.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
                     ),
-                    const SizedBox(width: 12),
-                    Icon(Icons.signal_cellular_alt, size: 14, color: subtitleColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      difficulty,
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 11,
-                        color: subtitleColor,
-                      ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    recipe.usesExpiringItem
+                        ? 'Uses: ${recipe.expiringMatchedItems.take(2).join(', ')}'
+                        : '${recipe.matchedCount}/${recipe.ingredients.length} ingredients in pantry',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 11,
+                      color: recipe.usesExpiringItem
+                          ? const Color(0xFFE65100)
+                          : subtitleColor,
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.schedule, size: 13, color: subtitleColor),
+                      const SizedBox(width: 3),
+                      Text(
+                        recipe.estimatedPrepTime,
+                        style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 11,
+                            color: subtitleColor),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

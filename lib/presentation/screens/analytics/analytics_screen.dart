@@ -753,7 +753,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
             const SizedBox(height: 20),
             SizedBox(
-              height: 160,
+              height: 170,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -761,7 +761,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     final index = entry.key;
                     final cat = entry.value;
                     final barHeight =
-                        (cat.value / maxVal * 120).clamp(8.0, 120.0);
+                        (cat.value / maxVal * 110).clamp(8.0, 110.0);
                     return Expanded(
                       child: Padding(
                         padding: EdgeInsets.only(
