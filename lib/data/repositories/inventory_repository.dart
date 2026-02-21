@@ -33,10 +33,14 @@ class InventoryRepository {
             snapshot.docs.map((doc) => FoodItem.fromFirestore(doc)).toList());
   }
 
-  // Update food item
+  // Update food item — auto-converts DateTime values to Firestore Timestamp
   Future<void> updateFoodItem(
       String itemId, Map<String, dynamic> updates) async {
-    await _firebaseService.foodItems.doc(itemId).update(updates);
+    final converted = updates.map((k, v) {
+      if (v is DateTime) return MapEntry(k, Timestamp.fromDate(v));
+      return MapEntry(k, v);
+    });
+    await _firebaseService.foodItems.doc(itemId).update(converted);
   }
 
   // Delete food item

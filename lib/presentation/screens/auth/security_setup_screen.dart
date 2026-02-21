@@ -20,6 +20,9 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  // Guard: only navigate to verification screen ONCE — resend emissions from
+  // the child screen must not push another EmailVerificationScreen.
+  bool _hasNavigatedToVerification = false;
 
   @override
   void dispose() {
@@ -42,6 +45,11 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is VerificationCodeSentSuccess) {
+          // Only push the verification screen once — resend triggers this state
+          // again from the child screen; we must not stack another screen on top.
+          if (_hasNavigatedToVerification) return;
+          _hasNavigatedToVerification = true;
+
           final authBloc = context.read<AuthBloc>();
           final email = state.email;
           final firstName = state.firstName;
@@ -58,7 +66,10 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
                   FadeTransition(opacity: animation, child: child),
               transitionDuration: const Duration(milliseconds: 300),
             ),
-          );
+          ).then((_) {
+            // Reset flag when user navigates back to this screen
+            if (mounted) _hasNavigatedToVerification = false;
+          });
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -98,7 +109,7 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
                               ),
                             ),
                             const SizedBox(height: 24),
-                            const Center(child: SabiTrakLogo(fontSize: 24, iconSize: 28)),
+                            const Center(child: SabiTrakLogo(iconSize: 40, showText: false)),
                             const SizedBox(height: 12),
                             Text(
                               'Security Setup',

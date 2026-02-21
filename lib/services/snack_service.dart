@@ -31,18 +31,45 @@ class SnackService {
     'beverages',
     'other',
     'canned',
+    'cereals',
+    'breakfast',
+    'bread',
+    'bakery',
+    'dairy',
+    'eggs',
+    'condiments',
+    'spreads',
   };
 
-  /// Returns snack suggestions for pantry items that are in snack-like categories
-  /// or have a barcode (scanned products).
+  /// Name keywords that qualify any item as a quick/no-cook item regardless of category.
+  static const List<String> _quickKeywords = [
+    'cereal', 'cornflakes', 'oats', 'granola', 'muesli',
+    'bread', 'toast', 'biscuit', 'cracker', 'wafer',
+    'noodle', 'indomie', 'instant', 'maggi', 'cup noodle',
+    'egg', 'boiled egg',
+    'yogurt', 'yoghurt', 'milk', 'cheese',
+    'peanut butter', 'jam', 'honey', 'spread', 'margarine', 'butter',
+    'juice', 'drink', 'water', 'milo', 'ovaltine', 'bournvita',
+    'banana', 'apple', 'orange', 'fruit',
+    'chocolate', 'candy', 'sweet', 'candy bar',
+    'chips', 'crisps', 'popcorn', 'pringles',
+    'nuts', 'peanut', 'groundnut', 'cashew', 'almond',
+    'sardine', 'tuna', 'corned beef',
+    'plantain chips', 'gari', 'garri',
+  ];
+
+  /// Returns snack/quick-eat suggestions for pantry items that are in snack-like
+  /// categories, have a barcode, or match quick-eat keywords — no cooking required.
   Future<List<SnackSuggestion>> getSuggestions(
       List<FoodItem> pantryItems) async {
-    // Filter to snack-category or barcoded items
-    final snackItems = pantryItems
-        .where((item) =>
-            _snackCategories.contains(item.category.toLowerCase()) ||
-            item.barcode.isNotEmpty)
-        .toList();
+    // Filter: snack-category OR barcoded OR name matches a quick keyword
+    final snackItems = pantryItems.where((item) {
+      final cat = item.category.toLowerCase();
+      final name = item.name.toLowerCase();
+      if (_snackCategories.contains(cat)) return true;
+      if (item.barcode.isNotEmpty) return true;
+      return _quickKeywords.any((kw) => name.contains(kw));
+    }).toList();
 
     if (snackItems.isEmpty) return [];
 
@@ -155,53 +182,86 @@ class SnackService {
     final n = name.toLowerCase();
     final c = offCategory.toLowerCase();
 
-    if (n.contains('pringles') || n.contains('chips') || n.contains('crisp') || c.contains('chips')) {
-      return 'Enjoy with a cold drink or dip';
-    }
-    if (n.contains('biscuit') || n.contains('cookie') || c.contains('biscuit') || c.contains('cookie')) {
-      return 'Great with tea, coffee, or milk';
-    }
-    if (n.contains('chocolate') || c.contains('chocolate')) {
-      return 'Melt over ice cream or enjoy as-is';
-    }
-    if (n.contains('juice') || n.contains('drink') || c.contains('beverage') || c.contains('juice')) {
-      return 'Serve chilled with a snack';
-    }
-    if (n.contains('nut') || n.contains('groundnut') || n.contains('peanut') || c.contains('nut')) {
-      return 'Add to salads or enjoy as a protein snack';
-    }
-    if (n.contains('yogurt') || n.contains('yoghurt') || c.contains('yogurt')) {
-      return 'Top with honey or fruit for a quick snack';
-    }
-    if (n.contains('bread') || c.contains('bread')) {
-      return 'Toast and top with butter, egg, or avocado';
-    }
-    if (n.contains('noodle') || n.contains('indomie') || n.contains('pasta') || c.contains('noodle')) {
-      return 'Quick 5-min meal: boil and season to taste';
-    }
-    if (n.contains('sardine') || n.contains('tuna') || c.contains('fish')) {
-      return 'Serve on crackers or toast for a quick meal';
-    }
-    if (n.contains('corn') || n.contains('popcorn')) {
-      return 'Pop or enjoy as a crunchy snack';
-    }
-    return 'Ready to eat — a quick and easy snack';
+    // Cereals & breakfast
+    if (n.contains('cornflakes') || n.contains('corn flakes')) return 'Pour into a bowl, add cold milk — done in 1 min';
+    if (n.contains('cereal') || n.contains('granola') || n.contains('muesli') || c.contains('cereal')) return 'Add milk or yogurt for a quick no-cook breakfast';
+    if (n.contains('oat') || n.contains('oatmeal') || n.contains('quaker')) return 'Add hot water or milk and stir — ready in 3 min';
+    if (n.contains('milo') || n.contains('ovaltine') || n.contains('bournvita') || n.contains('horlicks')) return 'Mix with hot or cold milk for an instant energy drink';
+
+    // Bread & spreads
+    if (n.contains('bread') || c.contains('bread') || c.contains('bakery')) return 'Toast and spread with butter, jam, or peanut butter';
+    if (n.contains('peanut butter') || n.contains('jam') || n.contains('jelly') || n.contains('spread')) return 'Spread on bread or crackers for a quick bite';
+    if (n.contains('margarine') || n.contains('butter')) return 'Spread on toast or warm bread — ready instantly';
+
+    // Eggs
+    if (n.contains('egg')) return 'Boil, fry, or microwave in under 5 min';
+
+    // Instant noodles
+    if (n.contains('indomie') || n.contains('instant noodle') || n.contains('cup noodle') || n.contains('maggi noodle')) return 'Boil for 3 min, add seasoning — fastest hot meal ever';
+    if (n.contains('noodle') || c.contains('noodle')) return 'Quick 5-min meal: boil and season to taste';
+
+    // Dairy
+    if (n.contains('yogurt') || n.contains('yoghurt') || c.contains('yogurt')) return 'Top with honey or granola for a quick snack';
+    if (n.contains('milk') || c.contains('dairy')) return 'Drink cold or mix with cereal';
+    if (n.contains('cheese')) return 'Slice onto crackers or bread — no cooking needed';
+
+    // Chips & crisps
+    if (n.contains('pringles') || n.contains('chips') || n.contains('crisp') || c.contains('chips')) return 'Enjoy with a cold drink or dip';
+
+    // Biscuits & cookies
+    if (n.contains('biscuit') || n.contains('cookie') || n.contains('cracker') || c.contains('biscuit') || c.contains('cookie')) return 'Great with tea, coffee, or milk';
+
+    // Chocolate & sweets
+    if (n.contains('chocolate') || c.contains('chocolate')) return 'Eat as-is or melt over ice cream';
+
+    // Drinks
+    if (n.contains('juice') || n.contains('drink') || c.contains('beverage') || c.contains('juice')) return 'Serve chilled — no prep needed';
+
+    // Nuts
+    if (n.contains('cashew') || n.contains('almond') || n.contains('groundnut') || n.contains('peanut') || c.contains('nut')) return 'Grab a handful — great protein snack on the go';
+
+    // Canned fish
+    if (n.contains('sardine') || n.contains('tuna') || n.contains('corned beef') || c.contains('fish')) return 'Serve on crackers or toast — open and eat';
+
+    // African quick bites
+    if (n.contains('garri') || n.contains('gari')) return 'Soak in cold water with sugar and groundnuts for a quick snack';
+    if (n.contains('plantain chip') || n.contains('chin chin')) return 'Ready to eat straight from the pack';
+
+    // Fruits
+    if (n.contains('banana') || n.contains('apple') || n.contains('orange') || n.contains('mango')) return 'Rinse and enjoy as-is — nature\'s fastest snack';
+
+    // Popcorn & corn
+    if (n.contains('popcorn') || n.contains('corn')) return 'Pop or enjoy as a crunchy snack';
+
+    return 'Ready to eat — no cooking required';
   }
 
   String _emojiFor(String name, String offCategory) {
     final n = name.toLowerCase();
     final c = offCategory.toLowerCase();
 
+    if (n.contains('cornflakes') || n.contains('cereal') || n.contains('granola') || n.contains('muesli') || c.contains('cereal')) return '🥣';
+    if (n.contains('oat') || n.contains('oatmeal')) return '🥣';
+    if (n.contains('milo') || n.contains('ovaltine') || n.contains('bournvita')) return '☕';
+    if (n.contains('bread') || c.contains('bread') || c.contains('bakery')) return '🍞';
+    if (n.contains('peanut butter')) return '🥜';
+    if (n.contains('jam') || n.contains('jelly') || n.contains('honey')) return '🍯';
+    if (n.contains('egg')) return '🥚';
+    if (n.contains('indomie') || n.contains('instant noodle') || n.contains('noodle') || c.contains('noodle')) return '🍜';
+    if (n.contains('cheese')) return '🧀';
+    if (n.contains('yogurt') || n.contains('yoghurt') || n.contains('milk') || c.contains('dairy')) return '🥛';
     if (n.contains('pringles') || n.contains('chips') || n.contains('crisp') || c.contains('chips')) return '🥔';
     if (n.contains('chocolate') || c.contains('chocolate')) return '🍫';
-    if (n.contains('biscuit') || n.contains('cookie') || c.contains('biscuit')) return '🍪';
+    if (n.contains('biscuit') || n.contains('cookie') || n.contains('cracker') || c.contains('biscuit')) return '🍪';
     if (n.contains('juice') || n.contains('drink') || c.contains('juice')) return '🥤';
-    if (n.contains('nut') || n.contains('peanut') || c.contains('nut')) return '🥜';
-    if (n.contains('yogurt') || n.contains('yoghurt')) return '🥛';
-    if (n.contains('bread') || c.contains('bread')) return '🍞';
-    if (n.contains('noodle') || n.contains('indomie') || c.contains('noodle')) return '🍜';
-    if (n.contains('sardine') || n.contains('tuna') || c.contains('fish')) return '🐟';
+    if (n.contains('cashew') || n.contains('almond') || n.contains('peanut') || n.contains('groundnut') || c.contains('nut')) return '🥜';
+    if (n.contains('sardine') || n.contains('tuna') || n.contains('corned beef') || c.contains('fish')) return '🐟';
     if (n.contains('popcorn') || n.contains('corn')) return '🍿';
-    return '🍽️';
+    if (n.contains('banana')) return '🍌';
+    if (n.contains('apple')) return '🍎';
+    if (n.contains('orange')) return '🍊';
+    if (n.contains('garri') || n.contains('gari')) return '🥣';
+    if (n.contains('plantain chip') || n.contains('chin chin')) return '🍟';
+    return '⚡';
   }
 }

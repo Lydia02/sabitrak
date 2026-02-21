@@ -54,15 +54,10 @@ class RecipeService {
     final expiringList =
         merged.where((r) => r.usesExpiringItem).take(10).toList();
     final quickMatchList = merged.take(15).toList();
-    final quickEasyList = merged
-        .where((r) => _isQuickRecipe(r.instructions))
-        .take(10)
-        .toList();
 
     return RecipeRecommendationResult(
       expiring: expiringList,
       quickMatch: quickMatchList,
-      quickEasy: quickEasyList,
     );
   }
 
@@ -551,14 +546,6 @@ class RecipeService {
     return keywords.isEmpty ? [name.toLowerCase().trim()] : keywords;
   }
 
-  bool _isQuickRecipe(String instructions) {
-    final steps = instructions
-        .split(RegExp(r'\r\n|\n'))
-        .where((s) => s.trim().isNotEmpty)
-        .length;
-    return steps <= 5;
-  }
-
   static final FoodItem _noMatch = FoodItem(
     id: '',
     name: '',
@@ -599,12 +586,10 @@ class _AfricanFoodEntry {
 class RecipeRecommendationResult {
   final List<MatchedRecipe> expiring;
   final List<MatchedRecipe> quickMatch;
-  final List<MatchedRecipe> quickEasy;
 
   const RecipeRecommendationResult({
     required this.expiring,
     required this.quickMatch,
-    this.quickEasy = const [],
   });
 
   bool get isEmpty => expiring.isEmpty && quickMatch.isEmpty;
