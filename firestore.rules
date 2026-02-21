@@ -60,7 +60,7 @@ service cloud.firestore {
 
     // Verification codes (email OTP)
     match /verification_codes/{email} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow create: if true;
       allow update: if true;
     }

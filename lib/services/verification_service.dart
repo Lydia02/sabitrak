@@ -23,18 +23,45 @@ class VerificationService {
   }
 
   /// Send verification code to the user's email
+  /// Send verification code to the user's email.
+  ///
+  /// Guards against duplicate sends: if a code was already sent for this email
+  /// within the last 60 seconds and hasn't been verified yet, the existing code
+  /// is reused — no overwrite, no duplicate email that invalidates prior codes.
   Future<void> sendVerificationCode({
     required String email,
     required String firstName,
   }) async {
+    final docRef = _firebaseService.firestore
+        .collection('verification_codes')
+        .doc(email);
+
+    // Check for a recently-sent, unverified code (cooldown: 60 s)
+    final existing = await docRef.get();
+    if (existing.exists) {
+      final data = existing.data()!;
+      final alreadyVerified = data['verified'] as bool? ?? false;
+      final createdAt = data['createdAt'];
+      if (!alreadyVerified && createdAt is Timestamp) {
+        final secondsAgo =
+            DateTime.now().difference(createdAt.toDate()).inSeconds;
+        if (secondsAgo < 60) {
+          // Fresh unverified code exists — resend the same code without overwriting
+          await _sendEmailViaEmailJS(
+            toEmail: email,
+            toName: firstName,
+            verificationCode: data['code'] as String,
+          );
+          return;
+        }
+      }
+    }
+
+    // Generate and store a new code
     final code = _generateCode();
     final expiresAt = DateTime.now().add(const Duration(minutes: 10));
 
-    // Store code in Firestore
-    await _firebaseService.firestore
-        .collection('verification_codes')
-        .doc(email)
-        .set({
+    await docRef.set({
       'code': code,
       'email': email,
       'expiresAt': Timestamp.fromDate(expiresAt),

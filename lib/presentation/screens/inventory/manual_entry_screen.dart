@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
 import '../../../services/firebase_service.dart';
+import '../../../services/food_image_service.dart';
 import '../../widgets/error_modal.dart';
 
 class ManualEntryScreen extends StatefulWidget {
@@ -153,7 +154,16 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
         createdAt: now,
       );
 
-      await FirebaseService().foodItems.add(item.toFirestore());
+      final docRef = await FirebaseService().foodItems.add(item.toFirestore());
+
+      // Option C: silently fetch a food image in the background if none prefilled
+      if (widget.prefilledImageUrl == null) {
+        FoodImageService.findImageUrl(name).then((imgUrl) {
+          if (imgUrl != null && imgUrl.isNotEmpty) {
+            docRef.update({'imageUrl': imgUrl});
+          }
+        });
+      }
 
       if (!mounted) return;
       showSuccessModal(
