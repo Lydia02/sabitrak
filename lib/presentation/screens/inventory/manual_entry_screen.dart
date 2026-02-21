@@ -163,9 +163,8 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
       );
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
+          // Pop back to the root route safely regardless of stack depth
+          Navigator.of(context).popUntil((route) => route.isFirst);
         }
       });
     } catch (e) {
