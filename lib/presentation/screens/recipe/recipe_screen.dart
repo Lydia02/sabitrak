@@ -29,6 +29,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
   StreamSubscription<List<FoodItem>>? _inventorySub;
   List<FoodItem> _inventoryItems = [];
+  Set<String> _inventoryIds = {};
+  Timer? _recommendationDebounce;
 
   RecipeRecommendationResult _recommendations =
       const RecipeRecommendationResult(expiring: [], quickMatch: []);
@@ -57,6 +59,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _inventorySub?.cancel();
     _searchController.dispose();
     _searchDebounce?.cancel();
+    _recommendationDebounce?.cancel();
     super.dispose();
   }
 
@@ -100,17 +103,23 @@ class _RecipeScreenState extends State<RecipeScreen> {
     final householdId = query.docs.first.id;
     _inventorySub = _inventoryRepo.getFoodItems(householdId).listen((items) {
       if (!mounted) return;
-      // Detect any change — length OR item names changed
-      final oldNames = _inventoryItems.map((i) => i.name).toSet();
-      final newNames = items.map((i) => i.name).toSet();
-      final changed = items.length != _inventoryItems.length ||
-          !oldNames.containsAll(newNames) ||
-          !newNames.containsAll(oldNames);
+
+      // Detect additions: compare by ID (unique per Firestore doc)
+      final newIds = items.map((i) => i.id).toSet();
+      final itemAdded = newIds.length > _inventoryIds.length ||
+          newIds.difference(_inventoryIds).isNotEmpty;
+
       _inventoryItems = items;
+      _inventoryIds = newIds;
       _inventoryLoaded = true;
       if (mounted) setState(() {});
-      if (changed || _recommendations.isEmpty) {
-        _fetchRecommendations();
+
+      // Re-fetch recommendations every time an item is added.
+      // Debounce by 800 ms so bulk additions trigger only one fetch.
+      if (itemAdded || _recommendations.isEmpty) {
+        _recommendationDebounce?.cancel();
+        _recommendationDebounce =
+            Timer(const Duration(milliseconds: 800), _fetchRecommendations);
       }
     });
   }
