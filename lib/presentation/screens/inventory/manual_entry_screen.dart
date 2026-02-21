@@ -104,8 +104,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
       14;
 
   String get _shelfLifeLabel =>
-      _currentSuggestion?.shelfLifeLabel ??
-      '${_suggestedDays}d';
+      _currentSuggestion?.shelfLifeLabel ?? '${_suggestedDays}d';
 
   @override
   void initState() {
@@ -127,8 +126,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
 
   void _onNameChanged() {
     _nameSuggestionDebounce?.cancel();
-    _nameSuggestionDebounce =
-        Timer(const Duration(milliseconds: 350), () {
+    _nameSuggestionDebounce = Timer(const Duration(milliseconds: 350), () {
       _applyNameSuggestion(_nameController.text);
     });
   }
@@ -154,11 +152,11 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   Future<void> _loadHouseholdId() async {
     final uid = FirebaseService().currentUser?.uid;
     if (uid == null) return;
-    final query = await FirebaseService()
-        .households
-        .where('members', arrayContains: uid)
-        .limit(1)
-        .get();
+    final query =
+        await FirebaseService().households
+            .where('members', arrayContains: uid)
+            .limit(1)
+            .get();
     if (query.docs.isNotEmpty && mounted) {
       setState(() => _householdId = query.docs.first.id);
     }
@@ -167,13 +165,19 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   Future<void> _addToInventory() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      showErrorModal(context,
-          title: 'Missing Name', message: 'Please enter a food name.');
+      showErrorModal(
+        context,
+        title: 'Missing Name',
+        message: 'Please enter a food name.',
+      );
       return;
     }
     if (_householdId == null) {
-      showErrorModal(context,
-          title: 'Error', message: 'No household found. Please try again.');
+      showErrorModal(
+        context,
+        title: 'Error',
+        message: 'No household found. Please try again.',
+      );
       return;
     }
 
@@ -226,8 +230,11 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        showErrorModal(context,
-            title: 'Error', message: 'Failed to add item: $e');
+        showErrorModal(
+          context,
+          title: 'Error',
+          message: 'Failed to add item: $e',
+        );
       }
     }
   }
@@ -244,11 +251,13 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : AppTheme.fieldBorderColor;
+    final borderColor =
+        isDark
+            ? Colors.white.withValues(alpha: 0.12)
+            : AppTheme.fieldBorderColor;
 
     return Scaffold(
       body: SafeArea(
@@ -265,7 +274,9 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                   ),
                   Expanded(
                     child: Text(
-                      widget.prefilledBarcode != null ? 'Scanned Item' : 'Add Item',
+                      widget.prefilledBarcode != null
+                          ? 'Scanned Item'
+                          : 'Add Item',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: 'Roboto',
@@ -319,9 +330,14 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                           enabledBorder: InputBorder.none,
                           focusedBorder: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 14),
-                          suffixIcon: const Icon(Icons.auto_awesome,
-                              color: AppTheme.primaryGreen, size: 20),
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          suffixIcon: const Icon(
+                            Icons.auto_awesome,
+                            color: AppTheme.primaryGreen,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
@@ -343,12 +359,17 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                         ),
                         if (_currentSuggestion != null)
                           GestureDetector(
-                            onTap: () => setState(
-                                () => _userOverrodeCategory = false),
+                            onTap:
+                                () => setState(
+                                  () => _userOverrodeCategory = false,
+                                ),
                             child: Row(
                               children: [
-                                const Icon(Icons.auto_awesome,
-                                    color: AppTheme.primaryGreen, size: 12),
+                                const Icon(
+                                  Icons.auto_awesome,
+                                  color: AppTheme.primaryGreen,
+                                  size: 12,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   _userOverrodeCategory
@@ -370,41 +391,46 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: _categories.map((cat) {
-                        final isSelected = _selectedCategory == cat;
-                        return GestureDetector(
-                          onTap: () => setState(() {
-                            _selectedCategory = cat;
-                            _userOverrodeCategory = true;
-                          }),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppTheme.primaryGreen
-                                  : cardColor,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isSelected
-                                    ? AppTheme.primaryGreen
-                                    : borderColor,
+                      children:
+                          _categories.map((cat) {
+                            final isSelected = _selectedCategory == cat;
+                            return GestureDetector(
+                              onTap:
+                                  () => setState(() {
+                                    _selectedCategory = cat;
+                                    _userOverrodeCategory = true;
+                                  }),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      isSelected
+                                          ? AppTheme.primaryGreen
+                                          : cardColor,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color:
+                                        isSelected
+                                            ? AppTheme.primaryGreen
+                                            : borderColor,
+                                  ),
+                                ),
+                                child: Text(
+                                  cat,
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color:
+                                        isSelected ? AppTheme.white : textColor,
+                                  ),
+                                ),
                               ),
-                            ),
-                            child: Text(
-                              cat,
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: isSelected
-                                    ? AppTheme.white
-                                    : textColor,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                            );
+                          }).toList(),
                     ),
                     const SizedBox(height: 24),
 
@@ -424,12 +450,17 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                         ),
                         if (_currentSuggestion != null)
                           GestureDetector(
-                            onTap: () => setState(
-                                () => _userOverrodeStorage = false),
+                            onTap:
+                                () => setState(
+                                  () => _userOverrodeStorage = false,
+                                ),
                             child: Row(
                               children: [
-                                const Icon(Icons.auto_awesome,
-                                    color: AppTheme.primaryGreen, size: 12),
+                                const Icon(
+                                  Icons.auto_awesome,
+                                  color: AppTheme.primaryGreen,
+                                  size: 12,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   _userOverrodeStorage
@@ -451,55 +482,66 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: _storageLocations.map((loc) {
-                        final isSelected = _selectedStorage == loc;
-                        return GestureDetector(
-                          onTap: () => setState(() {
-                            _selectedStorage = loc;
-                            _userOverrodeStorage = true;
-                          }),
-                          child: Container(
-                            width: (MediaQuery.of(context).size.width - 40 - 24) / 4,
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppTheme.primaryGreen
-                                  : cardColor,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected
-                                    ? AppTheme.primaryGreen
-                                    : borderColor,
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  _storageIcons[loc] ?? Icons.storage,
-                                  color: isSelected
-                                      ? AppTheme.white
-                                      : subtitleColor,
-                                  size: 22,
+                      children:
+                          _storageLocations.map((loc) {
+                            final isSelected = _selectedStorage == loc;
+                            return GestureDetector(
+                              onTap:
+                                  () => setState(() {
+                                    _selectedStorage = loc;
+                                    _userOverrodeStorage = true;
+                                  }),
+                              child: Container(
+                                width:
+                                    (MediaQuery.of(context).size.width -
+                                        40 -
+                                        24) /
+                                    4,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  loc,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontFamily: 'Roboto',
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w500,
-                                    color: isSelected
-                                        ? AppTheme.white
-                                        : textColor,
+                                decoration: BoxDecoration(
+                                  color:
+                                      isSelected
+                                          ? AppTheme.primaryGreen
+                                          : cardColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color:
+                                        isSelected
+                                            ? AppTheme.primaryGreen
+                                            : borderColor,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      _storageIcons[loc] ?? Icons.storage,
+                                      color:
+                                          isSelected
+                                              ? AppTheme.white
+                                              : subtitleColor,
+                                      size: 22,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      loc,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontFamily: 'Roboto',
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w500,
+                                        color:
+                                            isSelected
+                                                ? AppTheme.white
+                                                : textColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
                     ),
                     const SizedBox(height: 24),
 
@@ -509,20 +551,24 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                       decoration: BoxDecoration(
                         color: cardColor,
                         borderRadius: BorderRadius.circular(14),
-                        boxShadow: isDark
-                            ? []
-                            : [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.04),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
+                        boxShadow:
+                            isDark
+                                ? []
+                                : [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.04),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.auto_awesome,
-                              color: AppTheme.primaryGreen, size: 18),
+                          const Icon(
+                            Icons.auto_awesome,
+                            color: AppTheme.primaryGreen,
+                            size: 18,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Column(
@@ -555,7 +601,9 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: AppTheme.primaryGreen,
                               borderRadius: BorderRadius.circular(10),
@@ -592,19 +640,22 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                     // Quantity + Unit
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         color: cardColor,
                         borderRadius: BorderRadius.circular(14),
-                        boxShadow: isDark
-                            ? []
-                            : [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.04),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
+                        boxShadow:
+                            isDark
+                                ? []
+                                : [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.04),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                       ),
                       child: Row(
                         children: [
@@ -632,8 +683,11 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                                 shape: BoxShape.circle,
                                 border: Border.all(color: borderColor),
                               ),
-                              child: Icon(Icons.remove,
-                                  size: 18, color: subtitleColor),
+                              child: Icon(
+                                Icons.remove,
+                                size: 18,
+                                color: subtitleColor,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -658,10 +712,15 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                               fontWeight: FontWeight.w500,
                               color: textColor,
                             ),
-                            items: _units
-                                .map((u) => DropdownMenuItem(
-                                    value: u, child: Text(u)))
-                                .toList(),
+                            items:
+                                _units
+                                    .map(
+                                      (u) => DropdownMenuItem(
+                                        value: u,
+                                        child: Text(u),
+                                      ),
+                                    )
+                                    .toList(),
                             onChanged: (v) {
                               if (v != null) setState(() => _selectedUnit = v);
                             },
@@ -677,8 +736,11 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                                 shape: BoxShape.circle,
                                 color: AppTheme.primaryGreen,
                               ),
-                              child: const Icon(Icons.add,
-                                  size: 18, color: AppTheme.white),
+                              child: const Icon(
+                                Icons.add,
+                                size: 18,
+                                color: AppTheme.white,
+                              ),
                             ),
                           ),
                         ],
@@ -691,15 +753,17 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _addToInventory,
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
+                        child:
+                            _isLoading
+                                ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: AppTheme.white),
-                              )
-                            : const Text('Add to Inventory'),
+                                    color: AppTheme.white,
+                                  ),
+                                )
+                                : const Text('Add to Inventory'),
                       ),
                     ),
                     const SizedBox(height: 32),
