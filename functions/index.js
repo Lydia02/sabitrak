@@ -1,12 +1,216 @@
-const { onRequest } = require("firebase-functions/https");
+const { onRequest } = require("firebase-functions/v2/https");
+const { onDocumentCreated, onDocumentDeleted } = require("firebase-functions/v2/firestore");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
-const { getFirestore } = require("firebase-admin/firestore");
+const { getFirestore, Timestamp } = require("firebase-admin/firestore");
+const { getMessaging } = require("firebase-admin/messaging");
 const https = require("https");
 
 initializeApp();
 
-// Proxy EmailJS calls from mobile apps (EmailJS blocks non-browser origins)
+// ─── Shared helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Returns all FCM tokens for every member of a household.
+ * Skips members with no token and the excludedUid (the one who triggered the event).
+ */
+async function getHouseholdTokens(db, householdId, excludedUid = null) {
+  const householdDoc = await db.collection("households").doc(householdId).get();
+  if (!householdDoc.exists) return [];
+
+  const members = householdDoc.data().members || [];
+  const tokens = [];
+
+  await Promise.all(
+    members
+      .filter((uid) => uid !== excludedUid)
+      .map(async (uid) => {
+        const userDoc = await db.collection("users").doc(uid).get();
+        const token = userDoc.data()?.fcmToken;
+        if (token) tokens.push(token);
+      })
+  );
+
+  return tokens;
+}
+
+/** Sends a multicast push notification to up to 500 tokens per chunk. */
+async function sendPush(tokens, title, body, data = {}) {
+  if (!tokens.length) return;
+  const messaging = getMessaging();
+  const chunks = [];
+  for (let i = 0; i < tokens.length; i += 500) {
+    chunks.push(tokens.slice(i, i + 500));
+  }
+  await Promise.all(
+    chunks.map((chunk) =>
+      messaging.sendEachForMulticast({
+        tokens: chunk,
+        notification: { title, body },
+        android: {
+          priority: "high",
+          notification: { channelId: "sabitrak_default", sound: "default" },
+        },
+        apns: {
+          payload: { aps: { sound: "default", badge: 1 } },
+        },
+        data: Object.fromEntries(
+          Object.entries(data).map(([k, v]) => [k, String(v)])
+        ),
+      })
+    )
+  );
+}
+
+/** Persists a notification into household_notifications/{hid}/items for the in-app inbox. */
+async function persistNotification(db, householdId, type, title, body) {
+  await db
+    .collection("household_notifications")
+    .doc(householdId)
+    .collection("items")
+    .add({ type, title, body, createdAt: Timestamp.now() });
+}
+
+// ─── 1. Food item ADDED ───────────────────────────────────────────────────────
+
+exports.onFoodItemAdded = onDocumentCreated(
+  { document: "food_items/{itemId}", region: "us-central1" },
+  async (event) => {
+    const db = getFirestore();
+    const data = event.data?.data();
+    if (!data) return;
+
+    const { householdId, addedBy, name: itemName = "An item" } = data;
+    if (!householdId) return;
+
+    // Resolve the display name of the person who added the item
+    let adderName = "A household member";
+    if (addedBy) {
+      const userDoc = await db.collection("users").doc(addedBy).get();
+      adderName = userDoc.data()?.displayName || adderName;
+    }
+
+    const title = "🛒 Pantry Updated";
+    const body = `${adderName} added ${itemName} to the pantry.`;
+
+    const tokens = await getHouseholdTokens(db, householdId, addedBy);
+    await Promise.all([
+      sendPush(tokens, title, body, { type: "householdUpdate", itemName }),
+      persistNotification(db, householdId, "householdUpdate", title, body),
+    ]);
+  }
+);
+
+// ─── 2. Food item DELETED ─────────────────────────────────────────────────────
+
+exports.onFoodItemDeleted = onDocumentDeleted(
+  { document: "food_items/{itemId}", region: "us-central1" },
+  async (event) => {
+    const db = getFirestore();
+    const data = event.data?.data();
+    if (!data) return;
+
+    const { householdId, addedBy, name: itemName = "An item" } = data;
+    if (!householdId) return;
+
+    const title = "📦 Item Removed";
+    const body = `${itemName} was removed from the pantry.`;
+
+    const tokens = await getHouseholdTokens(db, householdId, addedBy);
+    await Promise.all([
+      sendPush(tokens, title, body, { type: "householdUpdate", itemName }),
+      persistNotification(db, householdId, "householdUpdate", title, body),
+    ]);
+  }
+);
+
+// ─── 3. Daily expiry check — 8 AM WAT (7 AM UTC) ─────────────────────────────
+
+exports.checkExpiringItems = onSchedule(
+  { schedule: "0 7 * * *", timeZone: "UTC", region: "us-central1" },
+  async () => {
+    const db = getFirestore();
+    const now = new Date();
+    const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+    const snap = await db
+      .collection("food_items")
+      .where("expiryDate", ">=", Timestamp.fromDate(now))
+      .where("expiryDate", "<=", Timestamp.fromDate(in3Days))
+      .get();
+
+    if (snap.empty) return;
+
+    // Group expiring items by household
+    const byHousehold = {};
+    snap.docs.forEach((doc) => {
+      const d = doc.data();
+      if (!d.householdId) return;
+      if (!byHousehold[d.householdId]) byHousehold[d.householdId] = [];
+      byHousehold[d.householdId].push(d.name || "Unknown item");
+    });
+
+    await Promise.all(
+      Object.entries(byHousehold).map(async ([householdId, names]) => {
+        const tokens = await getHouseholdTokens(db, householdId);
+        const unique = [...new Set(names)];
+        const preview = unique.slice(0, 3).join(", ");
+        const extra = unique.length > 3 ? ` +${unique.length - 3} more` : "";
+        const title = "⏰ Expiring Soon";
+        const body = `${preview}${extra} ${unique.length === 1 ? "is" : "are"} expiring in the next 3 days. Use them before they go to waste!`;
+
+        await Promise.all([
+          sendPush(tokens, title, body, { type: "expiringSoon" }),
+          persistNotification(db, householdId, "expiringSoon", title, body),
+        ]);
+      })
+    );
+  }
+);
+
+// ─── 4. Daily recipe reminder — 12 PM WAT (11 AM UTC) ────────────────────────
+
+exports.dailyRecipeReminder = onSchedule(
+  { schedule: "0 11 * * *", timeZone: "UTC", region: "us-central1" },
+  async () => {
+    const db = getFirestore();
+    const householdsSnap = await db.collection("households").get();
+    if (householdsSnap.empty) return;
+
+    const messages = [
+      "🍳 Check what you can cook today — your pantry has ideas waiting!",
+      "🥘 Don't let your pantry items go to waste. Check your recipe recommendations!",
+      "🍲 New recipe ideas based on what's in your pantry. Open SabiTrak to explore!",
+      "👨‍🍳 Your pantry is ready. See what delicious meals you can make today!",
+    ];
+    const body = messages[new Date().getDay() % messages.length];
+    const title = "🌟 Recipe of the Day";
+
+    await Promise.all(
+      householdsSnap.docs.map(async (householdDoc) => {
+        const householdId = householdDoc.id;
+
+        // Only notify households that actually have food items
+        const itemsSnap = await db
+          .collection("food_items")
+          .where("householdId", "==", householdId)
+          .limit(1)
+          .get();
+        if (itemsSnap.empty) return;
+
+        const tokens = await getHouseholdTokens(db, householdId);
+        await Promise.all([
+          sendPush(tokens, title, body, { type: "recipeReminder" }),
+          persistNotification(db, householdId, "recipeReminder", title, body),
+        ]);
+      })
+    );
+  }
+);
+
+// ─── Existing: EmailJS proxy ──────────────────────────────────────────────────
+
 exports.sendEmail = onRequest(
   { cors: true, invoker: "public" },
   async (req, res) => {
@@ -58,6 +262,8 @@ exports.sendEmail = onRequest(
   }
 );
 
+// ─── Existing: Password reset ─────────────────────────────────────────────────
+
 exports.resetPassword = onRequest(
   { cors: true, invoker: "public" },
   async (req, res) => {
@@ -102,7 +308,6 @@ exports.resetPassword = onRequest(
     }
 
     await db.collection("password_reset_codes").doc(email).delete();
-
     res.status(200).json({ result: { success: true } });
   }
 );

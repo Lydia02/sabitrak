@@ -5,9 +5,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
 import '../../../data/repositories/inventory_repository.dart';
 import '../../../services/firebase_service.dart';
-import '../../../services/notification_service.dart';
 import '../inventory/add_item_options_screen.dart';
-import '../profile/notification_inbox_screen.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -19,7 +17,6 @@ class AnalyticsScreen extends StatefulWidget {
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
   bool _loaded = false;
   List<FoodItem> _items = [];
-  int _unreadCount = 0;
   final InventoryRepository _inventoryRepo = InventoryRepository();
   StreamSubscription<List<FoodItem>>? _inventorySub;
 
@@ -27,23 +24,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   void initState() {
     super.initState();
     _loadData();
-    _loadUnreadCount();
-  }
-
-  Future<void> _loadUnreadCount() async {
-    final svc = NotificationService();
-    final notifications = await svc.fetchNotifications();
-    final lastRead = await svc.getLastReadAt();
-    final unread = notifications
-        .where((n) => lastRead == null || n.createdAt.isAfter(lastRead))
-        .length;
-    if (mounted) setState(() => _unreadCount = unread);
-  }
-
-  void _openNotifications() {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const NotificationInboxScreen()))
-        .then((_) => _loadUnreadCount());
   }
 
   @override
@@ -402,38 +382,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   ),
                 ),
               ],
-            ),
-          ),
-          GestureDetector(
-            onTap: _openNotifications,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: cardColor,
-                boxShadow: isDark
-                    ? []
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-              ),
-              child: Stack(clipBehavior: Clip.none, children: [
-                Center(child: Icon(Icons.notifications_outlined, color: textColor, size: 22)),
-                if (_unreadCount > 0)
-                  Positioned(
-                    right: 4, top: 4,
-                    child: Container(
-                      width: 14, height: 14,
-                      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                      child: Center(child: Text('$_unreadCount', style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w700, color: Colors.white))),
-                    ),
-                  ),
-              ]),
             ),
           ),
         ],

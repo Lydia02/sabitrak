@@ -6,12 +6,10 @@ import '../../../data/models/food_item.dart';
 import '../../../data/models/matched_recipe.dart';
 import '../../../data/repositories/inventory_repository.dart';
 import '../../../services/firebase_service.dart';
-import '../../../services/notification_service.dart';
 import '../../../services/recipe_service.dart';
 import '../../../services/snack_service.dart';
 import '../../../services/food_image_service.dart';
 import '../inventory/add_item_options_screen.dart';
-import '../profile/notification_inbox_screen.dart';
 import 'recipe_detail_screen.dart';
 
 class RecipeScreen extends StatefulWidget {
@@ -42,8 +40,6 @@ class _RecipeScreenState extends State<RecipeScreen> {
   bool _recipesLoading = false;
   bool _searching = false;
   String _searchQuery = '';
-  int _unreadCount = 0;
-
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounce;
 
@@ -51,7 +47,6 @@ class _RecipeScreenState extends State<RecipeScreen> {
   void initState() {
     super.initState();
     _loadInventory();
-    _loadUnreadCount();
   }
 
   @override
@@ -61,24 +56,6 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _searchDebounce?.cancel();
     _recommendationDebounce?.cancel();
     super.dispose();
-  }
-
-  // ── Notification badge ────────────────────────────────────────────────────
-  Future<void> _loadUnreadCount() async {
-    final svc = NotificationService();
-    final notifications = await svc.fetchNotifications();
-    final lastRead = await svc.getLastReadAt();
-    final unread = notifications
-        .where((n) => lastRead == null || n.createdAt.isAfter(lastRead))
-        .length;
-    if (mounted) setState(() => _unreadCount = unread);
-  }
-
-  void _openNotifications() {
-    Navigator.of(context)
-        .push(MaterialPageRoute(
-            builder: (_) => const NotificationInboxScreen()))
-        .then((_) => _loadUnreadCount());
   }
 
   // ── Inventory loading ─────────────────────────────────────────────────────
@@ -649,32 +626,6 @@ class _RecipeScreenState extends State<RecipeScreen> {
                   fontWeight: FontWeight.w700,
                   color: textColor,
                 ),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: _openNotifications,
-                child: Stack(clipBehavior: Clip.none, children: [
-                  Icon(Icons.notifications_outlined,
-                      color: textColor, size: 24),
-                  if (_unreadCount > 0)
-                    Positioned(
-                      right: -3,
-                      top: -3,
-                      child: Container(
-                        width: 14,
-                        height: 14,
-                        decoration: const BoxDecoration(
-                            color: Colors.red, shape: BoxShape.circle),
-                        child: Center(
-                          child: Text('$_unreadCount',
-                              style: const TextStyle(
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white)),
-                        ),
-                      ),
-                    ),
-                ]),
               ),
             ],
           ),

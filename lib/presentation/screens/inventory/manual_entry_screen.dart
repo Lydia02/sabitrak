@@ -4,6 +4,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
 import '../../../services/firebase_service.dart';
 import '../../../services/food_image_service.dart';
+import '../../../services/notification_service.dart';
 import '../../../services/food_intelligence_service.dart';
 import '../../widgets/error_modal.dart';
 
@@ -205,6 +206,13 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
       );
 
       final docRef = await FirebaseService().foodItems.add(item.toFirestore());
+
+      // Write a household notification so the inbox badge updates for everyone
+      NotificationService().recordAction(
+        type: NotificationType.householdUpdate,
+        title: '🛒 Item Added',
+        body: 'added $name to the pantry.',
+      );
 
       // Option C: silently fetch a food image in the background if none prefilled
       if (widget.prefilledImageUrl == null) {

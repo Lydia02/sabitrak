@@ -1,10 +1,44 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../services/firebase_service.dart';
+import '../../../services/notification_service.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../inventory/inventory_screen.dart';
 import '../recipe/recipe_screen.dart';
 import '../analytics/analytics_screen.dart';
 import '../profile/profile_screen.dart';
+import '../profile/notification_inbox_screen.dart';
+
+/// Global unread-notification count — any screen can read or reset this.
+class NotificationBadge {
+  static final ValueNotifier<int> count = ValueNotifier(0);
+
+  /// Re-computes the badge count and updates the notifier.
+  static Future<void> refresh() async {
+    try {
+      final svc = NotificationService();
+      final results = await Future.wait([
+        svc.fetchNotifications(),
+        svc.getLastReadAt(),
+      ]).timeout(const Duration(seconds: 6));
+
+      final notifications = results[0] as List<AppNotification>;
+      final lastRead = results[1] as DateTime?;
+
+      final unread = notifications
+          .where((n) => lastRead == null || n.createdAt.isAfter(lastRead))
+          .length;
+      count.value = unread;
+    } catch (_) {
+      // Keep previous value on error
+    }
+  }
+
+  /// Call after opening the inbox to reset to zero immediately.
+  static void clear() => count.value = 0;
+}
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -12,9 +46,7 @@ class MainShell extends StatefulWidget {
   static final GlobalKey<_MainShellState> shellKey =
       GlobalKey<_MainShellState>();
 
-  static void switchTab(int index) {
-    shellKey.currentState?.switchTab(index);
-  }
+  static void switchTab(int index) => shellKey.currentState?.switchTab(index);
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -23,9 +55,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  void switchTab(int index) {
-    setState(() => _currentIndex = index);
-  }
+  StreamSubscription<QuerySnapshot>? _foodItemSub;
 
   final List<Widget> _screens = [
     const DashboardScreen(),
@@ -36,14 +66,130 @@ class _MainShellState extends State<MainShell> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Initial badge load
+    NotificationBadge.refresh();
+    // Watch food_items for this household — refresh badge whenever anything changes
+    _startFoodItemsWatch();
+  }
+
+  @override
+  void dispose() {
+    _foodItemSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _startFoodItemsWatch() async {
+    final firebase = FirebaseService();
+    final uid = firebase.currentUser?.uid;
+    if (uid == null) return;
+
+    final hQuery = await firebase.households
+        .where('members', arrayContains: uid)
+        .limit(1)
+        .get();
+    if (hQuery.docs.isEmpty) return;
+
+    final householdId = hQuery.docs.first.id;
+
+    // Stream food_items — on any add/update/delete refresh the badge
+    _foodItemSub = firebase.firestore
+        .collection('food_items')
+        .where('householdId', isEqualTo: householdId)
+        .snapshots()
+        .listen((_) => NotificationBadge.refresh());
+  }
+
+  void switchTab(int index) => setState(() => _currentIndex = index);
+
+  void _openNotifications() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(
+            builder: (_) => const NotificationInboxScreen()))
+        .then((_) {
+      // After closing inbox mark all read and reset badge
+      NotificationService().markAllRead('');
+      NotificationBadge.clear();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final navBg = isDark ? AppTheme.darkSurface : AppTheme.white;
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+      body: Stack(
+        children: [
+          IndexedStack(index: _currentIndex, children: _screens),
+
+          // ── Global floating notification bell ────────────────────────────
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            right: 16,
+            child: ValueListenableBuilder<int>(
+              valueListenable: NotificationBadge.count,
+              builder: (_, count, __) => GestureDetector(
+                onTap: _openNotifications,
+                child: Stack(clipBehavior: Clip.none, children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppTheme.darkCard.withValues(alpha: 0.9)
+                          : Colors.white.withValues(alpha: 0.92),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.10),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      count > 0
+                          ? Icons.notifications
+                          : Icons.notifications_none_outlined,
+                      color: count > 0
+                          ? AppTheme.primaryGreen
+                          : (isDark
+                              ? AppTheme.darkSubtitle
+                              : AppTheme.subtitleGrey),
+                      size: 22,
+                    ),
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      top: -2,
+                      right: -2,
+                      child: Container(
+                        constraints: const BoxConstraints(
+                            minWidth: 18, minHeight: 18),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            count > 99 ? '99+' : '$count',
+                            style: const TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ]),
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -133,7 +279,8 @@ class _NavItem extends StatelessWidget {
     final isActive = index == currentIndex;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeColor = AppTheme.primaryGreen;
-    final inactiveColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final inactiveColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
 
     return Expanded(
       child: GestureDetector(
@@ -154,7 +301,8 @@ class _NavItem extends StatelessWidget {
                 fontFamily: 'Roboto',
                 fontSize: 10,
                 color: isActive ? activeColor : inactiveColor,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                fontWeight:
+                    isActive ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ],
