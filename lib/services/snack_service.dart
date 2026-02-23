@@ -99,9 +99,7 @@ class SnackService {
       }
 
       // Fall back to name search
-      if (product == null) {
-        product = await _searchByName(item.name);
-      }
+      product ??= await _searchByName(item.name);
 
       if (product == null) {
         // Return a generic suggestion based on category
