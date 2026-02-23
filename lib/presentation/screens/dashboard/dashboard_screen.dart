@@ -326,31 +326,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               children: [
                 SizedBox(
-                  width: 56,
-                  height: 56,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CircularProgressIndicator(
-                        value: _isEmpty ? 0.0 : 0.85,
-                        strokeWidth: 5,
-                        backgroundColor: isDark
-                            ? Colors.white.withValues(alpha: 0.1)
-                            : AppTheme.fieldBorderColor.withValues(alpha: 0.3),
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppTheme.primaryGreen,
-                        ),
-                      ),
-                      Text(
-                        _isEmpty ? '0%' : '85%',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: textColor,
-                        ),
-                      ),
-                    ],
+                  width: 96,
+                  height: 96,
+                  child: CustomPaint(
+                    painter: _DashRingPainter(
+                      value: _isEmpty ? 0.0 : 0.85,
+                      trackColor: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : AppTheme.fieldBorderColor.withValues(alpha: 0.3),
+                      fillColor: AppTheme.primaryGreen,
+                      textColor: textColor,
+                      label: _isEmpty ? '0%' : '85%',
+                      strokeWidth: 8,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -858,6 +846,63 @@ class _DashRecipeCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DashRingPainter extends CustomPainter {
+  final double value;
+  final Color trackColor;
+  final Color fillColor;
+  final Color textColor;
+  final String label;
+  final double strokeWidth;
+
+  const _DashRingPainter({
+    required this.value,
+    required this.trackColor,
+    required this.fillColor,
+    required this.textColor,
+    required this.label,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final radius = (size.width - strokeWidth) / 2;
+    final rect = Rect.fromCircle(center: Offset(cx, cy), radius: radius);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    paint.color = trackColor;
+    canvas.drawCircle(Offset(cx, cy), radius, paint);
+
+    if (value > 0) {
+      paint.color = fillColor;
+      canvas.drawArc(rect, -3.14159 / 2, 2 * 3.14159 * value.clamp(0.0, 1.0), false, paint);
+    }
+
+    final tp = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 15,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.5,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, Offset(cx - tp.width / 2, cy - tp.height / 2));
+  }
+
+  @override
+  bool shouldRepaint(_DashRingPainter old) =>
+      old.value != value || old.fillColor != fillColor ||
+      old.trackColor != trackColor || old.textColor != textColor;
 }
 
 // ── Pantry Check Popup ───────────────────────────────────────────────────────
