@@ -234,10 +234,10 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () async {
+                      final nav = Navigator.of(context);
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.setBool('household_setup_done', true);
-                      if (!context.mounted) return;
-                      Navigator.of(context).pushAndRemoveUntil(
+                      nav.pushAndRemoveUntil(
                         MaterialPageRoute(builder: (_) => MainShell(key: MainShell.shellKey)),
                         (route) => false,
                       );
