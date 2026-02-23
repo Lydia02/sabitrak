@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme/app_theme.dart';
-import '../../../services/notification_service.dart';
+import '../main/main_shell.dart';
 import 'notification_inbox_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -15,13 +15,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   bool _pushEnabled = true;
   bool _expiryReminders = true;
   bool _householdUpdates = true;
-  int _unreadCount = 0;
 
   @override
   void initState() {
     super.initState();
     _loadPrefs();
-    _loadUnreadCount();
   }
 
   Future<void> _loadPrefs() async {
@@ -38,20 +36,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     await prefs.setBool(key, value);
   }
 
-  Future<void> _loadUnreadCount() async {
-    final svc = NotificationService();
-    final notifications = await svc.fetchNotifications();
-    final lastRead = await svc.getLastReadAt();
-    final unread = notifications
-        .where((n) => lastRead == null || n.createdAt.isAfter(lastRead))
-        .length;
-    if (mounted) setState(() => _unreadCount = unread);
-  }
-
   void _openInbox() {
     Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const NotificationInboxScreen()))
-        .then((_) => _loadUnreadCount());
+        .push(MaterialPageRoute(builder: (_) => const NotificationInboxScreen()));
   }
 
   @override
@@ -88,33 +75,36 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
                 ),
-                child: Row(
-                  children: [
-                    Stack(clipBehavior: Clip.none, children: [
-                      Icon(Icons.inbox_outlined, size: 24, color: textColor),
-                      if (_unreadCount > 0)
-                        Positioned(
-                          right: -4, top: -4,
-                          child: Container(
-                            width: 16, height: 16,
-                            decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                            child: Center(child: Text('$_unreadCount', style: const TextStyle(fontFamily: 'Roboto', fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white))),
+                child: ValueListenableBuilder<int>(
+                  valueListenable: NotificationBadge.count,
+                  builder: (_, count, __) => Row(
+                    children: [
+                      Stack(clipBehavior: Clip.none, children: [
+                        Icon(Icons.inbox_outlined, size: 24, color: textColor),
+                        if (count > 0)
+                          Positioned(
+                            right: -4, top: -4,
+                            child: Container(
+                              width: 16, height: 16,
+                              decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                              child: Center(child: Text('$count', style: const TextStyle(fontFamily: 'Roboto', fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white))),
+                            ),
                           ),
-                        ),
-                    ]),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Notification Inbox', style: TextStyle(fontFamily: 'Roboto', fontSize: 15, fontWeight: FontWeight.w600, color: textColor)),
-                        const SizedBox(height: 2),
-                        Text(
-                          _unreadCount > 0 ? '$_unreadCount unread notification${_unreadCount == 1 ? '' : 's'}' : 'All caught up',
-                          style: TextStyle(fontFamily: 'Roboto', fontSize: 12, color: subtitleColor),
-                        ),
                       ]),
-                    ),
-                    Icon(Icons.chevron_right, size: 20, color: subtitleColor),
-                  ],
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text('Notification Inbox', style: TextStyle(fontFamily: 'Roboto', fontSize: 15, fontWeight: FontWeight.w600, color: textColor)),
+                          const SizedBox(height: 2),
+                          Text(
+                            count > 0 ? '$count unread notification${count == 1 ? '' : 's'}' : 'All caught up',
+                            style: TextStyle(fontFamily: 'Roboto', fontSize: 12, color: subtitleColor),
+                          ),
+                        ]),
+                      ),
+                      Icon(Icons.chevron_right, size: 20, color: subtitleColor),
+                    ],
+                  ),
                 ),
               ),
             ),
