@@ -95,8 +95,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               )),
               if (toDeduct.any((i) => i.quantity <= 1)) ...[
                 const SizedBox(height: 8),
-                Text('Items reaching 0 will be removed from your pantry.',
-                    style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: const Color(0xFFE65100))),
+                const Text('Items reaching 0 will be removed from your pantry.',
+                    style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: Color(0xFFE65100))),
               ],
             ],
           ),
@@ -137,10 +137,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            const Text('Pantry updated! Enjoy your meal.', style: TextStyle(fontFamily: 'Roboto')),
+          content: const Row(children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 18),
+            SizedBox(width: 8),
+            Text('Pantry updated! Enjoy your meal.', style: TextStyle(fontFamily: 'Roboto')),
           ]),
           backgroundColor: AppTheme.primaryGreen,
           behavior: SnackBarBehavior.floating,
@@ -437,12 +437,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   // Legend
                   Row(
                     children: [
-                      _LegendItem(
+                      const _LegendItem(
                           color: AppTheme.primaryGreen,
                           label: 'In your pantry'),
                       const SizedBox(width: 16),
-                      _LegendItem(
-                          color: const Color(0xFFE65100),
+                      const _LegendItem(
+                          color: Color(0xFFE65100),
                           label: 'Expiring soon'),
                       const SizedBox(width: 16),
                       _LegendItem(

@@ -20,7 +20,6 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   String? _householdName;
-  String? _householdId;
   bool _loaded = false;
   int _totalItems = 0;
   int _expiringItems = 0;
@@ -81,7 +80,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (mounted) {
       setState(() {
         _householdName = name;
-        _householdId = householdId;
         _memberCount = members;
         _loaded = true;
       });
