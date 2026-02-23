@@ -43,10 +43,12 @@ class NotificationBadge {
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
-  static final GlobalKey<_MainShellState> shellKey =
-      GlobalKey<_MainShellState>();
+  static final _shellKey = GlobalKey<_MainShellState>();
 
-  static void switchTab(int index) => shellKey.currentState?.switchTab(index);
+  // ignore: library_private_types_in_public_api
+  static GlobalKey<_MainShellState> get shellKey => _shellKey;
+
+  static void switchTab(int index) => _shellKey.currentState?.switchTab(index);
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -130,7 +132,7 @@ class _MainShellState extends State<MainShell> {
             right: 16,
             child: ValueListenableBuilder<int>(
               valueListenable: NotificationBadge.count,
-              builder: (_, count, __) => GestureDetector(
+              builder: (_, badgeCount, __) => GestureDetector(
                 onTap: _openNotifications,
                 child: Stack(clipBehavior: Clip.none, children: [
                   Container(
@@ -150,10 +152,10 @@ class _MainShellState extends State<MainShell> {
                       ],
                     ),
                     child: Icon(
-                      count > 0
+                      badgeCount > 0
                           ? Icons.notifications
                           : Icons.notifications_none_outlined,
-                      color: count > 0
+                      color: badgeCount > 0
                           ? AppTheme.primaryGreen
                           : (isDark
                               ? AppTheme.darkSubtitle
@@ -161,7 +163,7 @@ class _MainShellState extends State<MainShell> {
                       size: 22,
                     ),
                   ),
-                  if (count > 0)
+                  if (badgeCount > 0)
                     Positioned(
                       top: -2,
                       right: -2,
@@ -175,7 +177,7 @@ class _MainShellState extends State<MainShell> {
                         ),
                         child: Center(
                           child: Text(
-                            count > 99 ? '99+' : '$count',
+                            badgeCount > 99 ? '99+' : '$badgeCount',
                             style: const TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
@@ -278,7 +280,7 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isActive = index == currentIndex;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final activeColor = AppTheme.primaryGreen;
+    const activeColor = AppTheme.primaryGreen;
     final inactiveColor =
         isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
 
