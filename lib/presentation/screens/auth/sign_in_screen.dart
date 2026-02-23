@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../services/firebase_service.dart';
+import '../../../services/push_notification_service.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
@@ -170,6 +171,8 @@ class _SignInScreenState extends State<SignInScreen> {
     if (hasHousehold) {
       await prefs.setBool('household_setup_done', true);
     }
+    // Register FCM token for this device so push notifications work
+    PushNotificationService().init();
     if (!mounted) return;
     final nav = Navigator.of(context);
     if (hasHousehold) {

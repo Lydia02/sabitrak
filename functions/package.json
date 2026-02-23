@@ -2,9 +2,13 @@
   "name": "sabitrak-functions",
   "description": "SabiTrak Cloud Functions",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "main": "index.js",
+  "scripts": {
+    "lint": "echo \"No lint configured\"",
+    "deploy": "firebase deploy --only functions"
+  },
   "dependencies": {
     "firebase-admin": "^13.6.1",
     "firebase-functions": "^7.0.5"
