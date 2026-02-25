@@ -59,4 +59,41 @@ class InventoryRepository {
     if (snapshot.docs.isEmpty) return null;
     return FoodItem.fromFirestore(snapshot.docs.first);
   }
+
+  // Find existing item by name + itemType (case-insensitive)
+  Future<FoodItem?> findDuplicate(String name, String householdId, {ItemType itemType = ItemType.ingredient}) async {
+    final normalised = name.trim().toLowerCase();
+    // Fetch all items of the same type for this household (no compound index needed)
+    final snapshot = await _firebaseService.foodItems
+        .where('householdId', isEqualTo: householdId)
+        .get();
+
+    final sameType = snapshot.docs
+        .map((doc) => FoodItem.fromFirestore(doc))
+        .where((item) => item.itemType == itemType)
+        .toList();
+
+    // Exact match first
+    for (final item in sameType) {
+      if (item.name.trim().toLowerCase() == normalised) return item;
+    }
+    // Fuzzy: one name contains the other
+    for (final item in sameType) {
+      final existing = item.name.trim().toLowerCase();
+      if (existing.contains(normalised) || normalised.contains(existing)) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  // Merge: add quantity to existing item instead of creating a duplicate
+  Future<void> mergeQuantity(String itemId, int additionalQty) async {
+    final doc = await _firebaseService.foodItems.doc(itemId).get();
+    if (!doc.exists) return;
+    final current = (doc.data() as Map<String, dynamic>)['quantity'] as int? ?? 0;
+    await _firebaseService.foodItems.doc(itemId).update({
+      'quantity': current + additionalQty,
+    });
+  }
 }

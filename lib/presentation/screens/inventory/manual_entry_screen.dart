@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
+import '../../../data/repositories/inventory_repository.dart';
 import '../../../services/firebase_service.dart';
 import '../../../services/food_image_service.dart';
 import '../../../services/notification_service.dart';
@@ -13,6 +14,7 @@ class ManualEntryScreen extends StatefulWidget {
   final String? prefilledCategory;
   final String? prefilledBarcode;
   final String? prefilledImageUrl;
+  final ItemType initialItemType;
 
   const ManualEntryScreen({
     super.key,
@@ -20,6 +22,7 @@ class ManualEntryScreen extends StatefulWidget {
     this.prefilledCategory,
     this.prefilledBarcode,
     this.prefilledImageUrl,
+    this.initialItemType = ItemType.ingredient,
   });
 
   @override
@@ -34,12 +37,16 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   String _selectedUnit = 'Pieces';
   bool _isLoading = false;
   String? _householdId;
+  late ItemType _itemType;
 
   final _intelligenceService = FoodIntelligenceService();
+  final _repo = InventoryRepository();
   FoodSuggestion? _currentSuggestion;
   Timer? _nameSuggestionDebounce;
   bool _userOverrodeCategory = false;
   bool _userOverrodeStorage = false;
+  // For leftover mode: matched raw ingredient in pantry
+  FoodItem? _linkedIngredient;
 
   static const List<String> _categories = [
     'Fruits',
@@ -99,10 +106,12 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     'Other': 14,
   };
 
-  int get _suggestedDays =>
-      _currentSuggestion?.shelfLifeDays ??
-      _shelfLifeDefaults[_selectedCategory] ??
-      14;
+  int get _suggestedDays {
+    if (_itemType == ItemType.leftover) return 3;
+    return _currentSuggestion?.shelfLifeDays ??
+        _shelfLifeDefaults[_selectedCategory] ??
+        14;
+  }
 
   String get _shelfLifeLabel =>
       _currentSuggestion?.shelfLifeLabel ?? '${_suggestedDays}d';
@@ -110,6 +119,8 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   @override
   void initState() {
     super.initState();
+    _itemType = widget.initialItemType;
+    if (_itemType == ItemType.leftover) _selectedStorage = 'Fridge';
     _loadHouseholdId();
     if (widget.prefilledName != null) {
       _nameController.text = widget.prefilledName!;
@@ -134,20 +145,23 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
 
   void _applyNameSuggestion(String name) {
     if (name.trim().isEmpty) {
-      if (mounted) setState(() => _currentSuggestion = null);
+      if (mounted) setState(() { _currentSuggestion = null; _linkedIngredient = null; });
       return;
     }
     final suggestion = _intelligenceService.suggest(name);
     if (!mounted) return;
     setState(() {
       _currentSuggestion = suggestion;
-      if (!_userOverrodeCategory) {
-        _selectedCategory = suggestion.category;
-      }
+      if (!_userOverrodeCategory) _selectedCategory = suggestion.category;
       if (!_userOverrodeStorage) {
-        _selectedStorage = suggestion.storageLocation;
+        _selectedStorage = _itemType == ItemType.leftover ? 'Fridge' : suggestion.storageLocation;
       }
     });
+    // For leftovers: auto-look up matching raw ingredient in pantry
+    if (_itemType == ItemType.leftover && _householdId != null) {
+      _repo.findDuplicate(name, _householdId!, itemType: ItemType.ingredient)
+          .then((match) { if (mounted) setState(() => _linkedIngredient = match); });
+    }
   }
 
   Future<void> _loadHouseholdId() async {
@@ -163,23 +177,120 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     }
   }
 
+  Future<void> _showDeductDialog() async {
+    if (_linkedIngredient == null) return;
+    final ingredient = _linkedIngredient!;
+    int deductQty = _quantity;
+
+    final confirmed = await showDialog<int>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          title: Text('Deduct from ${ingredient.name}?'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text('Current stock: ${ingredient.quantity} ${ingredient.unit}',
+                style: const TextStyle(fontFamily: 'Roboto', fontSize: 13)),
+            const SizedBox(height: 16),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              IconButton(
+                onPressed: deductQty > 1 ? () => setS(() => deductQty--) : null,
+                icon: const Icon(Icons.remove_circle_outline),
+              ),
+              Text('$deductQty ${ingredient.unit}',
+                  style: const TextStyle(fontFamily: 'Roboto',
+                      fontSize: 16, fontWeight: FontWeight.w700)),
+              IconButton(
+                onPressed: deductQty < ingredient.quantity
+                    ? () => setS(() => deductQty++)
+                    : null,
+                icon: const Icon(Icons.add_circle_outline),
+              ),
+            ]),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Skip')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGreen),
+              onPressed: () => Navigator.pop(ctx, deductQty),
+              child: const Text('Deduct', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed != null && confirmed > 0) {
+      final newQty = ingredient.quantity - confirmed;
+      if (newQty <= 0) {
+        await _repo.deleteFoodItem(ingredient.id);
+      } else {
+        await _repo.updateFoodItem(ingredient.id, {'quantity': newQty});
+      }
+      if (mounted) setState(() => _linkedIngredient = null);
+    }
+  }
+
   Future<void> _addToInventory() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      showErrorModal(
-        context,
-        title: 'Missing Name',
-        message: 'Please enter a food name.',
-      );
+      showErrorModal(context, title: 'Missing Name', message: 'Please enter a food name.');
       return;
     }
     if (_householdId == null) {
-      showErrorModal(
-        context,
-        title: 'Error',
-        message: 'No household found. Please try again.',
-      );
+      showErrorModal(context, title: 'Error', message: 'No household found. Please try again.');
       return;
+    }
+
+    // ── Duplicate check (ingredients + leftovers) ───────────────────────────
+    if (_itemType == ItemType.ingredient || _itemType == ItemType.leftover) {
+      final duplicate = await _repo.findDuplicate(name, _householdId!, itemType: _itemType);
+      if (duplicate != null && mounted) {
+        final isLeftover = _itemType == ItemType.leftover;
+        final action = await showDialog<String>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(isLeftover ? 'Leftover Already Logged' : 'Item Already Exists'),
+            content: Text(
+              '"${duplicate.name}" is already in your ${isLeftover ? 'leftovers' : 'pantry'} '
+              '(${duplicate.quantity} ${duplicate.unit}, ${duplicate.storageLocation}).\n\n'
+              'What would you like to do?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, 'cancel'),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, 'add_anyway'),
+                child: const Text('Add Separate'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGreen),
+                onPressed: () => Navigator.pop(ctx, 'merge'),
+                child: Text(isLeftover ? 'Add to Existing' : 'Update Quantity',
+                    style: const TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+        if (action == null || action == 'cancel') return;
+        if (action == 'merge') {
+          await _repo.mergeQuantity(duplicate.id, _quantity);
+          NotificationService().recordAction(
+            type: NotificationType.householdUpdate,
+            title: isLeftover ? '🍽️ Leftover Updated' : '🛒 Pantry Updated',
+            body: 'added $_quantity more ${duplicate.unit} of ${duplicate.name}.',
+          );
+          if (!mounted) return;
+          showSuccessModal(context, title: 'Updated!',
+              message: 'Added $_quantity to your existing ${duplicate.name}.');
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+          });
+          return;
+        }
+        // 'add_anyway' falls through to create a new separate entry
+      }
     }
 
     setState(() => _isLoading = true);
@@ -203,19 +314,27 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
         householdId: _householdId!,
         addedBy: uid,
         createdAt: now,
+        itemType: _itemType,
       );
 
-      final docRef = await FirebaseService().foodItems.add(item.toFirestore());
+      final docRef = await _repo.addFoodItem(item).then((_) async {
+        // re-fetch to get the doc reference for image update
+        return FirebaseService().foodItems
+            .where('householdId', isEqualTo: _householdId)
+            .where('name', isEqualTo: name)
+            .orderBy('createdAt', descending: true)
+            .limit(1)
+            .get()
+            .then((s) => s.docs.isNotEmpty ? s.docs.first.reference : null);
+      });
 
-      // Write a household notification so the inbox badge updates for everyone
       NotificationService().recordAction(
         type: NotificationType.householdUpdate,
         title: '🛒 Item Added',
         body: 'added $name to the pantry.',
       );
 
-      // Option C: silently fetch a food image in the background if none prefilled
-      if (widget.prefilledImageUrl == null) {
+      if (widget.prefilledImageUrl == null && docRef != null) {
         FoodImageService.findImageUrl(name).then((imgUrl) {
           if (imgUrl != null && imgUrl.isNotEmpty) {
             docRef.update({'imageUrl': imgUrl});
@@ -308,6 +427,111 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
+
+                    // ── Item Type Toggle ─────────────────────────────────────
+                    Text(
+                      'ITEM TYPE',
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: subtitleColor,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      _TypeChip(
+                        label: 'Ingredient',
+                        icon: Icons.kitchen_outlined,
+                        selected: _itemType == ItemType.ingredient,
+                        onTap: () => setState(() {
+                          _itemType = ItemType.ingredient;
+                          _userOverrodeStorage = false;
+                          _applyNameSuggestion(_nameController.text);
+                        }),
+                        cardColor: cardColor,
+                        borderColor: borderColor,
+                      ),
+                      const SizedBox(width: 8),
+                      _TypeChip(
+                        label: 'Leftover',
+                        icon: Icons.rice_bowl_outlined,
+                        selected: _itemType == ItemType.leftover,
+                        onTap: () => setState(() {
+                          _itemType = ItemType.leftover;
+                          // Auto-set fridge + 3-day shelf life for leftovers
+                          if (!_userOverrodeStorage) _selectedStorage = 'Fridge';
+                        }),
+                        cardColor: cardColor,
+                        borderColor: borderColor,
+                      ),
+                      const SizedBox(width: 8),
+                      _TypeChip(
+                        label: 'Product',
+                        icon: Icons.shopping_bag_outlined,
+                        selected: _itemType == ItemType.product,
+                        onTap: () => setState(() => _itemType = ItemType.product),
+                        cardColor: cardColor,
+                        borderColor: borderColor,
+                      ),
+                    ]),
+                    if (_itemType == ItemType.leftover) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE65100).withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(children: [
+                          const Icon(Icons.info_outline, color: Color(0xFFE65100), size: 15),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Leftover: auto-set to Fridge with 3-day shelf life.',
+                              style: TextStyle(fontFamily: 'Roboto', fontSize: 11,
+                                  color: subtitleColor),
+                            ),
+                          ),
+                        ]),
+                      ),
+                      if (_linkedIngredient != null) ...[
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(children: [
+                            const Icon(Icons.link, color: AppTheme.primaryGreen, size: 15),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Found "${_linkedIngredient!.name}" in pantry (${_linkedIngredient!.quantity} ${_linkedIngredient!.unit}). Deduct used amount?',
+                                style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: subtitleColor),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => _showDeductDialog(),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryGreen,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text('Deduct', style: TextStyle(
+                                    fontFamily: 'Roboto', fontSize: 11,
+                                    fontWeight: FontWeight.w700, color: Colors.white)),
+                              ),
+                            ),
+                          ]),
+                        ),
+                      ],
+                    ],
+                    const SizedBox(height: 20),
 
                     // Food Name
                     Text(
@@ -780,6 +1004,55 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TypeChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  final Color cardColor;
+  final Color borderColor;
+
+  const _TypeChip({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+    required this.cardColor,
+    required this.borderColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? AppTheme.primaryGreen : cardColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? AppTheme.primaryGreen : borderColor,
+            ),
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 20,
+                color: selected ? Colors.white : AppTheme.subtitleGrey),
+            const SizedBox(height: 4),
+            Text(label,
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? Colors.white : AppTheme.subtitleGrey,
+                )),
+          ]),
         ),
       ),
     );
