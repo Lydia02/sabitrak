@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../data/models/food_item.dart' show ItemType;
 import 'barcode_scanner_screen.dart';
 import 'manual_entry_screen.dart';
 
@@ -165,6 +166,63 @@ class _AddItemDialog extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 'For local or unpackaged foods.',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 12,
+                  color: subtitleColor,
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              // Log Leftover
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(parentContext).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ManualEntryScreen(
+                          initialItemType: ItemType.leftover,
+                        ),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFE65100),
+                    side: BorderSide(
+                      color: isDark
+                          ? const Color(0xFFE65100).withValues(alpha: 0.4)
+                          : const Color(0xFFE65100),
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Log Leftover',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFE65100),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.rice_bowl_outlined,
+                          size: 18, color: Color(0xFFE65100)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Cooked food with 3-day auto-expiry.',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 12,
