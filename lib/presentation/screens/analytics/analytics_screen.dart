@@ -224,31 +224,33 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   Widget _buildStatRow(bool isDark, Color textColor, Color subtitleColor, Color cardColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(children: [
-        _StatChip(
-          label: 'Fresh',
-          value: '$_freshCount',
-          color: const Color(0xFF2E7D32),
-          cardColor: cardColor,
-          isDark: isDark,
-        ),
-        const SizedBox(width: 10),
-        _StatChip(
-          label: 'Expiring',
-          value: '$_expiringSoonCount',
-          color: const Color(0xFFE65100),
-          cardColor: cardColor,
-          isDark: isDark,
-        ),
-        const SizedBox(width: 10),
-        _StatChip(
-          label: 'Expired',
-          value: '$_expiredCount',
-          color: const Color(0xFFC62828),
-          cardColor: cardColor,
-          isDark: isDark,
-        ),
-      ]),
+      child: IntrinsicHeight(
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Expanded(child: _StatChip(
+            label: 'Fresh',
+            value: '$_freshCount',
+            color: const Color(0xFF2E7D32),
+            cardColor: cardColor,
+            isDark: isDark,
+          )),
+          const SizedBox(width: 10),
+          Expanded(child: _StatChip(
+            label: 'Expiring',
+            value: '$_expiringSoonCount',
+            color: const Color(0xFFE65100),
+            cardColor: cardColor,
+            isDark: isDark,
+          )),
+          const SizedBox(width: 10),
+          Expanded(child: _StatChip(
+            label: 'Expired',
+            value: '$_expiredCount',
+            color: const Color(0xFFC62828),
+            cardColor: cardColor,
+            isDark: isDark,
+          )),
+        ]),
+      ),
     );
   }
 
@@ -270,24 +272,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         child: Row(children: [
           // Circular indicator
           SizedBox(
-            width: 76,
-            height: 76,
-            child: Stack(alignment: Alignment.center, children: [
-              CircularProgressIndicator(
+            width: 96,
+            height: 96,
+            child: CustomPaint(
+              painter: _RingPainter(
                 value: pct / 100,
-                strokeWidth: 7,
-                backgroundColor: isDark
+                trackColor: isDark
                     ? Colors.white.withValues(alpha: 0.08)
                     : Colors.black.withValues(alpha: 0.06),
-                valueColor: AlwaysStoppedAnimation<Color>(goalColor),
-                strokeCap: StrokeCap.round,
+                fillColor: goalColor,
+                textColor: textColor,
+                strokeWidth: 8,
               ),
-              Column(mainAxisSize: MainAxisSize.min, children: [
-                Text('${pct.round()}%',
-                    style: TextStyle(fontFamily: 'Roboto', fontSize: 17,
-                        fontWeight: FontWeight.w800, color: textColor)),
-              ]),
-            ]),
+            ),
           ),
           const SizedBox(width: 20),
           Expanded(
@@ -574,27 +571,25 @@ class _StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.2),
-          boxShadow: isDark
-              ? []
-              : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
-        ),
-        child: Column(children: [
-          Text(value,
-              style: TextStyle(fontFamily: 'Roboto', fontSize: 22,
-                  fontWeight: FontWeight.w800, color: color)),
-          const SizedBox(height: 2),
-          Text(label,
-              style: TextStyle(fontFamily: 'Roboto', fontSize: 11,
-                  fontWeight: FontWeight.w500, color: color.withValues(alpha: 0.75))),
-        ]),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.2),
+        boxShadow: isDark
+            ? []
+            : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
       ),
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Text(value,
+            style: TextStyle(fontFamily: 'Roboto', fontSize: 22,
+                fontWeight: FontWeight.w800, color: color)),
+        const SizedBox(height: 2),
+        Text(label,
+            style: TextStyle(fontFamily: 'Roboto', fontSize: 11,
+                fontWeight: FontWeight.w500, color: color.withValues(alpha: 0.75))),
+      ]),
     );
   }
 }
@@ -619,36 +614,29 @@ class _HBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fraction = maxValue > 0 ? (value / maxValue).clamp(0.0, 1.0) : 0.0;
+    final trackColor = isDark
+        ? Colors.white.withValues(alpha: 0.07)
+        : Colors.black.withValues(alpha: 0.05);
+
     return Row(children: [
       SizedBox(
-        width: 94,
+        width: 106,
         child: Text(label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(fontFamily: 'Roboto', fontSize: 12,
                 fontWeight: FontWeight.w500, color: textColor)),
       ),
       Expanded(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: Stack(children: [
-            // Track
-            Container(
-              height: 20,
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.07)
-                  : Colors.black.withValues(alpha: 0.05),
+        child: SizedBox(
+          height: 20,
+          child: CustomPaint(
+            painter: _BarPainter(
+              fraction: fraction,
+              trackColor: trackColor,
+              fillColor: color,
             ),
-            // Fill
-            FractionallySizedBox(
-              widthFactor: fraction,
-              child: Container(
-                height: 20,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-              ),
-            ),
-          ]),
+          ),
         ),
       ),
       const SizedBox(width: 10),
@@ -683,6 +671,10 @@ class _SBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fraction = maxQuantity > 0 ? (quantity / maxQuantity).clamp(0.0, 1.0) : 0.0;
+    final trackColor = isDark
+        ? Colors.white.withValues(alpha: 0.07)
+        : Colors.black.withValues(alpha: 0.05);
+
     return Row(children: [
       Icon(icon, size: 17, color: AppTheme.primaryGreen),
       const SizedBox(width: 8),
@@ -693,26 +685,15 @@ class _SBar extends StatelessWidget {
                 fontWeight: FontWeight.w500, color: textColor)),
       ),
       Expanded(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(5),
-          child: Stack(children: [
-            Container(
-              height: 14,
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.07)
-                  : Colors.black.withValues(alpha: 0.05),
+        child: SizedBox(
+          height: 14,
+          child: CustomPaint(
+            painter: _BarPainter(
+              fraction: fraction,
+              trackColor: trackColor,
+              fillColor: AppTheme.primaryGreen,
             ),
-            FractionallySizedBox(
-              widthFactor: fraction,
-              child: Container(
-                height: 14,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-              ),
-            ),
-          ]),
+          ),
         ),
       ),
       const SizedBox(width: 8),
@@ -725,6 +706,96 @@ class _SBar extends StatelessWidget {
       ),
     ]);
   }
+}
+
+class _RingPainter extends CustomPainter {
+  final double value;
+  final Color trackColor;
+  final Color fillColor;
+  final Color textColor;
+  final double strokeWidth;
+
+  const _RingPainter({
+    required this.value,
+    required this.trackColor,
+    required this.fillColor,
+    required this.textColor,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final radius = (size.width - strokeWidth) / 2;
+    final rect = Rect.fromCircle(center: Offset(cx, cy), radius: radius);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    // Track
+    paint.color = trackColor;
+    canvas.drawCircle(Offset(cx, cy), radius, paint);
+
+    // Arc
+    if (value > 0) {
+      paint.color = fillColor;
+      canvas.drawArc(rect, -pi / 2, 2 * pi * value.clamp(0.0, 1.0), false, paint);
+    }
+
+    // Text
+    final label = '${(value * 100).round()}%';
+    final tp = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 15,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.5,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, Offset(cx - tp.width / 2, cy - tp.height / 2));
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter old) =>
+      old.value != value || old.fillColor != fillColor ||
+      old.trackColor != trackColor || old.textColor != textColor;
+}
+
+class _BarPainter extends CustomPainter {
+  final double fraction;
+  final Color trackColor;
+  final Color fillColor;
+
+  const _BarPainter({
+    required this.fraction,
+    required this.trackColor,
+    required this.fillColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final radius = Radius.circular(size.height / 2);
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height), radius);
+    canvas.drawRRect(rrect, Paint()..color = trackColor);
+
+    final fillW = (size.width * fraction).clamp(0.0, size.width);
+    if (fillW > 0) {
+      final fillRect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, fillW, size.height), radius);
+      canvas.drawRRect(fillRect, Paint()..color = fillColor);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BarPainter old) =>
+      old.fraction != fraction || old.trackColor != trackColor || old.fillColor != fillColor;
 }
 
 class _Dot extends StatelessWidget {
