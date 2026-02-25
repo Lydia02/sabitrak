@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum ItemType { ingredient, leftover, product }
+
 class FoodItem {
   final String id;
   final String name;
@@ -14,6 +16,7 @@ class FoodItem {
   final String householdId;
   final String addedBy;
   final DateTime createdAt;
+  final ItemType itemType;
 
   FoodItem({
     required this.id,
@@ -29,11 +32,17 @@ class FoodItem {
     required this.householdId,
     required this.addedBy,
     required this.createdAt,
+    this.itemType = ItemType.ingredient,
   });
 
   // Convert Firestore document to FoodItem
   factory FoodItem.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    final typeStr = data['itemType'] as String? ?? 'ingredient';
+    final itemType = ItemType.values.firstWhere(
+      (e) => e.name == typeStr,
+      orElse: () => ItemType.ingredient,
+    );
     return FoodItem(
       id: doc.id,
       name: data['name'] ?? '',
@@ -48,6 +57,7 @@ class FoodItem {
       householdId: data['householdId'] ?? '',
       addedBy: data['addedBy'] ?? '',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
+      itemType: itemType,
     );
   }
 
@@ -66,6 +76,7 @@ class FoodItem {
       'householdId': householdId,
       'addedBy': addedBy,
       'createdAt': Timestamp.fromDate(createdAt),
+      'itemType': itemType.name,
     };
   }
 
@@ -79,4 +90,6 @@ class FoodItem {
 
   // Check if item is expiring soon (within 3 days)
   bool get isExpiringSoon => daysUntilExpiry >= 0 && daysUntilExpiry <= 3;
+
+  bool get isLeftover => itemType == ItemType.leftover;
 }
