@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../services/firebase_service.dart';
 import '../../../services/notification_service.dart';
+import '../../../services/push_notification_service.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../inventory/inventory_screen.dart';
 import '../recipe/recipe_screen.dart';
@@ -57,7 +58,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  StreamSubscription<QuerySnapshot>? _foodItemSub;
+  StreamSubscription<QuerySnapshot>? _notifSub;
 
   final List<Widget> _screens = [
     const DashboardScreen(),
@@ -70,19 +71,22 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
+    // Initialise push notifications for the signed-in user
+    PushNotificationService().init();
     // Initial badge load
     NotificationBadge.refresh();
-    // Watch food_items for this household — refresh badge whenever anything changes
-    _startFoodItemsWatch();
+    // Watch household_notifications in real-time — badge updates the moment
+    // any member adds/removes an item (Cloud Function writes a notification doc)
+    _startNotificationsWatch();
   }
 
   @override
   void dispose() {
-    _foodItemSub?.cancel();
+    _notifSub?.cancel();
     super.dispose();
   }
 
-  Future<void> _startFoodItemsWatch() async {
+  Future<void> _startNotificationsWatch() async {
     final firebase = FirebaseService();
     final uid = firebase.currentUser?.uid;
     if (uid == null) return;
@@ -95,10 +99,13 @@ class _MainShellState extends State<MainShell> {
 
     final householdId = hQuery.docs.first.id;
 
-    // Stream food_items — on any add/update/delete refresh the badge
-    _foodItemSub = firebase.firestore
-        .collection('food_items')
-        .where('householdId', isEqualTo: householdId)
+    // Stream household_notifications — fires whenever a new notification is written
+    // (by Cloud Functions when any member adds/removes/updates an item)
+    _notifSub = firebase.firestore
+        .collection('household_notifications')
+        .doc(householdId)
+        .collection('items')
+        .orderBy('createdAt', descending: true)
         .snapshots()
         .listen((_) => NotificationBadge.refresh());
   }

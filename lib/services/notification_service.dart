@@ -218,10 +218,12 @@ class NotificationService {
       try {
         final userDoc = await _firebase.users.doc(uid).get();
         final userData = userDoc.data() as Map<String, dynamic>?;
-        actorName = userData?['displayName'] as String? ??
-            userData?['name'] as String? ??
-            _firebase.currentUser?.displayName ??
-            'Someone';
+        final firstName = userData?['firstName'] as String? ?? '';
+        final lastName = userData?['lastName'] as String? ?? '';
+        final fullName = '$firstName $lastName'.trim();
+        actorName = fullName.isNotEmpty
+            ? fullName
+            : _firebase.currentUser?.displayName ?? 'Someone';
       } catch (_) {}
 
       final hQuery = await _firebase.households
