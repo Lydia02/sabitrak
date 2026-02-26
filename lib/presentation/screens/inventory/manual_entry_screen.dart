@@ -14,6 +14,7 @@ class ManualEntryScreen extends StatefulWidget {
   final String? prefilledCategory;
   final String? prefilledBarcode;
   final String? prefilledImageUrl;
+  final DateTime? prefilledExpiryDate;
   final ItemType initialItemType;
 
   const ManualEntryScreen({
@@ -22,6 +23,7 @@ class ManualEntryScreen extends StatefulWidget {
     this.prefilledCategory,
     this.prefilledBarcode,
     this.prefilledImageUrl,
+    this.prefilledExpiryDate,
     this.initialItemType = ItemType.ingredient,
   });
 
@@ -297,7 +299,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
 
     try {
       final now = DateTime.now();
-      final expiryDate = now.add(Duration(days: _suggestedDays));
+      final expiryDate = widget.prefilledExpiryDate ?? now.add(Duration(days: _suggestedDays));
       final uid = FirebaseService().currentUser?.uid ?? '';
 
       final item = FoodItem(
@@ -840,7 +842,9 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
-                              _shelfLifeLabel,
+                              widget.prefilledExpiryDate != null
+                                  ? '${widget.prefilledExpiryDate!.day}/${widget.prefilledExpiryDate!.month}/${widget.prefilledExpiryDate!.year}'
+                                  : _shelfLifeLabel,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontFamily: 'Roboto',
@@ -858,7 +862,9 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                     Padding(
                       padding: const EdgeInsets.only(left: 4),
                       child: Text(
-                        'Based on standard ${_selectedStorage.toLowerCase()} storage.',
+                        widget.prefilledExpiryDate != null
+                            ? 'Expiry date captured from label.'
+                            : 'Based on standard ${_selectedStorage.toLowerCase()} storage.',
                         style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 11,

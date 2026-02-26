@@ -229,55 +229,6 @@ class _AddItemDialog extends StatelessWidget {
                   color: subtitleColor,
                 ),
               ),
-              const SizedBox(height: 18),
-
-              // Capture Expiry Date
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: textColor,
-                    side: BorderSide(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.2)
-                          : AppTheme.primaryGreen,
-                      width: 1.5,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Capture Expiry Date',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(Icons.camera_alt_outlined, size: 18, color: textColor),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Scan expiry label using camera.',
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 12,
-                  color: subtitleColor,
-                ),
-              ),
               const SizedBox(height: 20),
 
               // Cancel

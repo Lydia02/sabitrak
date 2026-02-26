@@ -224,11 +224,119 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
       category = 'Frozen';
     }
 
+    // ── Expiry date extraction ───────────────────────────────────────────────
+    DateTime? expiryDate;
+
+    // Common label prefixes for expiry
+    final expiryPrefixPattern = RegExp(
+      r'(?:best\s*before|use\s*by|exp(?:iry)?\.?|expiration|bb|bbd|mfg|mfd|manufactured|production)\s*[:\-]?\s*',
+      caseSensitive: false,
+    );
+
+    // Date format patterns (ordered most-specific → least)
+    final datePatterns = <RegExp>[
+      // DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+      RegExp(r'\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})\b'),
+      // DD/MM/YY or DD-MM-YY
+      RegExp(r'\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2})\b'),
+      // MM/YYYY or MM-YYYY (month/year only, no day — default day=1)
+      RegExp(r'\b(\d{1,2})[/\-](\d{4})\b'),
+      // YYYY/MM/DD
+      RegExp(r'\b(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})\b'),
+      // Jan 2026 / January 2026 / JAN/2026
+      RegExp(
+        r'\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s/\-,]*(\d{4})\b',
+        caseSensitive: false,
+      ),
+      // 12 Jan 2026 / 12-JAN-26
+      RegExp(
+        r'\b(\d{1,2})[\s\-/](jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s\-/,]*(\d{2,4})\b',
+        caseSensitive: false,
+      ),
+    ];
+
+    const monthNames = {
+      'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+      'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
+    };
+
+    DateTime? tryParse(RegExp pattern, String text) {
+      final m = pattern.firstMatch(text);
+      if (m == null) return null;
+      try {
+        final g = m.groups(List.generate(m.groupCount, (i) => i + 1));
+        // YYYY/MM/DD
+        if (pattern.pattern.startsWith(r'\b(\d{4})')) {
+          final y = int.parse(g[0]!);
+          final mo = int.parse(g[1]!);
+          final d = int.parse(g[2]!);
+          return DateTime(y, mo, d);
+        }
+        // Month-name year (e.g. Jan 2026)
+        if (pattern.pattern.contains('jan|feb')) {
+          if (g[0] != null && int.tryParse(g[0]!) == null) {
+            // Pattern: MON YYYY
+            final mo = monthNames[g[0]!.toLowerCase().substring(0, 3)]!;
+            final y = int.parse(g[1]!);
+            return DateTime(y, mo, 1);
+          } else {
+            // Pattern: DD MON YYYY
+            final d = int.parse(g[0]!);
+            final mo = monthNames[g[1]!.toLowerCase().substring(0, 3)]!;
+            var y = int.parse(g[2]!);
+            if (y < 100) y += 2000;
+            return DateTime(y, mo, d);
+          }
+        }
+        // MM/YYYY
+        if (g.length == 2) {
+          final mo = int.parse(g[0]!);
+          final y = int.parse(g[1]!);
+          return DateTime(y, mo, 1);
+        }
+        // DD/MM/YYYY or DD/MM/YY
+        final d = int.parse(g[0]!);
+        final mo = int.parse(g[1]!);
+        var y = int.parse(g[2]!);
+        if (y < 100) y += 2000;
+        return DateTime(y, mo, d);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    // First pass: look near expiry keyword on the same line
+    for (final line in lines) {
+      if (expiryPrefixPattern.hasMatch(line)) {
+        final stripped = line.replaceAll(expiryPrefixPattern, '');
+        for (final pattern in datePatterns) {
+          final candidate = tryParse(pattern, stripped);
+          if (candidate != null && candidate.isAfter(DateTime(2020))) {
+            expiryDate = candidate;
+            break;
+          }
+        }
+        if (expiryDate != null) break;
+      }
+    }
+
+    // Second pass: scan all text if no keyword-adjacent date found
+    if (expiryDate == null) {
+      for (final pattern in datePatterns) {
+        final candidate = tryParse(pattern, allText);
+        if (candidate != null && candidate.isAfter(DateTime(2020))) {
+          expiryDate = candidate;
+          break;
+        }
+      }
+    }
+
     return ParsedLabelInfo(
       productName: productName,
       brand: brand,
       quantity: quantity,
       category: category,
+      expiryDate: expiryDate,
       rawLines: lines,
     );
   }
@@ -316,6 +424,36 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
                 _buildTextField('Quantity', quantityController, textColor, subtitleColor, isDark),
                 const SizedBox(height: 12),
 
+                // Expiry date banner — shown when OCR detected a date
+                if (info.expiryDate != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.event_available_outlined, color: AppTheme.primaryGreen, size: 18),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Expiry date detected: ${info.expiryDate!.day.toString().padLeft(2, '0')}/${info.expiryDate!.month.toString().padLeft(2, '0')}/${info.expiryDate!.year}',
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryGreen,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
                 // Category dropdown
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -401,6 +539,7 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
                         prefilledName: name,
                         prefilledCategory: selectedCategory,
                         prefilledBarcode: widget.prefilledBarcode,
+                        prefilledExpiryDate: info.expiryDate,
                       );
                       Navigator.of(context).pop();
                     },
@@ -687,6 +826,7 @@ class ParsedLabelInfo {
   final String? brand;
   final String? quantity;
   final String? category;
+  final DateTime? expiryDate;
   final List<String> rawLines;
 
   const ParsedLabelInfo({
@@ -694,6 +834,7 @@ class ParsedLabelInfo {
     this.brand,
     this.quantity,
     this.category,
+    this.expiryDate,
     required this.rawLines,
   });
 }
