@@ -8,6 +8,7 @@ import '../../../data/repositories/inventory_repository.dart';
 import '../../../services/firebase_service.dart';
 import '../../../services/recipe_service.dart';
 import '../inventory/add_item_options_screen.dart';
+import '../inventory/barcode_scanner_screen.dart';
 import '../main/main_shell.dart';
 import '../recipe/recipe_detail_screen.dart';
 
@@ -390,7 +391,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             textColor: textColor,
             cardColor: cardColor,
             isDark: isDark,
-            onTap: () {},
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
+            ),
           ),
           _QuickActionButton(
             icon: Icons.add_circle_outline,

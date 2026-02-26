@@ -6,6 +6,7 @@ import '../../../config/theme/theme_notifier.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../services/firebase_service.dart';
+import '../../../services/push_notification_service.dart';
 import '../welcome/welcome_screen.dart';
 import 'change_password_screen.dart';
 import 'members_screen.dart';
@@ -86,6 +87,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
     if (confirmed == true && mounted) {
+      await PushNotificationService().clearToken();
       await _authRepo.signOut();
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
