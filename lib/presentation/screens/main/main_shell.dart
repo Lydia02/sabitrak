@@ -105,7 +105,6 @@ class _MainShellState extends State<MainShell> {
         .collection('household_notifications')
         .doc(householdId)
         .collection('items')
-        .orderBy('createdAt', descending: true)
         .snapshots()
         .listen((_) => NotificationBadge.refresh());
   }

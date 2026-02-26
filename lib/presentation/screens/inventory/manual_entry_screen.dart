@@ -5,7 +5,6 @@ import '../../../data/models/food_item.dart';
 import '../../../data/repositories/inventory_repository.dart';
 import '../../../services/firebase_service.dart';
 import '../../../services/food_image_service.dart';
-import '../../../services/notification_service.dart';
 import '../../../services/food_intelligence_service.dart';
 import '../../widgets/error_modal.dart';
 
@@ -278,11 +277,6 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
         if (action == null || action == 'cancel') return;
         if (action == 'merge') {
           await _repo.mergeQuantity(duplicate.id, _quantity);
-          NotificationService().recordAction(
-            type: NotificationType.householdUpdate,
-            title: isLeftover ? '🍽️ Leftover Updated' : '🛒 Pantry Updated',
-            body: 'added $_quantity more ${duplicate.unit} of ${duplicate.name}.',
-          );
           if (!mounted) return;
           showSuccessModal(context, title: 'Updated!',
               message: 'Added $_quantity to your existing ${duplicate.name}.');
@@ -328,12 +322,6 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
             .get()
             .then((s) => s.docs.isNotEmpty ? s.docs.first.reference : null);
       });
-
-      NotificationService().recordAction(
-        type: NotificationType.householdUpdate,
-        title: '🛒 Item Added',
-        body: 'added $name to the pantry.',
-      );
 
       if (widget.prefilledImageUrl == null && docRef != null) {
         FoodImageService.findImageUrl(name).then((imgUrl) {
