@@ -1,5 +1,5 @@
 const { onRequest } = require("firebase-functions/v2/https");
-const { onDocumentCreated, onDocumentDeleted } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentDeleted, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
@@ -12,8 +12,7 @@ initializeApp();
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
 /**
- * Returns all FCM tokens for every member of a household.
- * Skips members with no token and the excludedUid (the one who triggered the event).
+ * Returns FCM tokens for ALL members of a household (or exclude one uid).
  */
 async function getHouseholdTokens(db, householdId, excludedUid = null) {
   const householdDoc = await db.collection("households").doc(householdId).get();
@@ -35,7 +34,7 @@ async function getHouseholdTokens(db, householdId, excludedUid = null) {
   return tokens;
 }
 
-/** Sends a multicast push notification to up to 500 tokens per chunk. */
+/** Sends a multicast push notification. */
 async function sendPush(tokens, title, body, data = {}) {
   if (!tokens.length) return;
   const messaging = getMessaging();
@@ -63,13 +62,39 @@ async function sendPush(tokens, title, body, data = {}) {
   );
 }
 
-/** Persists a notification into household_notifications/{hid}/items for the in-app inbox. */
-async function persistNotification(db, householdId, type, title, body) {
+/**
+ * Persists a notification into household_notifications/{hid}/items
+ * for ALL members to see in the in-app inbox.
+ */
+async function persistNotification(db, householdId, type, title, body, actorUid = null, actorName = null) {
   await db
     .collection("household_notifications")
     .doc(householdId)
     .collection("items")
-    .add({ type, title, body, createdAt: Timestamp.now() });
+    .add({
+      type,
+      title,
+      body,
+      actorUid: actorUid || null,
+      actorName: actorName || null,
+      createdAt: Timestamp.now(),
+    });
+}
+
+/** Resolves firstName + lastName from users collection. */
+async function resolveActorName(db, uid) {
+  if (!uid) return "A household member";
+  try {
+    const userDoc = await db.collection("users").doc(uid).get();
+    const data = userDoc.data();
+    if (!data) return "A household member";
+    const first = data.firstName || "";
+    const last = data.lastName || "";
+    const full = `${first} ${last}`.trim();
+    return full || data.displayName || "A household member";
+  } catch (_) {
+    return "A household member";
+  }
 }
 
 // ─── 1. Food item ADDED ───────────────────────────────────────────────────────
@@ -84,20 +109,17 @@ exports.onFoodItemAdded = onDocumentCreated(
     const { householdId, addedBy, name: itemName = "An item" } = data;
     if (!householdId) return;
 
-    // Resolve the display name of the person who added the item
-    let adderName = "A household member";
-    if (addedBy) {
-      const userDoc = await db.collection("users").doc(addedBy).get();
-      adderName = userDoc.data()?.displayName || adderName;
-    }
-
+    const actorName = await resolveActorName(db, addedBy);
     const title = "🛒 Pantry Updated";
-    const body = `${adderName} added ${itemName} to the pantry.`;
+    const body = `${actorName} added ${itemName} to the pantry.`;
 
+    // Push to OTHER members only (don't push to self)
     const tokens = await getHouseholdTokens(db, householdId, addedBy);
+
     await Promise.all([
       sendPush(tokens, title, body, { type: "householdUpdate", itemName }),
-      persistNotification(db, householdId, "householdUpdate", title, body),
+      // Persist for ALL members (including actor — shows in their own inbox)
+      persistNotification(db, householdId, "householdUpdate", title, body, addedBy, actorName),
     ]);
   }
 );
@@ -114,18 +136,52 @@ exports.onFoodItemDeleted = onDocumentDeleted(
     const { householdId, addedBy, name: itemName = "An item" } = data;
     if (!householdId) return;
 
+    // Use addedBy as a proxy for who deleted (best available)
+    const actorName = await resolveActorName(db, addedBy);
     const title = "📦 Item Removed";
-    const body = `${itemName} was removed from the pantry.`;
+    const body = `${actorName} removed ${itemName} from the pantry.`;
 
     const tokens = await getHouseholdTokens(db, householdId, addedBy);
+
     await Promise.all([
       sendPush(tokens, title, body, { type: "householdUpdate", itemName }),
-      persistNotification(db, householdId, "householdUpdate", title, body),
+      persistNotification(db, householdId, "householdUpdate", title, body, addedBy, actorName),
     ]);
   }
 );
 
-// ─── 3. Daily expiry check — 8 AM WAT (7 AM UTC) ─────────────────────────────
+// ─── 3. Food item UPDATED ─────────────────────────────────────────────────────
+
+exports.onFoodItemUpdated = onDocumentUpdated(
+  { document: "food_items/{itemId}", region: "us-central1" },
+  async (event) => {
+    const db = getFirestore();
+    const after = event.data?.after?.data();
+    const before = event.data?.before?.data();
+    if (!after || !before) return;
+
+    const { householdId, addedBy, name: itemName = "An item" } = after;
+    if (!householdId) return;
+
+    // Only notify if quantity or expiryDate changed (skip trivial writes)
+    const qtyChanged = before.quantity !== after.quantity;
+    const expiryChanged = String(before.expiryDate?.seconds) !== String(after.expiryDate?.seconds);
+    if (!qtyChanged && !expiryChanged) return;
+
+    const actorName = await resolveActorName(db, addedBy);
+    const title = "✏️ Item Updated";
+    const body = `${actorName} updated ${itemName} in the pantry.`;
+
+    const tokens = await getHouseholdTokens(db, householdId, addedBy);
+
+    await Promise.all([
+      sendPush(tokens, title, body, { type: "householdUpdate", itemName }),
+      persistNotification(db, householdId, "householdUpdate", title, body, addedBy, actorName),
+    ]);
+  }
+);
+
+// ─── 4. Daily expiry check — 8 AM WAT (7 AM UTC) ─────────────────────────────
 
 exports.checkExpiringItems = onSchedule(
   { schedule: "0 7 * * *", timeZone: "UTC", region: "us-central1" },
@@ -142,7 +198,6 @@ exports.checkExpiringItems = onSchedule(
 
     if (snap.empty) return;
 
-    // Group expiring items by household
     const byHousehold = {};
     snap.docs.forEach((doc) => {
       const d = doc.data();
@@ -169,7 +224,7 @@ exports.checkExpiringItems = onSchedule(
   }
 );
 
-// ─── 4. Daily recipe reminder — 12 PM WAT (11 AM UTC) ────────────────────────
+// ─── 5. Daily recipe reminder — 12 PM WAT (11 AM UTC) ────────────────────────
 
 exports.dailyRecipeReminder = onSchedule(
   { schedule: "0 11 * * *", timeZone: "UTC", region: "us-central1" },
@@ -190,8 +245,6 @@ exports.dailyRecipeReminder = onSchedule(
     await Promise.all(
       householdsSnap.docs.map(async (householdDoc) => {
         const householdId = householdDoc.id;
-
-        // Only notify households that actually have food items
         const itemsSnap = await db
           .collection("food_items")
           .where("householdId", "==", householdId)
