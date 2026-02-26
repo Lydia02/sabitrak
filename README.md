@@ -6,19 +6,25 @@ SabiTrak is a mobile food inventory management app designed for African students
 
 **Design Mockups:** [View on Uizard](https://app.uizard.io/p/4f316171)
 
-**Demo Video:** [Watch Initial Product Demo](https://drive.google.com/file/d/1fEGalPJlz8gyPdhFqUWo3lqrl8H0xaZE/view?usp=sharing)
+**Demo Video:** [Watch on Google Drive](https://drive.google.com/file/d/1fEGalPJlz8gyPdhFqUWo3lqrl8H0xaZE/view?usp=sharing)
+
+**Download APK:** [SabiTrak-release.apk (Google Drive)](https://drive.google.com/file/d/1fEGalPJlz8gyPdhFqUWo3lqrl8H0xaZE/view?usp=sharing)
 
 ---
 
 ## Features
 
-- **Inventory Management** - Track items across Pantry, Fridge, and Freezer with color-coded expiry indicators
+- **Smart Inventory Management** - Add items with type classification (Ingredient / Leftover / Product); duplicate detection with merge or separate options
+- **Leftover Tracking** - Log cooked food with automatic 3-day expiry and link back to the raw ingredient for stock deduction
 - **Barcode Scanning** - Scan products to auto-fill details via Open Food Facts API, with manual entry fallback
-- **Expiry Date Tracking** - Get alerts for items expiring soon, with OCR capture for expiry dates
-- **Recipe Recommendations** - Get recipe suggestions based on current inventory, prioritizing expiring items
-- **Household Collaboration** - Create or join a household with invite codes, share inventory with family/roommates
+- **Expiry Date OCR** - Capture expiry dates from product labels using the device camera
+- **Expiry Alerts** - Color-coded indicators (green / orange / red) with push notifications for items expiring soon
+- **Recipe Recommendations** - AI-powered suggestions based on current inventory, prioritizing expiring items, with African cuisine support
+- **Household Collaboration** - Create or join a household with invite codes; manage members; admin controls
 - **Update Pantry** - Log used and wasted items after cooking to keep inventory accurate
-- **Insights & Analytics** - View waste reduction summaries and savings
+- **Analytics & Insights** - Waste reduction ring, savings tracker, top wasted items bar chart
+- **Dark Mode** - Full dark/light theme toggle, persisted across sessions
+- **Push Notifications** - Expiry reminders and household activity alerts via Firebase Cloud Messaging
 
 ---
 
@@ -26,52 +32,78 @@ SabiTrak is a mobile food inventory management app designed for African students
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Flutter (Dart) |
+| Framework | Flutter 3.x (Dart) |
 | State Management | BLoC |
 | Backend | Firebase (Auth, Firestore, Storage, Cloud Messaging) |
-| Barcode API | Open Food Facts |
-| Local Storage | Hive, SharedPreferences |
-| Navigation | GoRouter |
+| Barcode Scanning | Open Food Facts API + ML Kit |
+| OCR | Google ML Kit Text Recognition |
+| Notifications | Firebase Cloud Messaging (FCM) |
+| Local Storage | SharedPreferences |
+| AI Recipes | Gemini API (Google) |
 
 ---
 
-## Getting Started
+## How to Install (APK — Android)
+
+> No setup required. Just download and install.
+
+1. Download the APK from the link above
+2. On your Android phone, go to **Settings → Security → Install Unknown Apps** and allow your browser
+3. Open the downloaded `.apk` file and tap **Install**
+4. Launch **SabiTrak** from your app drawer
+
+---
+
+## How to Run from Source
 
 ### Prerequisites
 
-- Flutter SDK (stable) - [Install Flutter](https://docs.flutter.dev/get-started/install)
-- Dart SDK (bundled with Flutter)
-- Android Studio / Xcode (for emulator/simulator)
-- Firebase CLI - `npm install -g firebase-tools`
-- FlutterFire CLI - `dart pub global activate flutterfire_cli`
+- Flutter SDK (stable channel) — [Install Flutter](https://docs.flutter.dev/get-started/install)
+- Android Studio (for Android emulator) or a physical Android device with USB debugging enabled
+- Node.js + Firebase CLI — `npm install -g firebase-tools`
 
-### Clone & Install
+### Step 1 — Clone the Repository
 
 ```bash
 git clone https://github.com/Lydia02/sabitrak.git
 cd sabitrak
+```
+
+### Step 2 — Install Dependencies
+
+```bash
 flutter pub get
 ```
 
-### Firebase Configuration
+### Step 3 — Firebase Setup
 
-1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable the following services:
-   - **Authentication** (Email/Password)
-   - **Cloud Firestore**
-   - **Firebase Storage**
-   - **Cloud Messaging** (for expiry alerts)
-3. Configure FlutterFire:
-   ```bash
-   firebase login
-   flutterfire configure
-   ```
-   This generates `lib/firebase_options.dart` automatically.
+The `lib/firebase_options.dart` file is already configured for the project Firebase instance. No additional setup is needed to run the app.
 
-### Run the App
+If you want to connect to your own Firebase project:
+
+```bash
+dart pub global activate flutterfire_cli
+firebase login
+flutterfire configure
+```
+
+### Step 4 — Run the App
+
+**On a connected Android device or emulator:**
 
 ```bash
 flutter run
+```
+
+**Build a release APK:**
+
+```bash
+flutter build apk --release
+```
+
+The APK will be output to:
+```
+build/app/outputs/flutter-apk/app-release.apk
 ```
 
 ---
@@ -80,63 +112,82 @@ flutter run
 
 ```
 lib/
-├── main.dart
-├── firebase_options.dart
+├── main.dart                        # App entry point, theme setup
+├── firebase_options.dart            # Firebase config
 ├── config/
-│   ├── routes/          # GoRouter configuration
-│   └── theme/           # App theme, colors, typography
-├── core/
-│   ├── constants/
-│   ├── utils/
-│   └── errors/
+│   └── theme/                       # AppTheme (light + dark), ThemeNotifier
 ├── data/
-│   ├── models/          # FoodItem, Recipe, Household
-│   ├── repositories/    # Data access layer
-│   └── datasources/     # Local (Hive) & Remote (Firebase)
+│   ├── models/                      # FoodItem (with ItemType), UserModel, Recipe
+│   └── repositories/                # InventoryRepository, AuthRepository
 ├── presentation/
-│   ├── blocs/           # BLoC state management
-│   ├── screens/         # App screens
-│   └── widgets/         # Reusable UI components
-└── services/            # Firebase, Barcode, Notifications
+│   ├── screens/
+│   │   ├── dashboard/               # Home overview, expiry ring, quick actions
+│   │   ├── inventory/               # Inventory list, manual entry, barcode/label scanner
+│   │   ├── recipe/                  # Recipe screen, recipe detail with cooking mode
+│   │   ├── analytics/               # Waste reduction ring, savings, bar charts
+│   │   ├── profile/                 # Profile, change password, members, notifications
+│   │   ├── auth/                    # Sign in, sign up, email verification, forgot password
+│   │   └── household/               # Create, join, solo setup
+│   └── blocs/                       # Auth BLoC
+└── services/                        # FirebaseService, NotificationService, RecipeService
 ```
 
 ---
 
 ## App Flow
 
-1. **Splash** - Animated logo reveal
-2. **Welcome** - Create Account / Log In
-3. **Registration** - Name, profile details, password, email verification
-4. **Household Setup** - Create household, join with invite code, or go solo
-5. **Dashboard** - Overview with expiry alerts, quick actions, smart suggestions
-6. **Inventory** - Browse items by category (Pantry/Fridge/Freezer/Expiring Soon)
-7. **Add Item** - Scan barcode, capture expiry with camera, or add manually
-8. **Recipes** - Suggestions based on inventory, filtered by diet and expiry urgency
-9. **Cooking Mode** - Step-by-step instructions, then update pantry with used/wasted items
-10. **Profile** - Household management, notifications, data sync, analytics
+1. **Splash** → Animated logo reveal, auto-navigate to sign-in or dashboard
+2. **Welcome** → Create Account / Log In / Continue with Google
+3. **Registration** → Name, occupation, country, password, email verification
+4. **Household Setup** → Create household, join with invite code, or go solo
+5. **Dashboard** → Overview: expiry ring, expiring items, quick-add, smart suggestions
+6. **Inventory** → Browse by storage (Pantry / Fridge / Freezer) and filter by status
+7. **Add Item** → Choose: scan barcode, capture expiry label, add manually, or log leftover
+8. **Manual Entry** → Item type (Ingredient / Leftover / Product), duplicate check, merge dialog
+9. **Leftover Flow** → Auto 3-day expiry, link to raw ingredient, deduct from stock
+10. **Recipes** → AI suggestions filtered by available ingredients and expiry urgency
+11. **Analytics** → Waste ring, savings, top wasted items, monthly trends
+12. **Profile** → Theme toggle (dark/light), change password, household members, notifications, FAQ
 
 ---
 
 ## Deployment
 
-### Android (Google Play Store)
+### Android APK (Current)
 
 ```bash
-flutter build appbundle
+flutter build apk --release
+# Output: build/app/outputs/flutter-apk/app-release.apk
+```
+
+APK is hosted on Google Drive for distribution.
+
+### Android App Bundle (Google Play)
+
+```bash
+flutter build appbundle --release
 ```
 
 Upload the `.aab` file to Google Play Console.
 
-### iOS (Apple App Store)
+### Firebase Hosting (Web — optional)
 
 ```bash
-flutter build ios --release
+flutter build web
+firebase deploy --only hosting
 ```
 
-Archive in Xcode and upload to App Store Connect.
+---
+
+## Related Files
+
+- `firestore.indexes.json` — Composite index definitions for Firestore queries
+- `firestore.rules` — Firestore security rules
+- `android/app/proguard-rules.pro` — R8 minification rules for release builds
+- `functions/index.js` — Firebase Cloud Functions for scheduled expiry notifications
 
 ---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.

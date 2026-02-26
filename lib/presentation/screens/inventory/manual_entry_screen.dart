@@ -322,7 +322,6 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
         return FirebaseService().foodItems
             .where('householdId', isEqualTo: _householdId)
             .where('name', isEqualTo: name)
-            .orderBy('createdAt', descending: true)
             .limit(1)
             .get()
             .then((s) => s.docs.isNotEmpty ? s.docs.first.reference : null);
