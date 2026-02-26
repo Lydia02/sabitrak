@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
 import '../../../data/repositories/inventory_repository.dart';
-import '../../../services/notification_service.dart';
 
 class UpdatePantrySheet extends StatefulWidget {
   final FoodItem item;
@@ -103,11 +102,6 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
         'expiryDate': _expiryDate,
         'storageLocation': _selectedStorage,
       });
-      NotificationService().recordAction(
-        type: NotificationType.householdUpdate,
-        title: '✏️ Item Updated',
-        body: 'updated ${widget.item.name} in the pantry.',
-      );
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       setState(() => _isSaving = false);
@@ -139,11 +133,6 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
     setState(() => _isDeleting = true);
     try {
       await widget.repo.deleteFoodItem(widget.item.id);
-      NotificationService().recordAction(
-        type: NotificationType.householdUpdate,
-        title: '📦 Item Removed',
-        body: 'removed ${widget.item.name} from the pantry.',
-      );
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       setState(() => _isDeleting = false);

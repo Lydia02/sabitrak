@@ -96,6 +96,13 @@ class _InventoryScreenState extends State<InventoryScreen>
           .toList();
     }
 
+    // FIFO sort: use soonest-expiring items first (expired pushed to bottom)
+    filtered.sort((a, b) {
+      if (a.isExpired && !b.isExpired) return 1;
+      if (!a.isExpired && b.isExpired) return -1;
+      return a.expiryDate.compareTo(b.expiryDate);
+    });
+
     return filtered;
   }
 
@@ -366,16 +373,20 @@ class _InventoryScreenState extends State<InventoryScreen>
                                         itemCount: filteredItems.length,
                                         separatorBuilder: (_, __) =>
                                             const SizedBox(height: 12),
-                                        itemBuilder: (_, i) =>
-                                            _InventoryItemCard(
-                                          item: filteredItems[i],
-                                          isDark: isDark,
-                                          cardColor: cardColor,
-                                          textColor: textColor,
-                                          subtitleColor: subtitleColor,
-                                          onTap: () => _openUpdateSheet(
-                                              filteredItems[i]),
-                                        ),
+                                        itemBuilder: (_, i) {
+                                          // Mark the first non-expired item as "USE FIRST" (FIFO)
+                                          final firstNonExpiredIndex = filteredItems
+                                              .indexWhere((item) => !item.isExpired);
+                                          return _InventoryItemCard(
+                                            item: filteredItems[i],
+                                            isDark: isDark,
+                                            cardColor: cardColor,
+                                            textColor: textColor,
+                                            subtitleColor: subtitleColor,
+                                            onTap: () => _openUpdateSheet(filteredItems[i]),
+                                            showUseFist: i == firstNonExpiredIndex,
+                                          );
+                                        },
                                       ),
                       ),
                     ],
@@ -446,6 +457,7 @@ class _InventoryItemCard extends StatelessWidget {
   final Color textColor;
   final Color subtitleColor;
   final VoidCallback onTap;
+  final bool showUseFist;
 
   const _InventoryItemCard({
     required this.item,
@@ -454,6 +466,7 @@ class _InventoryItemCard extends StatelessWidget {
     required this.textColor,
     required this.subtitleColor,
     required this.onTap,
+    this.showUseFist = false,
   });
 
   // Determine shelf life fraction remaining (0.0 – 1.0)
@@ -636,6 +649,28 @@ class _InventoryItemCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
+                      if (showUseFist)
+                        Container(
+                          margin: const EdgeInsets.only(right: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1565C0).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: const Color(0xFF1565C0).withValues(alpha: 0.4)),
+                          ),
+                          child: const Text(
+                            'USE FIRST',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1565C0),
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
