@@ -2,4 +2,5 @@
 <resources>
     <!-- FCM notification accent color — SabiTrak primary green -->
     <color name="notification_color">#2E7D32</color>
+	<color name="ic_launcher_background">#FFFFFF</color>
 </resources>
