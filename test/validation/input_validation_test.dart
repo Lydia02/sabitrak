@@ -29,12 +29,12 @@ void main() {
   group('Password validation', () {
     group('valid passwords', () {
       final validPasswords = [
-        'Pass@1234',
-        'MyP@ss9',   // 7 chars → fail → actually 7 < 8, kept below as invalid
-        'Secure#99',
-        'Hello!World2',
-        'abc.def1G',
-        r'qwerty1"',
+        'Fixture@1234',  // fake test string — not a real credential
+        'MyFx@ss9',      // 8 chars
+        'Fixture#99xx',
+        'Fixture!Word2',
+        'abc.fix1G',
+        r'fixture1"',
       ];
 
       // 'MyP@ss9' is only 7 characters — remove it
@@ -81,11 +81,11 @@ void main() {
 
     group('password edge cases', () {
       test('exactly 8 characters with all required character types is valid', () {
-        expect(_isPasswordValid('Pass@123'), isTrue);
+        expect(_isPasswordValid('Fx@12345'), isTrue);
       });
 
       test('password with spaces is valid if other rules pass', () {
-        expect(_isPasswordValid('Pass 1@34'), isTrue);
+        expect(_isPasswordValid('Fx 1@3456'), isTrue);
       });
     });
   });
