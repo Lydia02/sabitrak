@@ -78,8 +78,8 @@ void main() {
           country: 'Nigeria',
         ));
         bloc.add(const SecuritySetupSubmitted(
-          password: 'Test@1234',
-          confirmPassword: 'Test@1234',
+          password: 'T3st_Fixture@99',
+          confirmPassword: 'T3st_Fixture@99',
         ));
         bloc.add(const VerificationCodeSubmitted(
           email: 'ada@test.com',
@@ -115,8 +115,8 @@ void main() {
           country: 'Nigeria',
         ));
         bloc.add(const SecuritySetupSubmitted(
-          password: 'Test@1234',
-          confirmPassword: 'Test@1234',
+          password: 'T3st_Fixture@99',
+          confirmPassword: 'T3st_Fixture@99',
         ));
       },
       expect: () => [
@@ -199,7 +199,7 @@ void main() {
       },
       act: (bloc) => bloc.add(const SignInSubmitted(
         email: 'ada@test.com',
-        password: 'Test@1234',
+        password: 'T3st_Fixture@99',
       )),
       expect: () => [
         isA<AuthLoading>(),
@@ -217,7 +217,7 @@ void main() {
       },
       act: (bloc) => bloc.add(const SignInSubmitted(
         email: 'ada@test.com',
-        password: 'WrongPass@1',
+        password: 'Wrong_Fixture@1',
       )),
       expect: () => [
         isA<AuthLoading>(),
@@ -255,7 +255,7 @@ void main() {
             email: 'ada@test.com', otp: '4321'));
         bloc.add(const ForgotPasswordReset(
           email: 'ada@test.com',
-          newPassword: 'NewPass@99',
+          newPassword: 'NewFixture@99',
           resetToken: '4321',
         ));
       },
