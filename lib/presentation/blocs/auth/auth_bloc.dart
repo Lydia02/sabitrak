@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../data/models/registration_data.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../services/connectivity_service.dart';
 import '../../../services/verification_service.dart';
 import '../../../services/password_reset_service.dart';
 import 'auth_event.dart';
@@ -11,9 +13,9 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
   final VerificationService _verificationService;
-  RegistrationData _registrationData = const RegistrationData();
-
   final PasswordResetService _passwordResetService;
+  final ConnectivityService _connectivity = ConnectivityService();
+  RegistrationData _registrationData = const RegistrationData();
 
   AuthBloc({
     AuthRepository? authRepository,
@@ -85,6 +87,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     emit(AuthLoading());
 
+    if (!await _connectivity.isConnected()) {
+      emit(AuthError('No internet connection. Please check your network and try again.',
+          registrationData: _registrationData));
+      return;
+    }
+
     try {
       // Send OTP — account creation happens AFTER verification succeeds
       await _verificationService.sendVerificationCode(
@@ -96,8 +104,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         firstName: _registrationData.firstName,
       ));
     } catch (e) {
-      emit(AuthError('Failed to send verification code: $e',
-          registrationData: _registrationData));
+      if (_isNetworkError(e)) {
+        emit(AuthError('No internet connection. Please check your network and try again.',
+            registrationData: _registrationData));
+      } else {
+        emit(AuthError('Failed to send verification code. Please try again.',
+            registrationData: _registrationData));
+      }
     }
   }
 
@@ -106,6 +119,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
+    if (!await _connectivity.isConnected()) {
+      emit(const AuthError('No internet connection. Please check your network and try again.'));
+      return;
+    }
     try {
       final result = await _authRepository.signInWithGoogle();
       final user = result.user;
@@ -150,7 +167,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         }
       }
     } catch (e) {
-      emit(AuthError(e.toString()));
+      if (_isNetworkError(e)) {
+        emit(const AuthError('No internet connection. Please check your network and try again.'));
+      } else {
+        emit(AuthError(e.toString()));
+      }
     }
   }
 
@@ -164,6 +185,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
 
     emit(AuthLoading());
+    if (!await _connectivity.isConnected()) {
+      emit(AuthError('No internet connection. Please check your network and try again.',
+          registrationData: _registrationData));
+      return;
+    }
     try {
       final user = _authRepository.currentUser;
       await _authRepository.saveGoogleUserProfile(
@@ -183,7 +209,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       _registrationData = const RegistrationData();
       emit(RegistrationSuccess(email: email, firstName: firstName));
     } catch (e) {
-      emit(AuthError(e.toString(), registrationData: _registrationData));
+      if (_isNetworkError(e)) {
+        emit(AuthError('No internet connection. Please check your network and try again.',
+            registrationData: _registrationData));
+      } else {
+        emit(AuthError(e.toString(), registrationData: _registrationData));
+      }
     }
   }
 
@@ -192,6 +223,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
+    if (!await _connectivity.isConnected()) {
+      emit(VerificationFailed(
+        message: 'No internet connection. Please check your network and try again.',
+        email: event.email,
+        firstName: event.firstName,
+      ));
+      return;
+    }
     try {
       await _verificationService.sendVerificationCode(
         email: event.email,
@@ -203,7 +242,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ));
     } catch (e) {
       emit(VerificationFailed(
-        message: 'Failed to send verification code: $e',
+        message: _isNetworkError(e)
+            ? 'No internet connection. Please check your network and try again.'
+            : 'Failed to send verification code. Please try again.',
         email: event.email,
         firstName: event.firstName,
       ));
@@ -215,6 +256,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
+    if (!await _connectivity.isConnected()) {
+      emit(VerificationFailed(
+        message: 'No internet connection. Please check your network and try again.',
+        email: event.email,
+        firstName: '',
+      ));
+      return;
+    }
     try {
       final isValid = await _verificationService.verifyCode(
         email: event.email,
@@ -248,7 +297,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     } catch (e) {
       emit(VerificationFailed(
-        message: 'Verification failed. Please try again.',
+        message: _isNetworkError(e)
+            ? 'No internet connection. Please check your network and try again.'
+            : 'Verification failed. Please try again.',
         email: event.email,
         firstName: '',
       ));
@@ -260,6 +311,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
+    if (!await _connectivity.isConnected()) {
+      emit(VerificationFailed(
+        message: 'No internet connection. Please check your network and try again.',
+        email: event.email,
+        firstName: event.firstName,
+      ));
+      return;
+    }
     try {
       await _verificationService.sendVerificationCode(
         email: event.email,
@@ -271,7 +330,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ));
     } catch (e) {
       emit(VerificationFailed(
-        message: 'Failed to resend code: $e',
+        message: _isNetworkError(e)
+            ? 'No internet connection. Please check your network and try again.'
+            : 'Failed to resend code. Please try again.',
         email: event.email,
         firstName: event.firstName,
       ));
@@ -283,6 +344,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
+    if (!await _connectivity.isConnected()) {
+      emit(const AuthError('No internet connection. Please check your network and try again.'));
+      return;
+    }
     try {
       final user = await _authRepository.signInWithEmailAndPassword(
         event.email,
@@ -292,7 +357,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } on FirebaseAuthException catch (e) {
       emit(AuthError(_mapSignInError(e.code)));
     } catch (e) {
-      emit(AuthError(e.toString()));
+      if (_isNetworkError(e)) {
+        emit(const AuthError('No internet connection. Please check your network and try again.'));
+      } else {
+        emit(AuthError(e.toString()));
+      }
     }
   }
 
@@ -301,13 +370,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
+    if (!await _connectivity.isConnected()) {
+      emit(const AuthError('No internet connection. Please check your network and try again.'));
+      return;
+    }
     try {
       await _authRepository.sendPasswordResetEmail(event.email);
       emit(ForgotPasswordSuccess());
     } on FirebaseAuthException catch (e) {
       emit(AuthError(_mapSignInError(e.code)));
     } catch (e) {
-      emit(AuthError(e.toString()));
+      if (_isNetworkError(e)) {
+        emit(const AuthError('No internet connection. Please check your network and try again.'));
+      } else {
+        emit(AuthError(e.toString()));
+      }
     }
   }
 
@@ -317,11 +394,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
+    if (!await _connectivity.isConnected()) {
+      emit(const AuthError('No internet connection. Please check your network and try again.'));
+      return;
+    }
     try {
       await _passwordResetService.sendOtp(email: event.email);
       emit(ForgotPasswordOtpSent(email: event.email));
     } catch (e) {
-      emit(AuthError(e.toString()));
+      if (_isNetworkError(e)) {
+        emit(const AuthError('No internet connection. Please check your network and try again.'));
+      } else {
+        emit(AuthError(e.toString()));
+      }
     }
   }
 
@@ -331,6 +416,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
+    if (!await _connectivity.isConnected()) {
+      emit(ForgotPasswordOtpFailed(
+        message: 'No internet connection. Please check your network and try again.',
+        email: event.email,
+      ));
+      return;
+    }
     try {
       final valid = await _passwordResetService.verifyOtp(
         email: event.email,
@@ -346,7 +438,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     } catch (e) {
       emit(ForgotPasswordOtpFailed(
-        message: 'Verification failed. Please try again.',
+        message: _isNetworkError(e)
+            ? 'No internet connection. Please check your network and try again.'
+            : 'Verification failed. Please try again.',
         email: event.email,
       ));
     }
@@ -358,6 +452,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
+    if (!await _connectivity.isConnected()) {
+      emit(const AuthError('No internet connection. Please check your network and try again.'));
+      return;
+    }
     try {
       await _passwordResetService.resetPassword(
         email: event.email,
@@ -366,7 +464,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       emit(ForgotPasswordResetSuccess());
     } catch (e) {
-      emit(AuthError(e.toString()));
+      if (_isNetworkError(e)) {
+        emit(const AuthError('No internet connection. Please check your network and try again.'));
+      } else {
+        emit(AuthError(e.toString()));
+      }
     }
   }
 
@@ -407,6 +509,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) {
     _registrationData = const RegistrationData();
     emit(AuthInitial());
+  }
+
+  /// Returns true for socket/network-level failures (no connectivity).
+  bool _isNetworkError(Object e) {
+    if (e is SocketException) return true;
+    final msg = e.toString().toLowerCase();
+    return msg.contains('network') ||
+        msg.contains('socket') ||
+        msg.contains('connection') ||
+        msg.contains('unreachable') ||
+        msg.contains('failed host lookup') ||
+        msg.contains('no address associated');
   }
 
   bool _isPasswordValid(String password) {

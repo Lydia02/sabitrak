@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
 import '../../../data/repositories/inventory_repository.dart';
+import '../../../data/repositories/waste_repository.dart';
 
 class UpdatePantrySheet extends StatefulWidget {
   final FoodItem item;
@@ -25,6 +26,7 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
   late String _selectedStorage;
   bool _isSaving = false;
   bool _isDeleting = false;
+  final WasteRepository _wasteRepo = WasteRepository();
 
   static const List<String> _units = [
     'Pieces',
@@ -110,28 +112,66 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
   }
 
   Future<void> _delete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Remove Item'),
-        content:
-            Text('Remove "${widget.item.name}" from your inventory?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Remove',
-                style: TextStyle(color: Colors.red)),
+    final isExpired = widget.item.isExpired;
+
+    // For expired items: confirm and auto-log as wasted.
+    // For fresh/expiring items: ask whether they were Used or Wasted.
+    bool logAsWaste = false;
+
+    if (isExpired) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Remove Expired Item'),
+          content: Text(
+            '"${widget.item.name}" has expired and will be recorded as wasted. Remove it?',
           ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Remove', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      logAsWaste = true;
+    } else {
+      final reason = await showDialog<String>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Remove Item'),
+          content: Text('How was "${widget.item.name}" removed?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'cancel'),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'used'),
+              child: const Text('Used Up',
+                  style: TextStyle(color: AppTheme.primaryGreen)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'wasted'),
+              child: const Text('Wasted', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      );
+      if (reason == null || reason == 'cancel') return;
+      logAsWaste = reason == 'wasted';
+    }
 
     setState(() => _isDeleting = true);
     try {
+      if (logAsWaste) {
+        await _wasteRepo.logWaste(widget.item);
+      }
       await widget.repo.deleteFoodItem(widget.item.id);
       if (mounted) Navigator.of(context).pop();
     } catch (e) {

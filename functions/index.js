@@ -1,5 +1,5 @@
 const { onRequest } = require("firebase-functions/v2/https");
-const { onDocumentCreated, onDocumentDeleted, onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentDeleted, onDocumentUpdated, onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
@@ -111,13 +111,14 @@ exports.onFoodItemAdded = onDocumentCreated(
 
     const actorName = await resolveActorName(db, addedBy);
     const title = "🛒 Pantry Updated";
-    const body = `${actorName} added ${itemName} to the pantry.`;
+    // body is stored without the actor prefix — Flutter prepends "You" or actorName
+    const body = `added ${itemName} to the pantry.`;
 
     // Push to OTHER members only (don't push to self)
     const tokens = await getHouseholdTokens(db, householdId, addedBy);
 
     await Promise.all([
-      sendPush(tokens, title, body, { type: "householdUpdate", itemName }),
+      sendPush(tokens, title, `${actorName} ${body}`, { type: "householdUpdate", itemName }),
       // Persist for ALL members (including actor — shows in their own inbox)
       persistNotification(db, householdId, "householdUpdate", title, body, addedBy, actorName),
     ]);
@@ -136,16 +137,37 @@ exports.onFoodItemDeleted = onDocumentDeleted(
     const { householdId, addedBy, name: itemName = "An item" } = data;
     if (!householdId) return;
 
-    // Use addedBy as a proxy for who deleted (best available)
-    const actorName = await resolveActorName(db, addedBy);
-    const title = "📦 Item Removed";
-    const body = `${actorName} removed ${itemName} from the pantry.`;
+    // If the item had already expired, archive it in waste_log.
+    // The Flutter app also writes to waste_log when the user marks it as
+    // wasted, so we only write here for items deleted by other means
+    // (e.g. programmatic cleanup) where expiryDate is in the past.
+    const expiryDate = data.expiryDate;
+    const now = Timestamp.now();
+    if (expiryDate && expiryDate.seconds < now.seconds) {
+      await db.collection("waste_log").add({
+        itemId: event.data.id,
+        itemName: itemName,
+        category: data.category || "",
+        quantity: data.quantity || 0,
+        unit: data.unit || "",
+        householdId,
+        addedBy: addedBy || null,
+        expiryDate: expiryDate,
+        wastedAt: now,
+      });
+    }
 
-    const tokens = await getHouseholdTokens(db, householdId, addedBy);
+    // Use lastEditedBy (set by Flutter just before delete) or fall back to addedBy
+    const actorUid = data.lastEditedBy || addedBy;
+    const actorName = await resolveActorName(db, actorUid);
+    const title = "📦 Item Removed";
+    const body = `removed ${itemName} from the pantry.`;
+
+    const tokens = await getHouseholdTokens(db, householdId, actorUid);
 
     await Promise.all([
-      sendPush(tokens, title, body, { type: "householdUpdate", itemName }),
-      persistNotification(db, householdId, "householdUpdate", title, body, addedBy, actorName),
+      sendPush(tokens, `🛒 ${title}`, `${actorName} ${body}`, { type: "householdUpdate", itemName }),
+      persistNotification(db, householdId, "householdUpdate", title, body, actorUid, actorName),
     ]);
   }
 );
@@ -168,20 +190,70 @@ exports.onFoodItemUpdated = onDocumentUpdated(
     const expiryChanged = String(before.expiryDate?.seconds) !== String(after.expiryDate?.seconds);
     if (!qtyChanged && !expiryChanged) return;
 
-    const actorName = await resolveActorName(db, addedBy);
-    const title = "✏️ Item Updated";
-    const body = `${actorName} updated ${itemName} in the pantry.`;
+    // Use lastEditedBy (set by Flutter on every update) or fall back to addedBy
+    const actorUid = after.lastEditedBy || addedBy;
+    const actorName = await resolveActorName(db, actorUid);
 
-    const tokens = await getHouseholdTokens(db, householdId, addedBy);
+    // Build a meaningful body describing what changed
+    let changeDesc;
+    if (qtyChanged && expiryChanged) {
+      changeDesc = `updated quantity and expiry date of ${itemName}.`;
+    } else if (qtyChanged) {
+      changeDesc = `updated ${itemName} quantity to ${after.quantity} ${after.unit || ""}.`.trim();
+    } else {
+      changeDesc = `updated the expiry date of ${itemName}.`;
+    }
+
+    const title = "✏️ Item Updated";
+    const tokens = await getHouseholdTokens(db, householdId, actorUid);
 
     await Promise.all([
-      sendPush(tokens, title, body, { type: "householdUpdate", itemName }),
-      persistNotification(db, householdId, "householdUpdate", title, body, addedBy, actorName),
+      sendPush(tokens, title, `${actorName} ${changeDesc}`, { type: "householdUpdate", itemName }),
+      persistNotification(db, householdId, "householdUpdate", title, changeDesc, actorUid, actorName),
     ]);
   }
 );
 
-// ─── 4. Daily expiry check — 8 AM WAT (7 AM UTC) ─────────────────────────────
+// ─── 4. Household member JOINED ───────────────────────────────────────────────
+// Fires when the households/{householdId} document is updated (members array grows)
+
+exports.onHouseholdMemberJoined = onDocumentWritten(
+  { document: "households/{householdId}", region: "us-central1" },
+  async (event) => {
+    const before = event.data?.before?.data();
+    const after = event.data?.after?.data();
+    if (!before || !after) return;
+
+    const beforeMembers = before.members || [];
+    const afterMembers = after.members || [];
+
+    // Find newly added members
+    const newMembers = afterMembers.filter((uid) => !beforeMembers.includes(uid));
+    if (newMembers.length === 0) return;
+
+    const db = getFirestore();
+    const householdId = event.params.householdId;
+    const householdName = after.name || "your household";
+
+    await Promise.all(
+      newMembers.map(async (newUid) => {
+        const newMemberName = await resolveActorName(db, newUid);
+        const title = "👥 New Member Joined";
+        const body = `joined ${householdName}.`;
+
+        // Push to existing members (everyone except the new joiner)
+        const tokens = await getHouseholdTokens(db, householdId, newUid);
+        await Promise.all([
+          sendPush(tokens, title, `${newMemberName} ${body}`, { type: "householdUpdate" }),
+          // Persist for ALL members (so the joiner also sees it)
+          persistNotification(db, householdId, "householdUpdate", title, body, newUid, newMemberName),
+        ]);
+      })
+    );
+  }
+);
+
+// ─── 5. Daily expiry check — 8 AM WAT (7 AM UTC) ─────────────────────────────
 
 exports.checkExpiringItems = onSchedule(
   { schedule: "0 7 * * *", timeZone: "UTC", region: "us-central1" },
@@ -224,7 +296,57 @@ exports.checkExpiringItems = onSchedule(
   }
 );
 
-// ─── 5. Daily recipe reminder — 12 PM WAT (11 AM UTC) ────────────────────────
+// ─── 6. Auto-move long-expired items to waste_log — 6 AM UTC daily ───────────
+//
+// Any food item whose expiryDate is more than 7 days in the past is considered
+// abandoned waste. We archive it to waste_log and delete it from food_items so
+// the inventory stays clean and the waste reduction % stays accurate.
+
+exports.autoMoveExpiredToWaste = onSchedule(
+  { schedule: "0 6 * * *", timeZone: "UTC", region: "us-central1" },
+  async () => {
+    const db = getFirestore();
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const snap = await db
+      .collection("food_items")
+      .where("expiryDate", "<", Timestamp.fromDate(sevenDaysAgo))
+      .get();
+
+    if (snap.empty) return;
+
+    const batch = db.batch();
+    const wasteEntries = [];
+
+    snap.docs.forEach((doc) => {
+      const data = doc.data();
+      if (!data.householdId) return;
+
+      wasteEntries.push({
+        itemId: doc.id,
+        itemName: data.name || "Unknown item",
+        category: data.category || "",
+        quantity: data.quantity || 0,
+        unit: data.unit || "",
+        householdId: data.householdId,
+        addedBy: data.addedBy || null,
+        expiryDate: data.expiryDate,
+        wastedAt: Timestamp.now(),
+      });
+
+      batch.delete(doc.ref);
+    });
+
+    // Write waste log entries and delete expired items atomically
+    await Promise.all([
+      ...wasteEntries.map((entry) => db.collection("waste_log").add(entry)),
+      batch.commit(),
+    ]);
+  }
+);
+
+// ─── 7. Daily recipe reminder — 12 PM WAT (11 AM UTC) ────────────────────────
 
 exports.dailyRecipeReminder = onSchedule(
   { schedule: "0 11 * * *", timeZone: "UTC", region: "us-central1" },

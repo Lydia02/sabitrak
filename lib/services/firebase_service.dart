@@ -18,6 +18,7 @@ class FirebaseService {
   CollectionReference get households => firestore.collection('households');
   CollectionReference get foodItems => firestore.collection('food_items');
   CollectionReference get recipes => firestore.collection('recipes');
+  CollectionReference get wasteLog => firestore.collection('waste_log');
 
   // Get current user
   User? get currentUser => auth.currentUser;

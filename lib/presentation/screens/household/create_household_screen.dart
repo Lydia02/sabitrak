@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../services/firebase_service.dart';
+import '../../../services/local_cache_service.dart';
 import '../../widgets/error_modal.dart';
 import '../main/main_shell.dart';
 
@@ -36,6 +37,14 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  Future<String> _getHouseholdId(FirebaseService svc, String uid) async {
+    final q = await svc.households
+        .where('members', arrayContains: uid)
+        .limit(1)
+        .get();
+    return q.docs.isEmpty ? '' : q.docs.first.id;
   }
 
   String _generateInviteCode() {
@@ -444,6 +453,16 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setBool('household_setup_done', true);
+                  final svc = FirebaseService();
+                  final u = svc.currentUser;
+                  if (u != null) {
+                    final hid = await _getHouseholdId(svc, u.uid);
+                    await LocalCacheService().saveUserProfile(
+                      uid: u.uid,
+                      displayName: u.displayName ?? u.email ?? '',
+                      householdId: hid,
+                    );
+                  }
                   if (!context.mounted) return;
                   Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (_) => MainShell(key: MainShell.shellKey)),

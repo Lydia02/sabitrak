@@ -1,23 +1,36 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/food_item.dart';
 import '../../services/firebase_service.dart';
+import '../../services/local_cache_service.dart';
 
 class InventoryRepository {
   final FirebaseService _firebaseService = FirebaseService();
+  final LocalCacheService _cache = LocalCacheService();
 
   // Add food item
   Future<void> addFoodItem(FoodItem item) async {
     await _firebaseService.foodItems.add(item.toFirestore());
   }
 
-  // Get all food items for a household
-  Stream<List<FoodItem>> getFoodItems(String householdId) {
-    return _firebaseService.foodItems
+  // Get all food items for a household.
+  // Emits cached data immediately (so the UI shows something while offline),
+  // then keeps updating from Firestore whenever connectivity is restored.
+  Stream<List<FoodItem>> getFoodItems(String householdId) async* {
+    // 1. Yield cached items instantly so the screen is never blank offline
+    final cached = _cache.getCachedFoodItems(householdId);
+    if (cached.isNotEmpty) yield cached;
+
+    // 2. Stream live updates from Firestore and keep the cache in sync
+    await for (final snapshot in _firebaseService.foodItems
         .where('householdId', isEqualTo: householdId)
         .orderBy('expiryDate')
-        .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => FoodItem.fromFirestore(doc)).toList());
+        .snapshots()) {
+      final items =
+          snapshot.docs.map((doc) => FoodItem.fromFirestore(doc)).toList();
+      // Persist to Hive so offline reads are fresh
+      await _cache.saveFoodItems(householdId, items);
+      yield items;
+    }
   }
 
   // Get expiring items (within 3 days)
@@ -40,11 +53,21 @@ class InventoryRepository {
       if (v is DateTime) return MapEntry(k, Timestamp.fromDate(v));
       return MapEntry(k, v);
     });
+    // Tag who made the edit so Cloud Functions can attribute the notification
+    final uid = _firebaseService.currentUser?.uid;
+    if (uid != null) converted['lastEditedBy'] = uid;
     await _firebaseService.foodItems.doc(itemId).update(converted);
   }
 
-  // Delete food item
+  // Delete food item — stamps lastEditedBy before deleting so the Cloud
+  // Function onFoodItemDeleted can read the correct actor from the snapshot
   Future<void> deleteFoodItem(String itemId) async {
+    final uid = _firebaseService.currentUser?.uid;
+    if (uid != null) {
+      await _firebaseService.foodItems
+          .doc(itemId)
+          .update({'lastEditedBy': uid});
+    }
     await _firebaseService.foodItems.doc(itemId).delete();
   }
 

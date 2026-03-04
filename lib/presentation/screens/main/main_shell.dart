@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../services/firebase_service.dart';
 import '../../../services/notification_service.dart';
@@ -55,7 +56,7 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   int _currentIndex = 0;
 
   StreamSubscription<QuerySnapshot>? _notifSub;
@@ -71,6 +72,7 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Initialise push notifications for the signed-in user
     PushNotificationService().init();
     // Initial badge load
@@ -82,8 +84,24 @@ class _MainShellState extends State<MainShell> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _notifSub?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      // Record when the user last had the app open
+      SharedPreferences.getInstance().then(
+        (prefs) => prefs.setInt(
+          'last_active_ms',
+          DateTime.now().millisecondsSinceEpoch,
+        ),
+      );
+    }
   }
 
   Future<void> _startNotificationsWatch() async {

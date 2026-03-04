@@ -5,6 +5,7 @@ import 'firebase_options.dart';
 import 'config/theme/app_theme.dart';
 import 'config/theme/theme_notifier.dart';
 import 'presentation/screens/splash/splash_screen.dart';
+import 'services/local_cache_service.dart';
 import 'services/push_notification_service.dart';
 
 /// Background message handler — must be a top-level function (not a closure).
@@ -25,6 +26,7 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   await ThemeNotifier.instance.init();
+  await LocalCacheService.init();
 
   runApp(const SabiTrakApp());
 }

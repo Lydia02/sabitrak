@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../services/firebase_service.dart';
+import '../../../services/local_cache_service.dart';
 import '../../widgets/error_modal.dart';
 import '../main/main_shell.dart';
 
@@ -52,6 +53,19 @@ class _SoloSetupScreenState extends State<SoloSetupScreen> {
       if (!mounted) return;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('household_setup_done', true);
+      if (user != null) {
+        final svc = FirebaseService();
+        final q = await svc.households
+            .where('members', arrayContains: user.uid)
+            .limit(1)
+            .get();
+        final hid = q.docs.isEmpty ? '' : q.docs.first.id;
+        await LocalCacheService().saveUserProfile(
+          uid: user.uid,
+          displayName: user.displayName ?? user.email ?? '',
+          householdId: hid,
+        );
+      }
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => MainShell(key: MainShell.shellKey)),
