@@ -14,17 +14,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
   final VerificationService _verificationService;
   final PasswordResetService _passwordResetService;
-  final ConnectivityService _connectivity = ConnectivityService();
+  late final ConnectivityService _connectivity;
   RegistrationData _registrationData = const RegistrationData();
 
   AuthBloc({
     AuthRepository? authRepository,
     VerificationService? verificationService,
     PasswordResetService? passwordResetService,
+    ConnectivityService? connectivityService,
   })  : _authRepository = authRepository ?? AuthRepository(),
         _verificationService = verificationService ?? VerificationService(),
         _passwordResetService = passwordResetService ?? PasswordResetService(),
         super(AuthInitial()) {
+    _connectivity = connectivityService ?? ConnectivityService();
     on<SignUpInfoSubmitted>(_onSignUpInfoSubmitted);
     on<ProfileDetailsSubmitted>(_onProfileDetailsSubmitted);
     on<SecuritySetupSubmitted>(_onSecuritySetupSubmitted);
