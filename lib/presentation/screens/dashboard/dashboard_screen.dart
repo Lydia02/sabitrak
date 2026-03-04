@@ -5,6 +5,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
 import '../../../data/models/matched_recipe.dart';
 import '../../../data/repositories/inventory_repository.dart';
+import '../../../data/repositories/waste_repository.dart';
 import '../../../services/firebase_service.dart';
 import '../../../services/recipe_service.dart';
 import '../inventory/add_item_options_screen.dart';
@@ -29,8 +30,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _popupShown = false;
 
   final InventoryRepository _inventoryRepo = InventoryRepository();
+  final WasteRepository _wasteRepo = WasteRepository();
   final RecipeService _recipeService = RecipeService();
   StreamSubscription<List<FoodItem>>? _inventorySub;
+  StreamSubscription? _wasteSub;
+  int _wasteCount = 0;
   List<FoodItem> _inventoryItems = [];
   List<MatchedRecipe> _recommendedRecipes = [];
 
@@ -58,6 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void dispose() {
     _inventorySub?.cancel();
+    _wasteSub?.cancel();
     super.dispose();
   }
 
@@ -98,6 +103,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (changed || _recommendedRecipes.isEmpty) _fetchDashboardRecipes(items);
           }
         });
+        _wasteSub = _wasteRepo.getWasteLogs(householdId).listen((logs) {
+          if (mounted) setState(() => _wasteCount = logs.length);
+        });
       }
     }
   }
@@ -135,6 +143,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   bool get _isEmpty => _totalItems == 0;
+
+  double get _wasteReductionPercent {
+    final totalEverAdded = _totalItems + _wasteCount;
+    if (totalEverAdded == 0) return 0;
+    return ((totalEverAdded - _wasteCount) / totalEverAdded * 100).clamp(0, 100);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -339,13 +353,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   height: 96,
                   child: CustomPaint(
                     painter: _DashRingPainter(
-                      value: _isEmpty ? 0.0 : 0.85,
+                      value: _wasteReductionPercent / 100,
                       trackColor: isDark
                           ? Colors.white.withValues(alpha: 0.1)
                           : AppTheme.fieldBorderColor.withValues(alpha: 0.3),
                       fillColor: AppTheme.primaryGreen,
                       textColor: textColor,
-                      label: _isEmpty ? '0%' : '85%',
+                      label: '${_wasteReductionPercent.round()}%',
                       strokeWidth: 8,
                     ),
                   ),
@@ -368,7 +382,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Text(
                         _isEmpty
                             ? 'Start tracking your food to see your reduction progress.'
-                            : 'You\'re doing great! Only 15% away from your monthly target.',
+                            : _wasteReductionPercent >= 80
+                                ? 'You\'re doing great! Keep using items before they expire.'
+                                : 'Log wasted items to track your reduction progress.',
                         style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 12,
