@@ -4,6 +4,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
 import '../../../data/repositories/inventory_repository.dart';
 import '../../../data/repositories/waste_repository.dart';
+import '../../../services/notification_service.dart';
 
 class UpdatePantrySheet extends StatefulWidget {
   final FoodItem item;
@@ -171,6 +172,17 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
     try {
       if (logAsWaste) {
         await _wasteRepo.logWaste(widget.item);
+        NotificationService().recordAction(
+          type: NotificationType.householdUpdate,
+          title: 'Item removed',
+          body: 'logged ${widget.item.name} as wasted.',
+        );
+      } else {
+        NotificationService().recordAction(
+          type: NotificationType.householdUpdate,
+          title: 'Item removed',
+          body: 'marked ${widget.item.name} as used up.',
+        );
       }
       await widget.repo.deleteFoodItem(widget.item.id);
       if (mounted) Navigator.of(context).pop();

@@ -91,16 +91,16 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.detached) {
-      // Record when the user last had the app open
-      SharedPreferences.getInstance().then(
-        (prefs) => prefs.setInt(
-          'last_active_ms',
-          DateTime.now().millisecondsSinceEpoch,
-        ),
-      );
+    // Keep last_active_ms fresh so the 30-day session window resets
+    SharedPreferences.getInstance().then(
+      (prefs) => prefs.setInt(
+        'last_active_ms',
+        DateTime.now().millisecondsSinceEpoch,
+      ),
+    );
+    // Re-check badge when app comes back to foreground (catches expiry alerts)
+    if (state == AppLifecycleState.resumed) {
+      NotificationBadge.refresh();
     }
   }
 

@@ -6,6 +6,7 @@ import '../../../data/repositories/inventory_repository.dart';
 import '../../../services/firebase_service.dart';
 import '../../../services/food_image_service.dart';
 import '../../../services/food_intelligence_service.dart';
+import '../../../services/notification_service.dart';
 import '../../widgets/error_modal.dart';
 
 class ManualEntryScreen extends StatefulWidget {
@@ -314,6 +315,12 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
       );
 
       final docRef = await _repo.addFoodItem(item).then((_) async {
+        // Record activity for the household notification inbox
+        NotificationService().recordAction(
+          type: NotificationType.householdUpdate,
+          title: 'Pantry updated',
+          body: 'added $name to pantry.',
+        );
         // re-fetch to get the doc reference for image update
         return FirebaseService().foodItems
             .where('householdId', isEqualTo: _householdId)
