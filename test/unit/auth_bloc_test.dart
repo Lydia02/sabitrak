@@ -117,8 +117,8 @@ void main() {
       'emits AuthError when passwords do not match',
       build: buildBloc,
       act: (bloc) => bloc.add(const SecuritySetupSubmitted(
-        password: 'Pass@1234',
-        confirmPassword: 'Different@1',
+        password: 'T3st_Fixture@99',
+        confirmPassword: 'Other_Fixture@11',
       )),
       expect: () => [
         isA<AuthError>().having(
@@ -145,8 +145,8 @@ void main() {
       'emits AuthError when password has no number',
       build: buildBloc,
       act: (bloc) => bloc.add(const SecuritySetupSubmitted(
-        password: 'Password@',
-        confirmPassword: 'Password@',
+        password: 'NoDigits@xx',
+        confirmPassword: 'NoDigits@xx',
       )),
       expect: () => [
         isA<AuthError>().having((s) => s.message, 'message', contains('number')),
@@ -157,8 +157,8 @@ void main() {
       'emits AuthError when password has no symbol',
       build: buildBloc,
       act: (bloc) => bloc.add(const SecuritySetupSubmitted(
-        password: 'Password1',
-        confirmPassword: 'Password1',
+        password: 'NoSymbol1xx',
+        confirmPassword: 'NoSymbol1xx',
       )),
       expect: () => [
         isA<AuthError>().having((s) => s.message, 'message', contains('symbol')),
@@ -172,8 +172,8 @@ void main() {
         return buildBloc();
       },
       act: (bloc) => bloc.add(const SecuritySetupSubmitted(
-        password: 'Pass@1234',
-        confirmPassword: 'Pass@1234',
+        password: 'T3st_Fixture@99',
+        confirmPassword: 'T3st_Fixture@99',
       )),
       expect: () => [
         isA<AuthLoading>(),
@@ -198,8 +198,8 @@ void main() {
           email: 'ada@example.com',
         ));
         bloc.add(const SecuritySetupSubmitted(
-          password: 'Pass@1234',
-          confirmPassword: 'Pass@1234',
+          password: 'T3st_Fixture@99',
+          confirmPassword: 'T3st_Fixture@99',
         ));
       },
       expect: () => [
@@ -242,8 +242,8 @@ void main() {
           country: 'Nigeria',
         ));
         bloc.add(const SecuritySetupSubmitted(
-          password: 'Pass@1234',
-          confirmPassword: 'Pass@1234',
+          password: 'T3st_Fixture@99',
+          confirmPassword: 'T3st_Fixture@99',
         ));
         bloc.add(const VerificationCodeSubmitted(
           email: 'ada@example.com',
@@ -319,7 +319,7 @@ void main() {
       },
       act: (bloc) => bloc.add(const SignInSubmitted(
         email: 'ada@example.com',
-        password: 'Pass@1234',
+        password: 'T3st_Fixture@99',
       )),
       expect: () => [
         isA<AuthLoading>(),
@@ -340,7 +340,7 @@ void main() {
       },
       act: (bloc) => bloc.add(const SignInSubmitted(
         email: 'ada@example.com',
-        password: 'WrongPass@1',
+        password: 'Wrong_Fixture@1',
       )),
       expect: () => [
         isA<AuthLoading>(),
@@ -361,7 +361,7 @@ void main() {
       },
       act: (bloc) => bloc.add(const SignInSubmitted(
         email: 'nobody@example.com',
-        password: 'Pass@1234',
+        password: 'T3st_Fixture@99',
       )),
       expect: () => [
         isA<AuthLoading>(),
@@ -381,7 +381,7 @@ void main() {
       },
       act: (bloc) => bloc.add(const SignInSubmitted(
         email: 'ada@example.com',
-        password: 'Pass@1234',
+        password: 'T3st_Fixture@99',
       )),
       expect: () => [
         isA<AuthLoading>(),
@@ -398,7 +398,7 @@ void main() {
       },
       act: (bloc) => bloc.add(const SignInSubmitted(
         email: 'ada@example.com',
-        password: 'Pass@1234',
+        password: 'T3st_Fixture@99',
       )),
       expect: () => [
         isA<AuthLoading>(),
@@ -562,8 +562,8 @@ void main() {
       },
       act: (bloc) => bloc.add(const ForgotPasswordReset(
         email: 'ada@example.com',
-        newPassword: 'NewPass@99',
-        resetToken: 'tok123',
+        newPassword: 'NewFixture@99',
+        resetToken: 'test-reset-token',
       )),
       expect: () => [
         isA<AuthLoading>(),
