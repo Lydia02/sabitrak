@@ -102,7 +102,7 @@ class _SplashScreenState extends State<SplashScreen>
         final lastActiveMs = prefs.getInt('last_active_ms');
         final withinGrace = lastActiveMs != null &&
             DateTime.now().millisecondsSinceEpoch - lastActiveMs <
-                const Duration(minutes: 10).inMilliseconds;
+                const Duration(days: 30).inMilliseconds;
 
         final householdDone = prefs.getBool('household_setup_done') ?? false;
         if (withinGrace && onboardingComplete && householdDone) {
