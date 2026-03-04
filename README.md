@@ -151,6 +151,61 @@ lib/
 
 ---
 
+## Testing
+
+### One-time setup (generates mock files)
+
+```bash
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+```
+
+### Run all tests at once
+
+```bash
+flutter test test/unit/ test/integration/ test/validation/ test/acceptance/
+```
+
+### Run a specific category
+
+```bash
+flutter test test/unit/
+flutter test test/integration/
+flutter test test/validation/
+flutter test test/acceptance/
+```
+
+### Run a single file
+
+```bash
+flutter test test/unit/food_item_model_test.dart
+```
+
+### Run with verbose output (see each test name)
+
+```bash
+flutter test test/unit/ --reporter=expanded
+```
+
+### Run a specific test by name
+
+```bash
+flutter test test/unit/food_item_model_test.dart --name "isExpired"
+```
+
+### Test coverage
+
+| Category | File | What it covers |
+|----------|------|----------------|
+| Unit | `test/unit/food_item_model_test.dart` | FoodItem properties, serialisation, round-trips |
+| Unit | `test/unit/inventory_repository_test.dart` | Duplicate detection, filter logic |
+| Unit | `test/unit/auth_bloc_test.dart` | Registration, sign-in, Google, forgot-password flows |
+| Integration | `test/integration/auth_flow_integration_test.dart` | Full multi-step auth flows with mocked services |
+| Validation | `test/validation/input_validation_test.dart` | Password rules, email format, quantity/date constraints |
+| Acceptance | `test/acceptance/acceptance_test_report.dart` | AC-01–AC-06 core user journey acceptance criteria |
+
+---
+
 ## Deployment
 
 ### Android APK (Current)
