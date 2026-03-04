@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../services/firebase_service.dart';
+import '../../../services/local_cache_service.dart';
 import '../../../services/push_notification_service.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
@@ -164,12 +165,23 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> _routeAfterSignIn(BuildContext ctx) async {
-    final hasHousehold = await FirebaseService().hasHousehold();
+    final firebaseService = FirebaseService();
+    final hasHousehold = await firebaseService.hasHousehold();
     final prefs = await SharedPreferences.getInstance();
     // Returning users who sign in are verified — mark flags accordingly
     await prefs.setBool('email_verified', true);
     if (hasHousehold) {
       await prefs.setBool('household_setup_done', true);
+      // Cache the user profile so the app can restore the session offline
+      final currentUser = firebaseService.currentUser;
+      if (currentUser != null) {
+        final householdId = await _getHouseholdId(firebaseService);
+        await LocalCacheService().saveUserProfile(
+          uid: currentUser.uid,
+          displayName: currentUser.displayName ?? currentUser.email ?? '',
+          householdId: householdId,
+        );
+      }
     }
     // Register FCM token for this device so push notifications work
     PushNotificationService().init();
@@ -186,6 +198,17 @@ class _SignInScreenState extends State<SignInScreen> {
         (route) => false,
       );
     }
+  }
+
+  Future<String> _getHouseholdId(FirebaseService svc) async {
+    final uid = svc.currentUser?.uid;
+    if (uid == null) return '';
+    final query = await svc.households
+        .where('members', arrayContains: uid)
+        .limit(1)
+        .get();
+    if (query.docs.isEmpty) return '';
+    return query.docs.first.id;
   }
 
   @override

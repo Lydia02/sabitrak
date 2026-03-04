@@ -2,6 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../services/connectivity_service.dart';
+import '../../../services/local_cache_service.dart';
+import '../main/main_shell.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../welcome/welcome_screen.dart';
 
@@ -76,26 +79,72 @@ class _SplashScreenState extends State<SplashScreen>
     final prefs = await SharedPreferences.getInstance();
     final onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
     final currentUser = FirebaseAuth.instance.currentUser;
+    final isOnline = await ConnectivityService().isConnected();
 
     // If a Google signup was started but never completed verification,
     // delete that Firebase account so it doesn't linger
     final pendingGoogleUid = prefs.getString('pending_google_uid');
     if (pendingGoogleUid != null && currentUser != null &&
         currentUser.uid == pendingGoogleUid) {
-      try {
-        await currentUser.delete();
-      } catch (_) {
+      if (isOnline) {
+        try {
+          await currentUser.delete();
+        } catch (_) {
+          await FirebaseAuth.instance.signOut();
+        }
+      } else {
         await FirebaseAuth.instance.signOut();
       }
       await prefs.remove('pending_google_uid');
     } else if (currentUser != null) {
-      // Always sign out on app open — user must log in every time
-      await FirebaseAuth.instance.signOut();
+      if (isOnline) {
+        // Check if user was active within the last 10 minutes
+        final lastActiveMs = prefs.getInt('last_active_ms');
+        final withinGrace = lastActiveMs != null &&
+            DateTime.now().millisecondsSinceEpoch - lastActiveMs <
+                const Duration(minutes: 10).inMilliseconds;
+
+        final householdDone = prefs.getBool('household_setup_done') ?? false;
+        if (withinGrace && onboardingComplete && householdDone) {
+          // Within grace period — go straight to app without signing out
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => MainShell(key: MainShell.shellKey),
+              transitionsBuilder: (_, animation, __, child) =>
+                  FadeTransition(opacity: animation, child: child),
+              transitionDuration: const Duration(milliseconds: 600),
+            ),
+          );
+          return;
+        }
+        // Grace period expired — sign out and require fresh login
+        await FirebaseAuth.instance.signOut();
+      } else {
+        // Offline: restore session if we have a cached profile + completed setup
+        final householdDone = prefs.getBool('household_setup_done') ?? false;
+        final cached = LocalCacheService().getCachedUserProfile();
+        if (onboardingComplete && householdDone && cached != null) {
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) =>
+                  MainShell(key: MainShell.shellKey),
+              transitionsBuilder: (_, animation, __, child) =>
+                  FadeTransition(opacity: animation, child: child),
+              transitionDuration: const Duration(milliseconds: 600),
+            ),
+          );
+          return;
+        }
+        // No cached session — still sign out so they hit the welcome screen
+        await FirebaseAuth.instance.signOut();
+      }
     }
 
     if (!mounted) return;
 
-    // After sign-out, route based only on whether they've onboarded before
+    // Route based on whether they've completed onboarding before
     final Widget destination;
     if (onboardingComplete) {
       destination = const WelcomeScreen();

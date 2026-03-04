@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
 import '../../../data/repositories/inventory_repository.dart';
+import '../../../data/repositories/waste_repository.dart';
 import '../../../services/firebase_service.dart';
 import '../inventory/add_item_options_screen.dart';
 
@@ -17,8 +18,11 @@ class AnalyticsScreen extends StatefulWidget {
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
   bool _loaded = false;
   List<FoodItem> _items = [];
+  int _wasteCount = 0;
   final InventoryRepository _inventoryRepo = InventoryRepository();
+  final WasteRepository _wasteRepo = WasteRepository();
   StreamSubscription<List<FoodItem>>? _inventorySub;
+  StreamSubscription? _wasteSub;
 
   @override
   void initState() {
@@ -29,6 +33,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   void dispose() {
     _inventorySub?.cancel();
+    _wasteSub?.cancel();
     super.dispose();
   }
 
@@ -49,6 +54,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         _inventorySub = _inventoryRepo.getFoodItems(householdId).listen((items) {
           if (mounted) setState(() => _items = items);
         });
+        _wasteSub = _wasteRepo.getWasteLogs(householdId).listen((logs) {
+          if (mounted) setState(() => _wasteCount = logs.length);
+        });
       }
     }
   }
@@ -61,9 +69,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   int get _freshCount => _items.where((i) => !i.isExpired && !i.isExpiringSoon).length;
   int get _totalQuantity => _items.fold(0, (s, i) => s + i.quantity);
 
+  // Waste reduction: how many items added vs how many were wasted.
+  // Uses the persistent waste_log so the % reflects actual discarded items.
   double get _wasteReductionPercent {
-    if (_totalItems == 0) return 0;
-    return ((_totalItems - _expiredCount) / _totalItems * 100).clamp(0, 100);
+    final totalEverAdded = _totalItems + _wasteCount;
+    if (totalEverAdded == 0) return 0;
+    return ((totalEverAdded - _wasteCount) / totalEverAdded * 100)
+        .clamp(0, 100);
   }
 
   Map<String, int> get _categoryBreakdown {
@@ -303,9 +315,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     color: subtitleColor, height: 1.4)),
               const SizedBox(height: 10),
               Row(children: [
-                _Dot(color: const Color(0xFF2E7D32), label: 'Saved: ${_totalItems - _expiredCount}'),
+                _Dot(color: const Color(0xFF2E7D32), label: 'In pantry: $_totalItems'),
                 const SizedBox(width: 14),
-                _Dot(color: const Color(0xFFC62828), label: 'Wasted: $_expiredCount'),
+                _Dot(color: const Color(0xFFC62828), label: 'Wasted: $_wasteCount'),
               ]),
             ]),
           ),

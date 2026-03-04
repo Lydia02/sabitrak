@@ -11,6 +11,7 @@ import '../inventory/add_item_options_screen.dart';
 import '../inventory/barcode_scanner_screen.dart';
 import '../main/main_shell.dart';
 import '../recipe/recipe_detail_screen.dart';
+import '../../widgets/no_internet_banner.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -144,33 +145,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: _loaded
-            ? SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(textColor, subtitleColor, cardColor, isDark),
-                    const SizedBox(height: 16),
-                    _buildStatCards(textColor, subtitleColor, cardColor, isDark),
-                    const SizedBox(height: 16),
-                    _buildAnalyticalOverview(textColor, subtitleColor, cardColor, isDark),
-                    const SizedBox(height: 16),
-                    _buildQuickActions(textColor, cardColor, isDark),
-                    const SizedBox(height: 16),
-                    if (_isEmpty)
-                      _buildEmptyState(textColor, subtitleColor)
-                    else
-                      _buildRecommended(textColor, subtitleColor, cardColor, isDark),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              )
-            : const Center(
-                child: CircularProgressIndicator(
-                  color: AppTheme.primaryGreen,
-                  strokeWidth: 2,
-                ),
-              ),
+        child: Column(
+          children: [
+            const NoInternetBanner(),
+            Expanded(
+              child: _loaded
+                  ? SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildHeader(textColor, subtitleColor, cardColor, isDark),
+                          const SizedBox(height: 16),
+                          _buildStatCards(textColor, subtitleColor, cardColor, isDark),
+                          const SizedBox(height: 16),
+                          _buildAnalyticalOverview(textColor, subtitleColor, cardColor, isDark),
+                          const SizedBox(height: 16),
+                          _buildQuickActions(textColor, cardColor, isDark),
+                          const SizedBox(height: 16),
+                          if (_isEmpty)
+                            _buildEmptyState(textColor, subtitleColor)
+                          else
+                            _buildRecommended(textColor, subtitleColor, cardColor, isDark),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    )
+                  : const Center(
+                      child: CircularProgressIndicator(
+                        color: AppTheme.primaryGreen,
+                        strokeWidth: 2,
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

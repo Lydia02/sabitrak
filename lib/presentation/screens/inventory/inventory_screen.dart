@@ -6,6 +6,7 @@ import '../../../data/repositories/inventory_repository.dart';
 import '../../../services/firebase_service.dart';
 import 'add_item_options_screen.dart';
 import 'update_pantry_sheet.dart';
+import '../../widgets/no_internet_banner.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -130,7 +131,11 @@ class _InventoryScreenState extends State<InventoryScreen>
     return Scaffold(
       backgroundColor: scaffoldBg,
       body: SafeArea(
-        child: _householdId == null
+        child: Column(
+          children: [
+            const NoInternetBanner(),
+            Expanded(
+              child: _householdId == null
             ? const Center(
                 child: CircularProgressIndicator(
                   color: AppTheme.primaryGreen,
@@ -393,6 +398,9 @@ class _InventoryScreenState extends State<InventoryScreen>
                   );
                 },
               ),
+            ),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _openAddItem,

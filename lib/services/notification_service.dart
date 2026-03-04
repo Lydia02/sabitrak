@@ -87,6 +87,7 @@ class NotificationService {
           .collection('household_notifications')
           .doc(householdId)
           .collection('items')
+          .orderBy('createdAt', descending: true)
           .limit(50)
           .get();
 
