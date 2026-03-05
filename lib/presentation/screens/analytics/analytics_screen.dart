@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../data/models/food_item.dart';
+import '../../../data/models/waste_log.dart';
 import '../../../data/repositories/inventory_repository.dart';
 import '../../../data/repositories/waste_repository.dart';
 import '../../../services/firebase_service.dart';
@@ -18,7 +19,7 @@ class AnalyticsScreen extends StatefulWidget {
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
   bool _loaded = false;
   List<FoodItem> _items = [];
-  int _wasteCount = 0;
+  List<WasteLog> _wasteLogs = [];
   final InventoryRepository _inventoryRepo = InventoryRepository();
   final WasteRepository _wasteRepo = WasteRepository();
   StreamSubscription<List<FoodItem>>? _inventorySub;
@@ -55,7 +56,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           if (mounted) setState(() => _items = items);
         });
         _wasteSub = _wasteRepo.getWasteLogs(householdId).listen((logs) {
-          if (mounted) setState(() => _wasteCount = logs.length);
+          if (mounted) setState(() => _wasteLogs = logs);
         });
       }
     }
@@ -69,6 +70,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   int get _freshCount => _items.where((i) => !i.isExpired && !i.isExpiringSoon).length;
   int get _totalQuantity => _items.fold(0, (s, i) => s + i.quantity);
 
+  int get _wasteCount => _wasteLogs.length;
+
   // Waste reduction: how many items added vs how many were wasted.
   // Uses the persistent waste_log so the % reflects actual discarded items.
   double get _wasteReductionPercent {
@@ -76,6 +79,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     if (totalEverAdded == 0) return 0;
     return ((totalEverAdded - _wasteCount) / totalEverAdded * 100)
         .clamp(0, 100);
+  }
+
+  // Top wasted categories
+  Map<String, int> get _wasteCategoryBreakdown {
+    final map = <String, int>{};
+    for (final log in _wasteLogs) {
+      final cat = log.category.isNotEmpty ? log.category : 'Other';
+      map[cat] = (map[cat] ?? 0) + 1;
+    }
+    return map;
   }
 
   Map<String, int> get _categoryBreakdown {
@@ -197,6 +210,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
         // ── Expiring Soon list ───────────────────────────────────────────
         _buildExpiringSoon(isDark, textColor, subtitleColor, cardColor),
+        const SizedBox(height: 16),
+
+        // ── Wasted Items ─────────────────────────────────────────────────
+        _buildWastedItems(isDark, textColor, subtitleColor, cardColor),
         const SizedBox(height: 28),
       ]),
     );
@@ -506,6 +523,139 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         ]),
       ),
     );
+  }
+
+  // ── Wasted Items ─────────────────────────────────────────────────────────
+
+  Widget _buildWastedItems(bool isDark, Color textColor, Color subtitleColor, Color cardColor) {
+    final logs = _wasteLogs.take(10).toList();
+    final catBreakdown = _wasteCategoryBreakdown;
+    final sortedCats = catBreakdown.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: _card(isDark, cardColor),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            _SectionLabel(label: 'WASTED ITEMS', trailing: '', subtitleColor: subtitleColor),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFC62828).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '$_wasteCount item${_wasteCount == 1 ? '' : 's'}',
+                style: const TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFC62828),
+                ),
+              ),
+            ),
+          ]),
+          if (_wasteCount == 0) ...[
+            const SizedBox(height: 16),
+            Row(children: [
+              const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 18),
+              const SizedBox(width: 8),
+              Text('No waste logged yet. Great job!',
+                  style: TextStyle(fontFamily: 'Roboto', fontSize: 13, color: subtitleColor)),
+            ]),
+          ] else ...[
+            // Category breakdown bars
+            if (sortedCats.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              ...sortedCats.take(4).map((e) {
+                final frac = e.value / _wasteCount;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(children: [
+                    SizedBox(
+                      width: 90,
+                      child: Text(e.key,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontFamily: 'Roboto', fontSize: 12,
+                              fontWeight: FontWeight.w500, color: textColor)),
+                    ),
+                    Expanded(
+                      child: SizedBox(
+                        height: 14,
+                        child: CustomPaint(
+                          painter: _BarPainter(
+                            fraction: frac,
+                            trackColor: isDark
+                                ? Colors.white.withValues(alpha: 0.07)
+                                : Colors.black.withValues(alpha: 0.05),
+                            fillColor: const Color(0xFFC62828),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 24,
+                      child: Text('${e.value}',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(fontFamily: 'Roboto', fontSize: 12,
+                              fontWeight: FontWeight.w700, color: Color(0xFFC62828))),
+                    ),
+                  ]),
+                );
+              }),
+            ],
+            // Recent wasted item rows
+            const SizedBox(height: 8),
+            Text('Recent', style: TextStyle(fontFamily: 'Roboto', fontSize: 11,
+                fontWeight: FontWeight.w700, color: subtitleColor, letterSpacing: 1.2)),
+            const SizedBox(height: 10),
+            ...logs.map((log) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(children: [
+                Container(
+                  width: 4, height: 36,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC62828),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(log.itemName,
+                        style: TextStyle(fontFamily: 'Roboto', fontSize: 13,
+                            fontWeight: FontWeight.w600, color: textColor)),
+                    Text('${log.quantity} ${log.unit} · ${log.category}',
+                        style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: subtitleColor)),
+                  ]),
+                ),
+                Text(_formatWastedAt(log.wastedAt),
+                    style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: subtitleColor)),
+              ]),
+            )),
+            if (_wasteLogs.length > 10)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text('+${_wasteLogs.length - 10} more',
+                    style: TextStyle(fontFamily: 'Roboto', fontSize: 12, color: subtitleColor)),
+              ),
+          ],
+        ]),
+      ),
+    );
+  }
+
+  String _formatWastedAt(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inDays == 0) return 'Today';
+    if (diff.inDays == 1) return 'Yesterday';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${dt.day}/${dt.month}';
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

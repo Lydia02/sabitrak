@@ -306,16 +306,32 @@ class FoodIntelligenceService {
         'Fresh fish is highly perishable. Cook within 1–2 days or freeze.',
       );
     }
+    // Tubers / root vegetables
+    if (q.contains('yam') ||
+        q.contains('cassava') ||
+        q.contains('cocoyam') ||
+        q.contains('taro') ||
+        q.contains('potato') ||
+        q.contains('sweet potato')) {
+      return _s(
+        'Tubers',
+        'Counter',
+        21,
+        'Store in a cool, dark, well-ventilated place.',
+        'Kg',
+      );
+    }
     // Beans / lentils / legumes (dried)
     if (q.contains('beans') ||
         q.contains('lentil') ||
         q.contains('pea') ||
         q.contains('cowpea')) {
       return _s(
-        'Grains',
+        'Legumes',
         'Cupboard',
         365,
         'Dried legumes last 1 year in airtight container.',
+        'Kg',
       );
     }
     // Rice / grain
@@ -329,6 +345,7 @@ class FoodIntelligenceService {
         'Cupboard',
         365,
         'Keep in sealed container away from moisture.',
+        'Kg',
       );
     }
     // Pasta / noodle
@@ -445,13 +462,15 @@ class FoodIntelligenceService {
     String category,
     String storage,
     int days,
-    String tip,
-  ) => FoodSuggestion(
+    String tip, [
+    String? unit,
+  ]) => FoodSuggestion(
     category: category,
     storageLocation: storage,
     shelfLifeDays: days,
     tip: tip,
     isGuessed: true,
+    suggestedUnit: unit,
   );
 
   // ── Comprehensive food database ────────────────────────────────────────────
@@ -662,34 +681,39 @@ class FoodIntelligenceService {
       'Keep in sealed container. Lasts 1 year.',
     ),
     'yam': _s(
-      'Vegetables',
+      'Tubers',
       'Counter',
       30,
       'Store whole yam in a cool, dark, well-ventilated place. Up to 1 month.',
+      'Kg',
     ),
     'yam flour': _s(
       'Grains',
       'Cupboard',
       180,
       'Store in airtight container in cool place.',
+      'Kg',
     ),
     'cassava': _s(
-      'Vegetables',
+      'Tubers',
       'Counter',
       5,
       'Fresh cassava must be used quickly. Peeled pieces refrigerate 3–5 days.',
+      'Kg',
     ),
     'cocoyam': _s(
-      'Vegetables',
+      'Tubers',
       'Counter',
       21,
       'Store in cool dry place like yam. Up to 3 weeks.',
+      'Kg',
     ),
     'taro': _s(
-      'Vegetables',
+      'Tubers',
       'Counter',
       21,
       'Store in cool dry ventilated place. Up to 3 weeks.',
+      'Kg',
     ),
     'plantain': _s(
       'Fruits',
@@ -990,28 +1014,32 @@ class FoodIntelligenceService {
       'Refrigerate in breathable bag. Up to 3 weeks.',
     ),
     'potato': _s(
-      'Vegetables',
+      'Tubers',
       'Counter',
       21,
       'Keep in cool dark dry place. Avoid fridge (sweetens starch).',
+      'Kg',
     ),
     'potatoes': _s(
-      'Vegetables',
+      'Tubers',
       'Counter',
       21,
       'Dark, cool, ventilated place. Never refrigerate raw.',
+      'Kg',
     ),
     'sweet potato': _s(
-      'Vegetables',
+      'Tubers',
       'Counter',
       30,
       'Store in cool dark dry place. Keeps up to 1 month.',
+      'Kg',
     ),
     'sweet potatoes': _s(
-      'Vegetables',
+      'Tubers',
       'Counter',
       30,
       'Keep in cool dry ventilated spot.',
+      'Kg',
     ),
     'cucumber': _s(
       'Vegetables',
@@ -1604,24 +1632,28 @@ class FoodIntelligenceService {
       'Cupboard',
       730,
       'White rice keeps 2 years in airtight container.',
+      'Kg',
     ),
     'white rice': _s(
       'Grains',
       'Cupboard',
       730,
       'Store sealed in cool dry place. Up to 2 years.',
+      'Kg',
     ),
     'brown rice': _s(
       'Grains',
       'Cupboard',
       180,
       'Brown rice has oils that go rancid — keep 6 months.',
+      'Kg',
     ),
     'basmati rice': _s(
       'Grains',
       'Cupboard',
       730,
       'Basmati keeps well. Store sealed, 2 years.',
+      'Kg',
     ),
     'parboiled rice': _s(
       'Grains',
@@ -2148,6 +2180,8 @@ class FoodSuggestion {
   final int shelfLifeDays;
   final String tip;
   final bool isGuessed;
+  /// Suggested unit for this food (e.g. 'Kg', 'Pieces', 'Cups'). May be null.
+  final String? suggestedUnit;
 
   const FoodSuggestion({
     required this.category,
@@ -2155,6 +2189,7 @@ class FoodSuggestion {
     required this.shelfLifeDays,
     required this.tip,
     required this.isGuessed,
+    this.suggestedUnit,
   });
 
   /// Human-readable shelf life e.g. "3 days", "2 weeks", "6 months"
