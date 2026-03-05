@@ -53,9 +53,11 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   static const List<String> _categories = [
     'Fruits',
     'Vegetables',
+    'Tubers',
     'Dairy',
     'Meat & Fish',
     'Grains',
+    'Legumes',
     'Canned',
     'Spices',
     'Beverages',
@@ -77,6 +79,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     'Pieces',
     'Kg',
     'Grams',
+    'Cups',
     'Litres',
     'Packs',
     'Bags',
@@ -97,9 +100,11 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   static const Map<String, int> _shelfLifeDefaults = {
     'Fruits': 5,
     'Vegetables': 5,
+    'Tubers': 30,
     'Dairy': 7,
     'Meat & Fish': 3,
     'Grains': 90,
+    'Legumes': 365,
     'Canned': 365,
     'Spices': 180,
     'Beverages': 30,
@@ -157,6 +162,12 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
       if (!_userOverrodeCategory) _selectedCategory = suggestion.category;
       if (!_userOverrodeStorage) {
         _selectedStorage = _itemType == ItemType.leftover ? 'Fridge' : suggestion.storageLocation;
+      }
+      // Auto-select suggested unit if user hasn't manually changed it
+      if (suggestion.suggestedUnit != null &&
+          _units.contains(suggestion.suggestedUnit) &&
+          _selectedUnit == 'Pieces') {
+        _selectedUnit = suggestion.suggestedUnit!;
       }
     });
     // For leftovers: auto-look up matching raw ingredient in pantry
