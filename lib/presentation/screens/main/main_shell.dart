@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../data/repositories/inventory_repository.dart';
+import '../../../data/repositories/waste_repository.dart';
 import '../../../services/firebase_service.dart';
 import '../../../services/notification_service.dart';
 import '../../../services/push_notification_service.dart';
@@ -101,6 +103,47 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     // Re-check badge when app comes back to foreground (catches expiry alerts)
     if (state == AppLifecycleState.resumed) {
       NotificationBadge.refresh();
+      _autoLogExpiredItems();
+    }
+  }
+
+  /// Scans the household inventory for items that have expired and
+  /// automatically logs them as wasted if not already in the waste_log.
+  Future<void> _autoLogExpiredItems() async {
+    try {
+      final firebase = FirebaseService();
+      final uid = firebase.currentUser?.uid;
+      if (uid == null) return;
+
+      final hQuery = await firebase.households
+          .where('members', arrayContains: uid)
+          .limit(1)
+          .get();
+      if (hQuery.docs.isEmpty) return;
+      final householdId = hQuery.docs.first.id;
+
+      final inventoryRepo = InventoryRepository();
+      final wasteRepo = WasteRepository();
+
+      final items = await inventoryRepo.getFoodItems(householdId).first;
+      final expiredItems = items.where((i) => i.isExpired).toList();
+      if (expiredItems.isEmpty) return;
+
+      // Fetch already-logged waste item IDs to avoid duplicates
+      final existingLogs = await wasteRepo.getWasteLogs(householdId).first;
+      final loggedItemIds = existingLogs.map((l) => l.itemId).toSet();
+
+      for (final item in expiredItems) {
+        if (loggedItemIds.contains(item.id)) continue;
+        await wasteRepo.logWaste(item);
+        await NotificationService().recordAction(
+          type: NotificationType.expired,
+          title: 'Item expired',
+          body: '${item.name} expired and was auto-logged as wasted.',
+        );
+      }
+    } catch (_) {
+      // Never crash the shell on background errors
     }
   }
 

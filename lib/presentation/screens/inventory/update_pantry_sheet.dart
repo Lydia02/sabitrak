@@ -33,6 +33,7 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
     'Pieces',
     'Kg',
     'Grams',
+    'Cups',
     'Litres',
     'Packs',
     'Bags',
