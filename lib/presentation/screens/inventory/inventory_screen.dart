@@ -32,8 +32,8 @@ class _InventoryScreenState extends State<InventoryScreen>
   int _selectedTabIndex = 0;
 
   // Status filter chips
-  static const List<String> _statusFilters = ['All', 'Expiring Soon', 'Expired', 'Fresh'];
-  String _selectedStatus = 'All';
+  static const List<String> _statusFilters = ['All Status', 'Expiring Soon', 'Expired', 'Fresh'];
+  String _selectedStatus = 'All Status';
 
   @override
   void initState() {
