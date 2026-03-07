@@ -264,7 +264,9 @@ void main() {
     });
 
     test('expiry title uses singular "day" when daysUntilExpiry is 1', () {
-      final now = DateTime.now();
+      final today = DateTime.now();
+      // Use next midnight + 1 day so inDays truncation always gives exactly 1
+      final tomorrow = DateTime(today.year, today.month, today.day + 1, 23, 59);
       final item = FoodItem(
         id: 'n-test-2',
         name: 'Banana',
@@ -272,12 +274,12 @@ void main() {
         category: 'Fruit',
         quantity: 1,
         unit: 'pcs',
-        purchaseDate: now.subtract(const Duration(days: 1)),
-        expiryDate: now.add(const Duration(days: 1)),
+        purchaseDate: today.subtract(const Duration(days: 1)),
+        expiryDate: tomorrow,
         storageLocation: 'Counter',
         householdId: 'hh-001',
         addedBy: 'uid-abc',
-        createdAt: now,
+        createdAt: today,
       );
       final days = item.daysUntilExpiry;
       final title = days == 0
@@ -287,7 +289,9 @@ void main() {
     });
 
     test('expiry title uses plural "days" when daysUntilExpiry > 1', () {
-      final now = DateTime.now();
+      final today = DateTime.now();
+      // Use midnight + 3 full days so inDays truncation always gives exactly 3
+      final inThreeDays = DateTime(today.year, today.month, today.day + 3, 23, 59);
       final item = FoodItem(
         id: 'n-test-3',
         name: 'Mango',
@@ -295,12 +299,12 @@ void main() {
         category: 'Fruit',
         quantity: 3,
         unit: 'pcs',
-        purchaseDate: now.subtract(const Duration(days: 1)),
-        expiryDate: now.add(const Duration(days: 3)),
+        purchaseDate: today.subtract(const Duration(days: 1)),
+        expiryDate: inThreeDays,
         storageLocation: 'Counter',
         householdId: 'hh-001',
         addedBy: 'uid-abc',
-        createdAt: now,
+        createdAt: today,
       );
       final days = item.daysUntilExpiry;
       final title = days == 0

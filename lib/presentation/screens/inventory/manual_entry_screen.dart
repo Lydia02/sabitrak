@@ -39,6 +39,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   String _selectedUnit = 'Pieces';
   bool _isLoading = false;
   String? _householdId;
+  int _householdMemberCount = 1;
   late ItemType _itemType;
 
   final _intelligenceService = FoodIntelligenceService();
@@ -180,13 +181,19 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   Future<void> _loadHouseholdId() async {
     final uid = FirebaseService().currentUser?.uid;
     if (uid == null) return;
-    final query =
-        await FirebaseService().households
-            .where('members', arrayContains: uid)
-            .limit(1)
-            .get();
+    final query = await FirebaseService()
+        .households
+        .where('members', arrayContains: uid)
+        .limit(1)
+        .get();
     if (query.docs.isNotEmpty && mounted) {
-      setState(() => _householdId = query.docs.first.id);
+      final doc = query.docs.first;
+      final members = (doc.data() as Map<String, dynamic>)['members'];
+      final memberCount = members is List ? members.length : 1;
+      setState(() {
+        _householdId = doc.id;
+        _householdMemberCount = memberCount;
+      });
     }
   }
 
@@ -989,6 +996,33 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                         ],
                       ),
                     ),
+                    // Cooking tip for grains/tubers stored in Kg
+                    if (_selectedUnit == 'Kg' &&
+                        (_selectedCategory == 'Grains' ||
+                            _selectedCategory == 'Tubers'))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8, bottom: 4),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.info_outline,
+                                size: 14, color: AppTheme.primaryGreen),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                '1 Kg ≈ 5 cups dry. '
+                                'For $_householdMemberCount person${_householdMemberCount == 1 ? '' : 's'}, '
+                                'that\'s ~${(_quantity * 5).toStringAsFixed(0)} cups '
+                                '($_householdMemberCount cup${_householdMemberCount == 1 ? '' : 's'} per cook).',
+                                style: const TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 11,
+                                  color: AppTheme.primaryGreen,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     const SizedBox(height: 32),
 
                     // Add to Inventory button
