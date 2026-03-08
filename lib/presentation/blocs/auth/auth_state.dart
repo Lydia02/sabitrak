@@ -95,7 +95,10 @@ class ForgotPasswordOtpSent extends AuthState {
 class ForgotPasswordOtpVerifiedState extends AuthState {
   final String email;
   final String otp;
-  const ForgotPasswordOtpVerifiedState({required this.email, required this.otp});
+  const ForgotPasswordOtpVerifiedState({
+    required this.email,
+    required this.otp,
+  });
   @override
   List<Object?> get props => [email, otp];
 }

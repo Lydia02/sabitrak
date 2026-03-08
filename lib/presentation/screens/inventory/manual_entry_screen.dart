@@ -153,7 +153,11 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
 
   void _applyNameSuggestion(String name) {
     if (name.trim().isEmpty) {
-      if (mounted) setState(() { _currentSuggestion = null; _linkedIngredient = null; });
+      if (mounted)
+        setState(() {
+          _currentSuggestion = null;
+          _linkedIngredient = null;
+        });
       return;
     }
     final suggestion = _intelligenceService.suggest(name);
@@ -162,7 +166,10 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
       _currentSuggestion = suggestion;
       if (!_userOverrodeCategory) _selectedCategory = suggestion.category;
       if (!_userOverrodeStorage) {
-        _selectedStorage = _itemType == ItemType.leftover ? 'Fridge' : suggestion.storageLocation;
+        _selectedStorage =
+            _itemType == ItemType.leftover
+                ? 'Fridge'
+                : suggestion.storageLocation;
       }
       // Auto-select suggested unit if user hasn't manually changed it
       if (suggestion.suggestedUnit != null &&
@@ -173,19 +180,22 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     });
     // For leftovers: auto-look up matching raw ingredient in pantry
     if (_itemType == ItemType.leftover && _householdId != null) {
-      _repo.findDuplicate(name, _householdId!, itemType: ItemType.ingredient)
-          .then((match) { if (mounted) setState(() => _linkedIngredient = match); });
+      _repo
+          .findDuplicate(name, _householdId!, itemType: ItemType.ingredient)
+          .then((match) {
+            if (mounted) setState(() => _linkedIngredient = match);
+          });
     }
   }
 
   Future<void> _loadHouseholdId() async {
     final uid = FirebaseService().currentUser?.uid;
     if (uid == null) return;
-    final query = await FirebaseService()
-        .households
-        .where('members', arrayContains: uid)
-        .limit(1)
-        .get();
+    final query =
+        await FirebaseService().households
+            .where('members', arrayContains: uid)
+            .limit(1)
+            .get();
     if (query.docs.isNotEmpty && mounted) {
       final doc = query.docs.first;
       final members = (doc.data() as Map<String, dynamic>)['members'];
@@ -204,39 +214,69 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
 
     final confirmed = await showDialog<int>(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setS) => AlertDialog(
-          title: Text('Deduct from ${ingredient.name}?'),
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text('Current stock: ${ingredient.quantity} ${ingredient.unit}',
-                style: const TextStyle(fontFamily: 'Roboto', fontSize: 13)),
-            const SizedBox(height: 16),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              IconButton(
-                onPressed: deductQty > 1 ? () => setS(() => deductQty--) : null,
-                icon: const Icon(Icons.remove_circle_outline),
-              ),
-              Text('$deductQty ${ingredient.unit}',
-                  style: const TextStyle(fontFamily: 'Roboto',
-                      fontSize: 16, fontWeight: FontWeight.w700)),
-              IconButton(
-                onPressed: deductQty < ingredient.quantity
-                    ? () => setS(() => deductQty++)
-                    : null,
-                icon: const Icon(Icons.add_circle_outline),
-              ),
-            ]),
-          ]),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Skip')),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGreen),
-              onPressed: () => Navigator.pop(ctx, deductQty),
-              child: const Text('Deduct', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+      builder:
+          (ctx) => StatefulBuilder(
+            builder:
+                (ctx, setS) => AlertDialog(
+                  title: Text('Deduct from ${ingredient.name}?'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Current stock: ${ingredient.quantity} ${ingredient.unit}',
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            onPressed:
+                                deductQty > 1
+                                    ? () => setS(() => deductQty--)
+                                    : null,
+                            icon: const Icon(Icons.remove_circle_outline),
+                          ),
+                          Text(
+                            '$deductQty ${ingredient.unit}',
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed:
+                                deductQty < ingredient.quantity
+                                    ? () => setS(() => deductQty++)
+                                    : null,
+                            icon: const Icon(Icons.add_circle_outline),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Skip'),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryGreen,
+                      ),
+                      onPressed: () => Navigator.pop(ctx, deductQty),
+                      child: const Text(
+                        'Deduct',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+          ),
     );
 
     if (confirmed != null && confirmed > 0) {
@@ -253,52 +293,76 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   Future<void> _addToInventory() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      showErrorModal(context, title: 'Missing Name', message: 'Please enter a food name.');
+      showErrorModal(
+        context,
+        title: 'Missing Name',
+        message: 'Please enter a food name.',
+      );
       return;
     }
     if (_householdId == null) {
-      showErrorModal(context, title: 'Error', message: 'No household found. Please try again.');
+      showErrorModal(
+        context,
+        title: 'Error',
+        message: 'No household found. Please try again.',
+      );
       return;
     }
 
     // ── Duplicate check (ingredients + leftovers) ───────────────────────────
     if (_itemType == ItemType.ingredient || _itemType == ItemType.leftover) {
-      final duplicate = await _repo.findDuplicate(name, _householdId!, itemType: _itemType);
+      final duplicate = await _repo.findDuplicate(
+        name,
+        _householdId!,
+        itemType: _itemType,
+      );
       if (duplicate != null && mounted) {
         final isLeftover = _itemType == ItemType.leftover;
         final action = await showDialog<String>(
           context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(isLeftover ? 'Leftover Already Logged' : 'Item Already Exists'),
-            content: Text(
-              '"${duplicate.name}" is already in your ${isLeftover ? 'leftovers' : 'pantry'} '
-              '(${duplicate.quantity} ${duplicate.unit}, ${duplicate.storageLocation}).\n\n'
-              'What would you like to do?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, 'cancel'),
-                child: const Text('Cancel'),
+          builder:
+              (ctx) => AlertDialog(
+                title: Text(
+                  isLeftover
+                      ? 'Leftover Already Logged'
+                      : 'Item Already Exists',
+                ),
+                content: Text(
+                  '"${duplicate.name}" is already in your ${isLeftover ? 'leftovers' : 'pantry'} '
+                  '(${duplicate.quantity} ${duplicate.unit}, ${duplicate.storageLocation}).\n\n'
+                  'What would you like to do?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, 'cancel'),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, 'add_anyway'),
+                    child: const Text('Add Separate'),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryGreen,
+                    ),
+                    onPressed: () => Navigator.pop(ctx, 'merge'),
+                    child: Text(
+                      isLeftover ? 'Add to Existing' : 'Update Quantity',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, 'add_anyway'),
-                child: const Text('Add Separate'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGreen),
-                onPressed: () => Navigator.pop(ctx, 'merge'),
-                child: Text(isLeftover ? 'Add to Existing' : 'Update Quantity',
-                    style: const TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
         );
         if (action == null || action == 'cancel') return;
         if (action == 'merge') {
           await _repo.mergeQuantity(duplicate.id, _quantity);
           if (!mounted) return;
-          showSuccessModal(context, title: 'Updated!',
-              message: 'Added $_quantity to your existing ${duplicate.name}.');
+          showSuccessModal(
+            context,
+            title: 'Updated!',
+            message: 'Added $_quantity to your existing ${duplicate.name}.',
+          );
           Future.delayed(const Duration(seconds: 2), () {
             if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
           });
@@ -312,7 +376,8 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
 
     try {
       final now = DateTime.now();
-      final expiryDate = widget.prefilledExpiryDate ?? now.add(Duration(days: _suggestedDays));
+      final expiryDate =
+          widget.prefilledExpiryDate ?? now.add(Duration(days: _suggestedDays));
       final uid = FirebaseService().currentUser?.uid ?? '';
 
       final item = FoodItem(
@@ -454,94 +519,139 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Row(children: [
-                      _TypeChip(
-                        label: 'Ingredient',
-                        icon: Icons.kitchen_outlined,
-                        selected: _itemType == ItemType.ingredient,
-                        onTap: () => setState(() {
-                          _itemType = ItemType.ingredient;
-                          _userOverrodeStorage = false;
-                          _applyNameSuggestion(_nameController.text);
-                        }),
-                        cardColor: cardColor,
-                        borderColor: borderColor,
-                      ),
-                      const SizedBox(width: 8),
-                      _TypeChip(
-                        label: 'Leftover',
-                        icon: Icons.rice_bowl_outlined,
-                        selected: _itemType == ItemType.leftover,
-                        onTap: () => setState(() {
-                          _itemType = ItemType.leftover;
-                          // Auto-set fridge + 3-day shelf life for leftovers
-                          if (!_userOverrodeStorage) _selectedStorage = 'Fridge';
-                        }),
-                        cardColor: cardColor,
-                        borderColor: borderColor,
-                      ),
-                      const SizedBox(width: 8),
-                      _TypeChip(
-                        label: 'Product',
-                        icon: Icons.shopping_bag_outlined,
-                        selected: _itemType == ItemType.product,
-                        onTap: () => setState(() => _itemType = ItemType.product),
-                        cardColor: cardColor,
-                        borderColor: borderColor,
-                      ),
-                    ]),
+                    Row(
+                      children: [
+                        _TypeChip(
+                          label: 'Ingredient',
+                          icon: Icons.kitchen_outlined,
+                          selected: _itemType == ItemType.ingredient,
+                          onTap:
+                              () => setState(() {
+                                _itemType = ItemType.ingredient;
+                                _userOverrodeStorage = false;
+                                _applyNameSuggestion(_nameController.text);
+                              }),
+                          cardColor: cardColor,
+                          borderColor: borderColor,
+                        ),
+                        const SizedBox(width: 8),
+                        _TypeChip(
+                          label: 'Leftover',
+                          icon: Icons.rice_bowl_outlined,
+                          selected: _itemType == ItemType.leftover,
+                          onTap:
+                              () => setState(() {
+                                _itemType = ItemType.leftover;
+                                // Auto-set fridge + 3-day shelf life for leftovers
+                                if (!_userOverrodeStorage)
+                                  _selectedStorage = 'Fridge';
+                              }),
+                          cardColor: cardColor,
+                          borderColor: borderColor,
+                        ),
+                        const SizedBox(width: 8),
+                        _TypeChip(
+                          label: 'Product',
+                          icon: Icons.shopping_bag_outlined,
+                          selected: _itemType == ItemType.product,
+                          onTap:
+                              () =>
+                                  setState(() => _itemType = ItemType.product),
+                          cardColor: cardColor,
+                          borderColor: borderColor,
+                        ),
+                      ],
+                    ),
                     if (_itemType == ItemType.leftover) ...[
                       const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE65100).withValues(alpha: 0.08),
+                          color: const Color(
+                            0xFFE65100,
+                          ).withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Row(children: [
-                          const Icon(Icons.info_outline, color: Color(0xFFE65100), size: 15),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Leftover: auto-set to Fridge with 3-day shelf life.',
-                              style: TextStyle(fontFamily: 'Roboto', fontSize: 11,
-                                  color: subtitleColor),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              color: Color(0xFFE65100),
+                              size: 15,
                             ),
-                          ),
-                        ]),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Leftover: auto-set to Fridge with 3-day shelf life.',
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 11,
+                                  color: subtitleColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       if (_linkedIngredient != null) ...[
                         const SizedBox(height: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                            color: AppTheme.primaryGreen.withValues(
+                              alpha: 0.08,
+                            ),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Row(children: [
-                            const Icon(Icons.link, color: AppTheme.primaryGreen, size: 15),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Found "${_linkedIngredient!.name}" in pantry (${_linkedIngredient!.quantity} ${_linkedIngredient!.unit}). Deduct used amount?',
-                                style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: subtitleColor),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.link,
+                                color: AppTheme.primaryGreen,
+                                size: 15,
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () => _showDeductDialog(),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryGreen,
-                                  borderRadius: BorderRadius.circular(6),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Found "${_linkedIngredient!.name}" in pantry (${_linkedIngredient!.quantity} ${_linkedIngredient!.unit}). Deduct used amount?',
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 11,
+                                    color: subtitleColor,
+                                  ),
                                 ),
-                                child: const Text('Deduct', style: TextStyle(
-                                    fontFamily: 'Roboto', fontSize: 11,
-                                    fontWeight: FontWeight.w700, color: Colors.white)),
                               ),
-                            ),
-                          ]),
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () => _showDeductDialog(),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryGreen,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'Deduct',
+                                    style: TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ],
@@ -1004,8 +1114,11 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                         padding: const EdgeInsets.only(top: 8, bottom: 4),
                         child: Row(
                           children: [
-                            const Icon(Icons.info_outline,
-                                size: 14, color: AppTheme.primaryGreen),
+                            const Icon(
+                              Icons.info_outline,
+                              size: 14,
+                              color: AppTheme.primaryGreen,
+                            ),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -1086,18 +1199,26 @@ class _TypeChip extends StatelessWidget {
               color: selected ? AppTheme.primaryGreen : borderColor,
             ),
           ),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 20,
-                color: selected ? Colors.white : AppTheme.subtitleGrey),
-            const SizedBox(height: 4),
-            Text(label,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: selected ? Colors.white : AppTheme.subtitleGrey,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: selected ? Colors.white : AppTheme.subtitleGrey,
-                )),
-          ]),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

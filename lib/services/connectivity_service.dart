@@ -15,8 +15,9 @@ class ConnectivityService {
 
     // Confirm real internet access with a DNS lookup
     try {
-      final lookup = await InternetAddress.lookup('google.com')
-          .timeout(const Duration(seconds: 5));
+      final lookup = await InternetAddress.lookup(
+        'google.com',
+      ).timeout(const Duration(seconds: 5));
       return lookup.isNotEmpty && lookup.first.rawAddress.isNotEmpty;
     } catch (_) {
       return false;

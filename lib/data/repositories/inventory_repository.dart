@@ -21,10 +21,11 @@ class InventoryRepository {
     if (cached.isNotEmpty) yield cached;
 
     // 2. Stream live updates from Firestore and keep the cache in sync
-    await for (final snapshot in _firebaseService.foodItems
-        .where('householdId', isEqualTo: householdId)
-        .orderBy('expiryDate')
-        .snapshots()) {
+    await for (final snapshot
+        in _firebaseService.foodItems
+            .where('householdId', isEqualTo: householdId)
+            .orderBy('expiryDate')
+            .snapshots()) {
       final items =
           snapshot.docs.map((doc) => FoodItem.fromFirestore(doc)).toList();
       // Persist to Hive so offline reads are fresh
@@ -42,13 +43,17 @@ class InventoryRepository {
         .where('expiryDate', isLessThan: Timestamp.fromDate(threeDaysFromNow))
         .orderBy('expiryDate')
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => FoodItem.fromFirestore(doc)).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => FoodItem.fromFirestore(doc)).toList(),
+        );
   }
 
   // Update food item — auto-converts DateTime values to Firestore Timestamp
   Future<void> updateFoodItem(
-      String itemId, Map<String, dynamic> updates) async {
+    String itemId,
+    Map<String, dynamic> updates,
+  ) async {
     final converted = updates.map((k, v) {
       if (v is DateTime) return MapEntry(k, Timestamp.fromDate(v));
       return MapEntry(k, v);
@@ -64,37 +69,44 @@ class InventoryRepository {
   Future<void> deleteFoodItem(String itemId) async {
     final uid = _firebaseService.currentUser?.uid;
     if (uid != null) {
-      await _firebaseService.foodItems
-          .doc(itemId)
-          .update({'lastEditedBy': uid});
+      await _firebaseService.foodItems.doc(itemId).update({
+        'lastEditedBy': uid,
+      });
     }
     await _firebaseService.foodItems.doc(itemId).delete();
   }
 
   // Search food items by barcode
   Future<FoodItem?> findByBarcode(String barcode, String householdId) async {
-    final QuerySnapshot snapshot = await _firebaseService.foodItems
-        .where('barcode', isEqualTo: barcode)
-        .where('householdId', isEqualTo: householdId)
-        .limit(1)
-        .get();
+    final QuerySnapshot snapshot =
+        await _firebaseService.foodItems
+            .where('barcode', isEqualTo: barcode)
+            .where('householdId', isEqualTo: householdId)
+            .limit(1)
+            .get();
 
     if (snapshot.docs.isEmpty) return null;
     return FoodItem.fromFirestore(snapshot.docs.first);
   }
 
   // Find existing item by name + itemType (case-insensitive)
-  Future<FoodItem?> findDuplicate(String name, String householdId, {ItemType itemType = ItemType.ingredient}) async {
+  Future<FoodItem?> findDuplicate(
+    String name,
+    String householdId, {
+    ItemType itemType = ItemType.ingredient,
+  }) async {
     final normalised = name.trim().toLowerCase();
     // Fetch all items of the same type for this household (no compound index needed)
-    final snapshot = await _firebaseService.foodItems
-        .where('householdId', isEqualTo: householdId)
-        .get();
+    final snapshot =
+        await _firebaseService.foodItems
+            .where('householdId', isEqualTo: householdId)
+            .get();
 
-    final sameType = snapshot.docs
-        .map((doc) => FoodItem.fromFirestore(doc))
-        .where((item) => item.itemType == itemType)
-        .toList();
+    final sameType =
+        snapshot.docs
+            .map((doc) => FoodItem.fromFirestore(doc))
+            .where((item) => item.itemType == itemType)
+            .toList();
 
     // Exact match first
     for (final item in sameType) {
@@ -114,7 +126,8 @@ class InventoryRepository {
   Future<void> mergeQuantity(String itemId, int additionalQty) async {
     final doc = await _firebaseService.foodItems.doc(itemId).get();
     if (!doc.exists) return;
-    final current = (doc.data() as Map<String, dynamic>)['quantity'] as int? ?? 0;
+    final current =
+        (doc.data() as Map<String, dynamic>)['quantity'] as int? ?? 0;
     await _firebaseService.foodItems.doc(itemId).update({
       'quantity': current + additionalQty,
     });
