@@ -40,18 +40,18 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
   }
 
   Future<String> _getHouseholdId(FirebaseService svc, String uid) async {
-    final q = await svc.households
-        .where('members', arrayContains: uid)
-        .limit(1)
-        .get();
+    final q =
+        await svc.households
+            .where('members', arrayContains: uid)
+            .limit(1)
+            .get();
     return q.docs.isEmpty ? '' : q.docs.first.id;
   }
 
   String _generateInviteCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final rand = DateTime.now().millisecondsSinceEpoch;
-    return List.generate(9, (i) => chars[(rand + i * 7) % chars.length])
-        .join();
+    return List.generate(9, (i) => chars[(rand + i * 7) % chars.length]).join();
   }
 
   Future<void> _onCreateHousehold() async {
@@ -80,8 +80,11 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        showErrorModal(context,
-            title: 'Error', message: 'Failed to create household: $e');
+        showErrorModal(
+          context,
+          title: 'Error',
+          message: 'Failed to create household: $e',
+        );
       }
     }
   }
@@ -108,9 +111,10 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: _step == 1
-            ? _buildStep1(context)
-            : _step == 2
+        child:
+            _step == 1
+                ? _buildStep1(context)
+                : _step == 2
                 ? _buildStep2(context)
                 : _buildSuccess(context),
       ),
@@ -120,10 +124,12 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
   Widget _buildStep1(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : AppTheme.fieldBorderColor;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final borderColor =
+        isDark
+            ? Colors.white.withValues(alpha: 0.12)
+            : AppTheme.fieldBorderColor;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -166,7 +172,9 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(
-                      color: AppTheme.primaryGreen, width: 1.5),
+                    color: AppTheme.primaryGreen,
+                    width: 1.5,
+                  ),
                 ),
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -174,14 +182,16 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
                 ),
                 focusedErrorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide:
-                      const BorderSide(color: Colors.red, width: 1.5),
+                  borderSide: const BorderSide(color: Colors.red, width: 1.5),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 14),
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
-              validator: (v) =>
-                  v == null || v.isEmpty ? 'Enter a household name' : null,
+              validator:
+                  (v) =>
+                      v == null || v.isEmpty ? 'Enter a household name' : null,
             ),
             const SizedBox(height: 6),
             Text(
@@ -205,7 +215,8 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.backButtonColor),
+                backgroundColor: AppTheme.backButtonColor,
+              ),
               child: const Text('Back'),
             ),
           ],
@@ -217,10 +228,12 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
   Widget _buildStep2(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : AppTheme.fieldBorderColor;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final borderColor =
+        isDark
+            ? Colors.white.withValues(alpha: 0.12)
+            : AppTheme.fieldBorderColor;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
 
     return SingleChildScrollView(
@@ -260,16 +273,19 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          ..._householdTypes.map((type) => RadioListTile<String>(
-                title: Text(type,
-                    style: TextStyle(
-                        fontFamily: 'Roboto', color: textColor)),
-                value: type,
-                groupValue: _householdType,
-                activeColor: AppTheme.primaryGreen,
-                onChanged: (v) => setState(() => _householdType = v!),
-                contentPadding: EdgeInsets.zero,
-              )),
+          ..._householdTypes.map(
+            (type) => RadioListTile<String>(
+              title: Text(
+                type,
+                style: TextStyle(fontFamily: 'Roboto', color: textColor),
+              ),
+              value: type,
+              groupValue: _householdType,
+              activeColor: AppTheme.primaryGreen,
+              onChanged: (v) => setState(() => _householdType = v!),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
           const SizedBox(height: 16),
           Text(
             'Default Expiry Alert (Optional):',
@@ -284,11 +300,16 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
             value: _expiryAlert,
             dropdownColor: cardColor,
             hint: const Text('Select an option'),
-            items: _expiryOptions
-                .map((o) => DropdownMenuItem(value: o, child: Text(o)))
-                .toList(),
+            items:
+                _expiryOptions
+                    .map((o) => DropdownMenuItem(value: o, child: Text(o)))
+                    .toList(),
             onChanged: (v) => setState(() => _expiryAlert = v),
-            style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: textColor),
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 14,
+              color: textColor,
+            ),
             decoration: InputDecoration(
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -297,10 +318,14 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: const BorderSide(
-                    color: AppTheme.primaryGreen, width: 1.5),
+                  color: AppTheme.primaryGreen,
+                  width: 1.5,
+                ),
               ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -315,13 +340,17 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
           const SizedBox(height: 32),
           ElevatedButton(
             onPressed: _isLoading ? null : _onCreateHousehold,
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: AppTheme.white))
-                : const Text('Create Household'),
+            child:
+                _isLoading
+                    ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppTheme.white,
+                      ),
+                    )
+                    : const Text('Create Household'),
           ),
           const SizedBox(height: 40),
         ],
@@ -332,11 +361,13 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
   Widget _buildSuccess(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : AppTheme.fieldBorderColor;
+    final borderColor =
+        isDark
+            ? Colors.white.withValues(alpha: 0.12)
+            : AppTheme.fieldBorderColor;
 
     return Center(
       child: Padding(
@@ -346,15 +377,16 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
           decoration: BoxDecoration(
             color: cardColor,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: isDark
-                ? []
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+            boxShadow:
+                isDark
+                    ? []
+                    : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -390,9 +422,12 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 12),
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkSurface : AppTheme.backgroundColor,
+                  color:
+                      isDark ? AppTheme.darkSurface : AppTheme.backgroundColor,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: borderColor),
                 ),
@@ -414,11 +449,13 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         Clipboard.setData(
-                            ClipboardData(text: _inviteCode ?? ''));
+                          ClipboardData(text: _inviteCode ?? ''),
+                        );
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('Code copied!'),
-                              backgroundColor: AppTheme.primaryGreen),
+                            content: Text('Code copied!'),
+                            backgroundColor: AppTheme.primaryGreen,
+                          ),
                         );
                       },
                       child: const Text('Copy Code'),
@@ -437,16 +474,18 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
               ElevatedButton(
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.backButtonColor),
+                  backgroundColor: AppTheme.backButtonColor,
+                ),
                 child: const Text('Invite Later'),
               ),
               const SizedBox(height: 4),
               Text(
                 'Inviting members is optional.',
                 style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 12,
-                    color: subtitleColor),
+                  fontFamily: 'Roboto',
+                  fontSize: 12,
+                  color: subtitleColor,
+                ),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
@@ -465,7 +504,9 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
                   }
                   if (!context.mounted) return;
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => MainShell(key: MainShell.shellKey)),
+                    MaterialPageRoute(
+                      builder: (_) => MainShell(key: MainShell.shellKey),
+                    ),
                     (route) => false,
                   );
                 },

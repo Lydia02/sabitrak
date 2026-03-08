@@ -79,10 +79,11 @@ class FaqScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: ExpansionTile(
-              tilePadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              childrenPadding:
-                  const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              tilePadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
+              ),
+              childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               title: Text(
                 faq['q']!,
                 style: TextStyle(
@@ -100,9 +101,8 @@ class FaqScreen extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 13,
-                    color: isDark
-                        ? AppTheme.darkSubtitle
-                        : AppTheme.subtitleGrey,
+                    color:
+                        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey,
                     height: 1.5,
                   ),
                 ),

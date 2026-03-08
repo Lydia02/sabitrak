@@ -43,16 +43,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     final uid = firebaseService.currentUser?.uid;
     String? householdId;
     if (uid != null) {
-      final query = await firebaseService.households
-          .where('members', arrayContains: uid)
-          .limit(1)
-          .get();
+      final query =
+          await firebaseService.households
+              .where('members', arrayContains: uid)
+              .limit(1)
+              .get();
       if (query.docs.isNotEmpty) householdId = query.docs.first.id;
     }
     if (mounted) {
       setState(() => _loaded = true);
       if (householdId != null) {
-        _inventorySub = _inventoryRepo.getFoodItems(householdId).listen((items) {
+        _inventorySub = _inventoryRepo.getFoodItems(householdId).listen((
+          items,
+        ) {
           if (mounted) setState(() => _items = items);
         });
         _wasteSub = _wasteRepo.getWasteLogs(householdId).listen((logs) {
@@ -66,8 +69,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   bool get _isEmpty => _items.isEmpty;
   int get _totalItems => _items.length;
   int get _expiredCount => _items.where((i) => i.isExpired).length;
-  int get _expiringSoonCount => _items.where((i) => i.isExpiringSoon && !i.isExpired).length;
-  int get _freshCount => _items.where((i) => !i.isExpired && !i.isExpiringSoon).length;
+  int get _expiringSoonCount =>
+      _items.where((i) => i.isExpiringSoon && !i.isExpired).length;
+  int get _freshCount =>
+      _items.where((i) => !i.isExpired && !i.isExpiringSoon).length;
   int get _totalQuantity => _items.fold(0, (s, i) => s + i.quantity);
 
   int get _wasteCount => _wasteLogs.length;
@@ -77,8 +82,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   double get _wasteReductionPercent {
     final totalEverAdded = _totalItems + _wasteCount;
     if (totalEverAdded == 0) return 0;
-    return ((totalEverAdded - _wasteCount) / totalEverAdded * 100)
-        .clamp(0, 100);
+    return ((totalEverAdded - _wasteCount) / totalEverAdded * 100).clamp(
+      0,
+      100,
+    );
   }
 
   // Top wasted categories
@@ -103,37 +110,59 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   Map<String, int> get _storageBreakdown {
     final map = <String, int>{};
     for (final item in _items) {
-      final loc = item.storageLocation.isNotEmpty ? item.storageLocation : 'Other';
+      final loc =
+          item.storageLocation.isNotEmpty ? item.storageLocation : 'Other';
       map[loc] = (map[loc] ?? 0) + item.quantity;
     }
     return map;
   }
 
-  List<FoodItem> get _expiringNext7Days => _items
-      .where((i) => !i.isExpired && i.daysUntilExpiry <= 7)
-      .toList()
-    ..sort((a, b) => a.daysUntilExpiry.compareTo(b.daysUntilExpiry));
+  List<FoodItem> get _expiringNext7Days =>
+      _items.where((i) => !i.isExpired && i.daysUntilExpiry <= 7).toList()
+        ..sort((a, b) => a.daysUntilExpiry.compareTo(b.daysUntilExpiry));
 
   // ── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
     final surfaceBg = isDark ? AppTheme.darkSurface : const Color(0xFFF5F5F3);
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.06);
+    final borderColor =
+        isDark
+            ? Colors.white.withValues(alpha: 0.08)
+            : Colors.black.withValues(alpha: 0.06);
 
     return Scaffold(
       backgroundColor: surfaceBg,
       body: SafeArea(
-        child: !_loaded
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen, strokeWidth: 2))
-            : _isEmpty
-                ? _buildEmptyState(isDark, textColor, subtitleColor, cardColor, borderColor, surfaceBg)
-                : _buildActiveState(isDark, textColor, subtitleColor, cardColor, borderColor, surfaceBg),
+        child:
+            !_loaded
+                ? const Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primaryGreen,
+                    strokeWidth: 2,
+                  ),
+                )
+                : _isEmpty
+                ? _buildEmptyState(
+                  isDark,
+                  textColor,
+                  subtitleColor,
+                  cardColor,
+                  borderColor,
+                  surfaceBg,
+                )
+                : _buildActiveState(
+                  isDark,
+                  textColor,
+                  subtitleColor,
+                  cardColor,
+                  borderColor,
+                  surfaceBg,
+                ),
       ),
     );
   }
@@ -142,38 +171,63 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   //  EMPTY STATE
   // ═══════════════════════════════════════════════════════════════════════
 
-  Widget _buildEmptyState(bool isDark, Color textColor, Color subtitleColor,
-      Color cardColor, Color borderColor, Color surfaceBg) {
+  Widget _buildEmptyState(
+    bool isDark,
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+    Color borderColor,
+    Color surfaceBg,
+  ) {
     return SingleChildScrollView(
-      child: Column(children: [
-        _buildHeader(isDark, textColor, subtitleColor, cardColor),
-        const SizedBox(height: 48),
-        Icon(Icons.bar_chart_rounded, size: 64, color: subtitleColor.withValues(alpha: 0.3)),
-        const SizedBox(height: 20),
-        Text('No Analytics Yet',
-            style: TextStyle(fontFamily: 'Roboto', fontSize: 20,
-                fontWeight: FontWeight.w700, color: textColor)),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 48),
-          child: Text('Add items to your pantry to see\ninsights about your food habits.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontFamily: 'Roboto', fontSize: 13, color: subtitleColor, height: 1.5)),
-        ),
-        const SizedBox(height: 28),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => AddItemOptionsScreen.show(context),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Your First Item'),
+      child: Column(
+        children: [
+          _buildHeader(isDark, textColor, subtitleColor, cardColor),
+          const SizedBox(height: 48),
+          Icon(
+            Icons.bar_chart_rounded,
+            size: 64,
+            color: subtitleColor.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'No Analytics Yet',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: textColor,
             ),
           ),
-        ),
-        const SizedBox(height: 40),
-      ]),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 48),
+            child: Text(
+              'Add items to your pantry to see\ninsights about your food habits.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 13,
+                color: subtitleColor,
+                height: 1.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => AddItemOptionsScreen.show(context),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Add Your First Item'),
+              ),
+            ),
+          ),
+          const SizedBox(height: 40),
+        ],
+      ),
     );
   }
 
@@ -181,115 +235,170 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   //  ACTIVE STATE
   // ═══════════════════════════════════════════════════════════════════════
 
-  Widget _buildActiveState(bool isDark, Color textColor, Color subtitleColor,
-      Color cardColor, Color borderColor, Color surfaceBg) {
+  Widget _buildActiveState(
+    bool isDark,
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+    Color borderColor,
+    Color surfaceBg,
+  ) {
     return SingleChildScrollView(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _buildHeader(isDark, textColor, subtitleColor, cardColor),
-        const SizedBox(height: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(isDark, textColor, subtitleColor, cardColor),
+          const SizedBox(height: 16),
 
-        // ── 3 summary stat chips ─────────────────────────────────────────
-        _buildStatRow(isDark, textColor, subtitleColor, cardColor),
-        const SizedBox(height: 16),
+          // ── 3 summary stat chips ─────────────────────────────────────────
+          _buildStatRow(isDark, textColor, subtitleColor, cardColor),
+          const SizedBox(height: 16),
 
-        // ── Waste Reduction ──────────────────────────────────────────────
-        _buildWasteReductionCard(isDark, textColor, subtitleColor, cardColor),
-        const SizedBox(height: 16),
+          // ── Waste Reduction ──────────────────────────────────────────────
+          _buildWasteReductionCard(isDark, textColor, subtitleColor, cardColor),
+          const SizedBox(height: 16),
 
-        // ── Pantry Overview bars ─────────────────────────────────────────
-        _buildOverviewBars(isDark, textColor, subtitleColor, cardColor),
-        const SizedBox(height: 16),
+          // ── Pantry Overview bars ─────────────────────────────────────────
+          _buildOverviewBars(isDark, textColor, subtitleColor, cardColor),
+          const SizedBox(height: 16),
 
-        // ── What's Left ──────────────────────────────────────────────────
-        _buildWhatsLeft(isDark, textColor, subtitleColor, cardColor),
-        const SizedBox(height: 16),
+          // ── What's Left ──────────────────────────────────────────────────
+          _buildWhatsLeft(isDark, textColor, subtitleColor, cardColor),
+          const SizedBox(height: 16),
 
-        // ── Top Categories vertical bars ─────────────────────────────────
-        _buildCategoryChart(isDark, textColor, subtitleColor, cardColor),
-        const SizedBox(height: 16),
+          // ── Top Categories vertical bars ─────────────────────────────────
+          _buildCategoryChart(isDark, textColor, subtitleColor, cardColor),
+          const SizedBox(height: 16),
 
-        // ── Expiring Soon list ───────────────────────────────────────────
-        _buildExpiringSoon(isDark, textColor, subtitleColor, cardColor),
-        const SizedBox(height: 16),
+          // ── Expiring Soon list ───────────────────────────────────────────
+          _buildExpiringSoon(isDark, textColor, subtitleColor, cardColor),
+          const SizedBox(height: 16),
 
-        // ── Wasted Items ─────────────────────────────────────────────────
-        _buildWastedItems(isDark, textColor, subtitleColor, cardColor),
-        const SizedBox(height: 28),
-      ]),
+          // ── Wasted Items ─────────────────────────────────────────────────
+          _buildWastedItems(isDark, textColor, subtitleColor, cardColor),
+          const SizedBox(height: 28),
+        ],
+      ),
     );
   }
 
   // ── Header ───────────────────────────────────────────────────────────────
 
-  Widget _buildHeader(bool isDark, Color textColor, Color subtitleColor, Color cardColor) {
+  Widget _buildHeader(
+    bool isDark,
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: Row(children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: AppTheme.primaryGreen,
-            borderRadius: BorderRadius.circular(10),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryGreen,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.bar_chart_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
           ),
-          child: const Icon(Icons.bar_chart_rounded, color: Colors.white, size: 20),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Analytics',
-                style: TextStyle(fontFamily: 'Roboto', fontSize: 20,
-                    fontWeight: FontWeight.w700, color: textColor)),
-            Text('Your pantry insights at a glance',
-                style: TextStyle(fontFamily: 'Roboto', fontSize: 12, color: subtitleColor)),
-          ]),
-        ),
-      ]),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Analytics',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: textColor,
+                  ),
+                ),
+                Text(
+                  'Your pantry insights at a glance',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 12,
+                    color: subtitleColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   // ── 3 Stat Chips ─────────────────────────────────────────────────────────
 
-  Widget _buildStatRow(bool isDark, Color textColor, Color subtitleColor, Color cardColor) {
+  Widget _buildStatRow(
+    bool isDark,
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: IntrinsicHeight(
-        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Expanded(child: _StatChip(
-            label: 'Fresh',
-            value: '$_freshCount',
-            color: const Color(0xFF2E7D32),
-            cardColor: cardColor,
-            isDark: isDark,
-          )),
-          const SizedBox(width: 10),
-          Expanded(child: _StatChip(
-            label: 'Expiring',
-            value: '$_expiringSoonCount',
-            color: const Color(0xFFE65100),
-            cardColor: cardColor,
-            isDark: isDark,
-          )),
-          const SizedBox(width: 10),
-          Expanded(child: _StatChip(
-            label: 'Expired',
-            value: '$_expiredCount',
-            color: const Color(0xFFC62828),
-            cardColor: cardColor,
-            isDark: isDark,
-          )),
-        ]),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: _StatChip(
+                label: 'Fresh',
+                value: '$_freshCount',
+                color: const Color(0xFF2E7D32),
+                cardColor: cardColor,
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatChip(
+                label: 'Expiring',
+                value: '$_expiringSoonCount',
+                color: const Color(0xFFE65100),
+                cardColor: cardColor,
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatChip(
+                label: 'Expired',
+                value: '$_expiredCount',
+                color: const Color(0xFFC62828),
+                cardColor: cardColor,
+                isDark: isDark,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // ── Waste Reduction Card ──────────────────────────────────────────────────
 
-  Widget _buildWasteReductionCard(bool isDark, Color textColor, Color subtitleColor, Color cardColor) {
+  Widget _buildWasteReductionCard(
+    bool isDark,
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+  ) {
     final pct = _wasteReductionPercent;
-    final goalColor = pct >= 70
-        ? const Color(0xFF2E7D32)
-        : pct >= 40
+    final goalColor =
+        pct >= 70
+            ? const Color(0xFF2E7D32)
+            : pct >= 40
             ? const Color(0xFFE65100)
             : const Color(0xFFC62828);
 
@@ -298,82 +407,146 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: _card(isDark, cardColor),
-        child: Row(children: [
-          // Circular indicator
-          SizedBox(
-            width: 96,
-            height: 96,
-            child: CustomPaint(
-              painter: _RingPainter(
-                value: pct / 100,
-                trackColor: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : Colors.black.withValues(alpha: 0.06),
-                fillColor: goalColor,
-                textColor: textColor,
-                strokeWidth: 8,
+        child: Row(
+          children: [
+            // Circular indicator
+            SizedBox(
+              width: 96,
+              height: 96,
+              child: CustomPaint(
+                painter: _RingPainter(
+                  value: pct / 100,
+                  trackColor:
+                      isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.06),
+                  fillColor: goalColor,
+                  textColor: textColor,
+                  strokeWidth: 8,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Waste Reduction Goal',
-                  style: TextStyle(fontFamily: 'Roboto', fontSize: 15,
-                      fontWeight: FontWeight.w700, color: textColor)),
-              const SizedBox(height: 4),
-              Text(
-                pct >= 80
-                    ? 'Amazing! You\'re saving most of your food.'
-                    : pct >= 50
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Waste Reduction Goal',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    pct >= 80
+                        ? 'Amazing! You\'re saving most of your food.'
+                        : pct >= 50
                         ? 'Good progress! Keep reducing waste.'
                         : 'Use items before they expire to save more.',
-                style: TextStyle(fontFamily: 'Roboto', fontSize: 12,
-                    color: subtitleColor, height: 1.4)),
-              const SizedBox(height: 10),
-              Row(children: [
-                _Dot(color: const Color(0xFF2E7D32), label: 'In pantry: $_totalItems'),
-                const SizedBox(width: 14),
-                _Dot(color: const Color(0xFFC62828), label: 'Wasted: $_wasteCount'),
-              ]),
-            ]),
-          ),
-        ]),
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 12,
+                      color: subtitleColor,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      _Dot(
+                        color: const Color(0xFF2E7D32),
+                        label: 'In pantry: $_totalItems',
+                      ),
+                      const SizedBox(width: 14),
+                      _Dot(
+                        color: const Color(0xFFC62828),
+                        label: 'Wasted: $_wasteCount',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // ── Pantry Overview horizontal bars ──────────────────────────────────────
 
-  Widget _buildOverviewBars(bool isDark, Color textColor, Color subtitleColor, Color cardColor) {
-    final maxVal = max(max(_freshCount, _expiringSoonCount), max(_expiredCount, 1));
+  Widget _buildOverviewBars(
+    bool isDark,
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+  ) {
+    final maxVal = max(
+      max(_freshCount, _expiringSoonCount),
+      max(_expiredCount, 1),
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: _card(isDark, cardColor),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _SectionLabel(label: 'PANTRY OVERVIEW', trailing: '$_totalItems items total', subtitleColor: subtitleColor),
-          const SizedBox(height: 18),
-          _HBar(label: 'Fresh', value: _freshCount, maxValue: maxVal,
-              color: const Color(0xFF2E7D32), textColor: textColor, isDark: isDark),
-          const SizedBox(height: 12),
-          _HBar(label: 'Expiring Soon', value: _expiringSoonCount, maxValue: maxVal,
-              color: const Color(0xFFE65100), textColor: textColor, isDark: isDark),
-          const SizedBox(height: 12),
-          _HBar(label: 'Expired', value: _expiredCount, maxValue: maxVal,
-              color: const Color(0xFFC62828), textColor: textColor, isDark: isDark),
-        ]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SectionLabel(
+              label: 'PANTRY OVERVIEW',
+              trailing: '$_totalItems items total',
+              subtitleColor: subtitleColor,
+            ),
+            const SizedBox(height: 18),
+            _HBar(
+              label: 'Fresh',
+              value: _freshCount,
+              maxValue: maxVal,
+              color: const Color(0xFF2E7D32),
+              textColor: textColor,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 12),
+            _HBar(
+              label: 'Expiring Soon',
+              value: _expiringSoonCount,
+              maxValue: maxVal,
+              color: const Color(0xFFE65100),
+              textColor: textColor,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 12),
+            _HBar(
+              label: 'Expired',
+              value: _expiredCount,
+              maxValue: maxVal,
+              color: const Color(0xFFC62828),
+              textColor: textColor,
+              isDark: isDark,
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // ── What's Left ──────────────────────────────────────────────────────────
 
-  Widget _buildWhatsLeft(bool isDark, Color textColor, Color subtitleColor, Color cardColor) {
-    final storage = _storageBreakdown.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+  Widget _buildWhatsLeft(
+    bool isDark,
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+  ) {
+    final storage =
+        _storageBreakdown.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
     final maxQty = storage.isNotEmpty ? storage.first.value : 1;
 
     return Padding(
@@ -381,10 +554,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: _card(isDark, cardColor),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _SectionLabel(label: 'WHAT\'S LEFT', trailing: '$_totalQuantity units', subtitleColor: subtitleColor),
-          const SizedBox(height: 18),
-          ...storage.map((e) => Padding(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SectionLabel(
+              label: 'WHAT\'S LEFT',
+              trailing: '$_totalQuantity units',
+              subtitleColor: subtitleColor,
+            ),
+            const SizedBox(height: 18),
+            ...storage.map(
+              (e) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: _SBar(
                   label: e.key,
@@ -394,19 +574,27 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   textColor: textColor,
                   isDark: isDark,
                 ),
-              )),
-        ]),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // ── Top Categories vertical bars ─────────────────────────────────────────
 
-  Widget _buildCategoryChart(bool isDark, Color textColor, Color subtitleColor, Color cardColor) {
-    final cats = (_categoryBreakdown.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value)))
-        .take(5)
-        .toList();
+  Widget _buildCategoryChart(
+    bool isDark,
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+  ) {
+    final cats =
+        (_categoryBreakdown.entries.toList()
+              ..sort((a, b) => b.value.compareTo(a.value)))
+            .take(5)
+            .toList();
     final maxVal = cats.isNotEmpty ? cats.first.value : 1;
 
     return Padding(
@@ -414,60 +602,98 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: _card(isDark, cardColor),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _SectionLabel(label: 'TOP CATEGORIES', trailing: '', subtitleColor: subtitleColor),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 160,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: cats.asMap().entries.map((e) {
-                final i = e.key;
-                final cat = e.value;
-                final barH = (cat.value / maxVal * 100).clamp(8.0, 100.0);
-                final color = _barColor(i);
-                return Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(left: i == 0 ? 0 : 5, right: i == cats.length - 1 ? 0 : 5),
-                    child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-                      Text('${cat.value}',
-                          style: TextStyle(fontFamily: 'Roboto', fontSize: 11,
-                              fontWeight: FontWeight.w700, color: textColor)),
-                      const SizedBox(height: 4),
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-                        child: Container(height: barH, color: color),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        cat.key.length > 8 ? '${cat.key.substring(0, 7)}…' : cat.key,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontFamily: 'Roboto', fontSize: 9, color: subtitleColor),
-                      ),
-                    ]),
-                  ),
-                );
-              }).toList(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SectionLabel(
+              label: 'TOP CATEGORIES',
+              trailing: '',
+              subtitleColor: subtitleColor,
             ),
-          ),
-          // Legend dots
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 12,
-            runSpacing: 6,
-            children: cats.asMap().entries.map((e) => _Dot(
-                  color: _barColor(e.key),
-                  label: e.value.key,
-                )).toList(),
-          ),
-        ]),
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 160,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children:
+                    cats.asMap().entries.map((e) {
+                      final i = e.key;
+                      final cat = e.value;
+                      final barH = (cat.value / maxVal * 100).clamp(8.0, 100.0);
+                      final color = _barColor(i);
+                      return Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            left: i == 0 ? 0 : 5,
+                            right: i == cats.length - 1 ? 0 : 5,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${cat.value}',
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: textColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(6),
+                                ),
+                                child: Container(height: barH, color: color),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                cat.key.length > 8
+                                    ? '${cat.key.substring(0, 7)}…'
+                                    : cat.key,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 9,
+                                  color: subtitleColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+              ),
+            ),
+            // Legend dots
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 12,
+              runSpacing: 6,
+              children:
+                  cats
+                      .asMap()
+                      .entries
+                      .map(
+                        (e) =>
+                            _Dot(color: _barColor(e.key), label: e.value.key),
+                      )
+                      .toList(),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // ── Expiring Soon list ────────────────────────────────────────────────────
 
-  Widget _buildExpiringSoon(bool isDark, Color textColor, Color subtitleColor, Color cardColor) {
+  Widget _buildExpiringSoon(
+    bool isDark,
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+  ) {
     final items = _expiringNext7Days;
 
     return Padding(
@@ -475,177 +701,302 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: _card(isDark, cardColor),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            _SectionLabel(
-              label: 'EXPIRING SOON',
-              trailing: '',
-              subtitleColor: subtitleColor,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _SectionLabel(
+                  label: 'EXPIRING SOON',
+                  trailing: '',
+                  subtitleColor: subtitleColor,
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        items.isNotEmpty
+                            ? const Color(0xFFE65100).withValues(alpha: 0.1)
+                            : const Color(0xFF2E7D32).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${items.length} item${items.length == 1 ? '' : 's'}',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color:
+                          items.isNotEmpty
+                              ? const Color(0xFFE65100)
+                              : const Color(0xFF2E7D32),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: items.isNotEmpty
-                    ? const Color(0xFFE65100).withValues(alpha: 0.1)
-                    : const Color(0xFF2E7D32).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '${items.length} item${items.length == 1 ? '' : 's'}',
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: items.isNotEmpty ? const Color(0xFFE65100) : const Color(0xFF2E7D32),
+            const SizedBox(height: 16),
+            if (items.isEmpty)
+              Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle,
+                    color: Color(0xFF2E7D32),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Nothing expiring this week. Nice!',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 13,
+                      color: subtitleColor,
+                    ),
+                  ),
+                ],
+              )
+            else
+              ...items
+                  .take(5)
+                  .map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _ExpiryRow(
+                        item: item,
+                        textColor: textColor,
+                        subtitleColor: subtitleColor,
+                      ),
+                    ),
+                  ),
+            if (items.length > 5)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '+${items.length - 5} more items',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 12,
+                    color: subtitleColor,
+                  ),
                 ),
               ),
-            ),
-          ]),
-          const SizedBox(height: 16),
-          if (items.isEmpty)
-            Row(children: [
-              const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 18),
-              const SizedBox(width: 8),
-              Text('Nothing expiring this week. Nice!',
-                  style: TextStyle(fontFamily: 'Roboto', fontSize: 13, color: subtitleColor)),
-            ])
-          else
-            ...items.take(5).map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _ExpiryRow(item: item, textColor: textColor, subtitleColor: subtitleColor),
-                )),
-          if (items.length > 5)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text('+${items.length - 5} more items',
-                  style: TextStyle(fontFamily: 'Roboto', fontSize: 12, color: subtitleColor)),
-            ),
-        ]),
+          ],
+        ),
       ),
     );
   }
 
   // ── Wasted Items ─────────────────────────────────────────────────────────
 
-  Widget _buildWastedItems(bool isDark, Color textColor, Color subtitleColor, Color cardColor) {
+  Widget _buildWastedItems(
+    bool isDark,
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+  ) {
     final logs = _wasteLogs.take(10).toList();
     final catBreakdown = _wasteCategoryBreakdown;
-    final sortedCats = catBreakdown.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final sortedCats =
+        catBreakdown.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: _card(isDark, cardColor),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            _SectionLabel(label: 'WASTED ITEMS', trailing: '', subtitleColor: subtitleColor),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFC62828).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _SectionLabel(
+                  label: 'WASTED ITEMS',
+                  trailing: '',
+                  subtitleColor: subtitleColor,
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC62828).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '$_wasteCount item${_wasteCount == 1 ? '' : 's'}',
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFC62828),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (_wasteCount == 0) ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle,
+                    color: Color(0xFF2E7D32),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'No waste logged yet. Great job!',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 13,
+                      color: subtitleColor,
+                    ),
+                  ),
+                ],
               ),
-              child: Text(
-                '$_wasteCount item${_wasteCount == 1 ? '' : 's'}',
-                style: const TextStyle(
+            ] else ...[
+              // Category breakdown bars
+              if (sortedCats.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                ...sortedCats.take(4).map((e) {
+                  final frac = e.value / _wasteCount;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 90,
+                          child: Text(
+                            e.key,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: textColor,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: SizedBox(
+                            height: 14,
+                            child: CustomPaint(
+                              painter: _BarPainter(
+                                fraction: frac,
+                                trackColor:
+                                    isDark
+                                        ? Colors.white.withValues(alpha: 0.07)
+                                        : Colors.black.withValues(alpha: 0.05),
+                                fillColor: const Color(0xFFC62828),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 24,
+                          child: Text(
+                            '${e.value}',
+                            textAlign: TextAlign.right,
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFFC62828),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+              // Recent wasted item rows
+              const SizedBox(height: 8),
+              Text(
+                'Recent',
+                style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFFC62828),
+                  color: subtitleColor,
+                  letterSpacing: 1.2,
                 ),
               ),
-            ),
-          ]),
-          if (_wasteCount == 0) ...[
-            const SizedBox(height: 16),
-            Row(children: [
-              const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 18),
-              const SizedBox(width: 8),
-              Text('No waste logged yet. Great job!',
-                  style: TextStyle(fontFamily: 'Roboto', fontSize: 13, color: subtitleColor)),
-            ]),
-          ] else ...[
-            // Category breakdown bars
-            if (sortedCats.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              ...sortedCats.take(4).map((e) {
-                final frac = e.value / _wasteCount;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(children: [
-                    SizedBox(
-                      width: 90,
-                      child: Text(e.key,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontFamily: 'Roboto', fontSize: 12,
-                              fontWeight: FontWeight.w500, color: textColor)),
-                    ),
-                    Expanded(
-                      child: SizedBox(
-                        height: 14,
-                        child: CustomPaint(
-                          painter: _BarPainter(
-                            fraction: frac,
-                            trackColor: isDark
-                                ? Colors.white.withValues(alpha: 0.07)
-                                : Colors.black.withValues(alpha: 0.05),
-                            fillColor: const Color(0xFFC62828),
-                          ),
+              const SizedBox(height: 10),
+              ...logs.map(
+                (log) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC62828),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: 24,
-                      child: Text('${e.value}',
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(fontFamily: 'Roboto', fontSize: 12,
-                              fontWeight: FontWeight.w700, color: Color(0xFFC62828))),
-                    ),
-                  ]),
-                );
-              }),
-            ],
-            // Recent wasted item rows
-            const SizedBox(height: 8),
-            Text('Recent', style: TextStyle(fontFamily: 'Roboto', fontSize: 11,
-                fontWeight: FontWeight.w700, color: subtitleColor, letterSpacing: 1.2)),
-            const SizedBox(height: 10),
-            ...logs.map((log) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(children: [
-                Container(
-                  width: 4, height: 36,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFC62828),
-                    borderRadius: BorderRadius.circular(2),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              log.itemName,
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: textColor,
+                              ),
+                            ),
+                            Text(
+                              '${log.quantity} ${log.unit} · ${log.category}',
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 11,
+                                color: subtitleColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        _formatWastedAt(log.wastedAt),
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 11,
+                          color: subtitleColor,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(log.itemName,
-                        style: TextStyle(fontFamily: 'Roboto', fontSize: 13,
-                            fontWeight: FontWeight.w600, color: textColor)),
-                    Text('${log.quantity} ${log.unit} · ${log.category}',
-                        style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: subtitleColor)),
-                  ]),
-                ),
-                Text(_formatWastedAt(log.wastedAt),
-                    style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: subtitleColor)),
-              ]),
-            )),
-            if (_wasteLogs.length > 10)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text('+${_wasteLogs.length - 10} more',
-                    style: TextStyle(fontFamily: 'Roboto', fontSize: 12, color: subtitleColor)),
               ),
+              if (_wasteLogs.length > 10)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    '+${_wasteLogs.length - 10} more',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 12,
+                      color: subtitleColor,
+                    ),
+                  ),
+                ),
+            ],
           ],
-        ]),
+        ),
       ),
     );
   }
@@ -661,22 +1012,36 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   BoxDecoration _card(bool isDark, Color cardColor) => BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: isDark
+    color: cardColor,
+    borderRadius: BorderRadius.circular(16),
+    boxShadow:
+        isDark
             ? []
-            : [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
-      );
+            : [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+  );
 
   IconData _storageIcon(String location) {
     switch (location.toLowerCase()) {
-      case 'fridge': return Icons.kitchen_outlined;
-      case 'freezer': return Icons.ac_unit;
-      case 'cupboard': return Icons.door_sliding_outlined;
-      case 'counter': return Icons.countertops_outlined;
-      case 'shelf': return Icons.shelves;
-      case 'bag/basket': return Icons.shopping_basket_outlined;
-      default: return Icons.inventory_2_outlined;
+      case 'fridge':
+        return Icons.kitchen_outlined;
+      case 'freezer':
+        return Icons.ac_unit;
+      case 'cupboard':
+        return Icons.door_sliding_outlined;
+      case 'counter':
+        return Icons.countertops_outlined;
+      case 'shelf':
+        return Icons.shelves;
+      case 'bag/basket':
+        return Icons.shopping_basket_outlined;
+      default:
+        return Icons.inventory_2_outlined;
     }
   }
 
@@ -701,18 +1066,38 @@ class _SectionLabel extends StatelessWidget {
   final String trailing;
   final Color subtitleColor;
 
-  const _SectionLabel({required this.label, required this.trailing, required this.subtitleColor});
+  const _SectionLabel({
+    required this.label,
+    required this.trailing,
+    required this.subtitleColor,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label,
-          style: TextStyle(fontFamily: 'Roboto', fontSize: 11,
-              fontWeight: FontWeight.w700, color: subtitleColor, letterSpacing: 1.2)),
-      if (trailing.isNotEmpty)
-        Text(trailing,
-            style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: subtitleColor.withValues(alpha: 0.7))),
-    ]);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: subtitleColor,
+            letterSpacing: 1.2,
+          ),
+        ),
+        if (trailing.isNotEmpty)
+          Text(
+            trailing,
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 11,
+              color: subtitleColor.withValues(alpha: 0.7),
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -739,19 +1124,41 @@ class _StatChip extends StatelessWidget {
         color: cardColor,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withValues(alpha: 0.3), width: 1.2),
-        boxShadow: isDark
-            ? []
-            : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
+        boxShadow:
+            isDark
+                ? []
+                : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
       ),
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Text(value,
-            style: TextStyle(fontFamily: 'Roboto', fontSize: 22,
-                fontWeight: FontWeight.w800, color: color)),
-        const SizedBox(height: 2),
-        Text(label,
-            style: TextStyle(fontFamily: 'Roboto', fontSize: 11,
-                fontWeight: FontWeight.w500, color: color.withValues(alpha: 0.75))),
-      ]),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: color.withValues(alpha: 0.75),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -776,40 +1183,55 @@ class _HBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fraction = maxValue > 0 ? (value / maxValue).clamp(0.0, 1.0) : 0.0;
-    final trackColor = isDark
-        ? Colors.white.withValues(alpha: 0.07)
-        : Colors.black.withValues(alpha: 0.05);
+    final trackColor =
+        isDark
+            ? Colors.white.withValues(alpha: 0.07)
+            : Colors.black.withValues(alpha: 0.05);
 
-    return Row(children: [
-      SizedBox(
-        width: 106,
-        child: Text(label,
+    return Row(
+      children: [
+        SizedBox(
+          width: 106,
+          child: Text(
+            label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontFamily: 'Roboto', fontSize: 12,
-                fontWeight: FontWeight.w500, color: textColor)),
-      ),
-      Expanded(
-        child: SizedBox(
-          height: 20,
-          child: CustomPaint(
-            painter: _BarPainter(
-              fraction: fraction,
-              trackColor: trackColor,
-              fillColor: color,
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: textColor,
             ),
           ),
         ),
-      ),
-      const SizedBox(width: 10),
-      SizedBox(
-        width: 28,
-        child: Text('$value',
+        Expanded(
+          child: SizedBox(
+            height: 20,
+            child: CustomPaint(
+              painter: _BarPainter(
+                fraction: fraction,
+                trackColor: trackColor,
+                fillColor: color,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 28,
+          child: Text(
+            '$value',
             textAlign: TextAlign.right,
-            style: TextStyle(fontFamily: 'Roboto', fontSize: 12,
-                fontWeight: FontWeight.w700, color: color)),
-      ),
-    ]);
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -832,41 +1254,57 @@ class _SBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fraction = maxQuantity > 0 ? (quantity / maxQuantity).clamp(0.0, 1.0) : 0.0;
-    final trackColor = isDark
-        ? Colors.white.withValues(alpha: 0.07)
-        : Colors.black.withValues(alpha: 0.05);
+    final fraction =
+        maxQuantity > 0 ? (quantity / maxQuantity).clamp(0.0, 1.0) : 0.0;
+    final trackColor =
+        isDark
+            ? Colors.white.withValues(alpha: 0.07)
+            : Colors.black.withValues(alpha: 0.05);
 
-    return Row(children: [
-      Icon(icon, size: 17, color: AppTheme.primaryGreen),
-      const SizedBox(width: 8),
-      SizedBox(
-        width: 70,
-        child: Text(label,
-            style: TextStyle(fontFamily: 'Roboto', fontSize: 12,
-                fontWeight: FontWeight.w500, color: textColor)),
-      ),
-      Expanded(
-        child: SizedBox(
-          height: 14,
-          child: CustomPaint(
-            painter: _BarPainter(
-              fraction: fraction,
-              trackColor: trackColor,
-              fillColor: AppTheme.primaryGreen,
+    return Row(
+      children: [
+        Icon(icon, size: 17, color: AppTheme.primaryGreen),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 70,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: textColor,
             ),
           ),
         ),
-      ),
-      const SizedBox(width: 8),
-      SizedBox(
-        width: 24,
-        child: Text('$quantity',
+        Expanded(
+          child: SizedBox(
+            height: 14,
+            child: CustomPaint(
+              painter: _BarPainter(
+                fraction: fraction,
+                trackColor: trackColor,
+                fillColor: AppTheme.primaryGreen,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 24,
+          child: Text(
+            '$quantity',
             textAlign: TextAlign.right,
-            style: TextStyle(fontFamily: 'Roboto', fontSize: 12,
-                fontWeight: FontWeight.w700, color: textColor)),
-      ),
-    ]);
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -891,10 +1329,11 @@ class _RingPainter extends CustomPainter {
     final cy = size.height / 2;
     final radius = (size.width - strokeWidth) / 2;
     final rect = Rect.fromCircle(center: Offset(cx, cy), radius: radius);
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
+    final paint =
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth
+          ..strokeCap = StrokeCap.round;
 
     // Track
     paint.color = trackColor;
@@ -903,7 +1342,13 @@ class _RingPainter extends CustomPainter {
     // Arc
     if (value > 0) {
       paint.color = fillColor;
-      canvas.drawArc(rect, -pi / 2, 2 * pi * value.clamp(0.0, 1.0), false, paint);
+      canvas.drawArc(
+        rect,
+        -pi / 2,
+        2 * pi * value.clamp(0.0, 1.0),
+        false,
+        paint,
+      );
     }
 
     // Text
@@ -925,8 +1370,10 @@ class _RingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_RingPainter old) =>
-      old.value != value || old.fillColor != fillColor ||
-      old.trackColor != trackColor || old.textColor != textColor;
+      old.value != value ||
+      old.fillColor != fillColor ||
+      old.trackColor != trackColor ||
+      old.textColor != textColor;
 }
 
 class _BarPainter extends CustomPainter {
@@ -944,20 +1391,26 @@ class _BarPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final radius = Radius.circular(size.height / 2);
     final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.width, size.height), radius);
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      radius,
+    );
     canvas.drawRRect(rrect, Paint()..color = trackColor);
 
     final fillW = (size.width * fraction).clamp(0.0, size.width);
     if (fillW > 0) {
       final fillRect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, fillW, size.height), radius);
+        Rect.fromLTWH(0, 0, fillW, size.height),
+        radius,
+      );
       canvas.drawRRect(fillRect, Paint()..color = fillColor);
     }
   }
 
   @override
   bool shouldRepaint(_BarPainter old) =>
-      old.fraction != fraction || old.trackColor != trackColor || old.fillColor != fillColor;
+      old.fraction != fraction ||
+      old.trackColor != trackColor ||
+      old.fillColor != fillColor;
 }
 
 class _Dot extends StatelessWidget {
@@ -968,17 +1421,29 @@ class _Dot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      Container(width: 8, height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 4),
-      Text(label,
-          style: TextStyle(fontFamily: 'Roboto', fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppTheme.darkSubtitle
-                  : AppTheme.subtitleGrey)),
-    ]);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? AppTheme.darkSubtitle
+                    : AppTheme.subtitleGrey,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -987,45 +1452,79 @@ class _ExpiryRow extends StatelessWidget {
   final Color textColor;
   final Color subtitleColor;
 
-  const _ExpiryRow({required this.item, required this.textColor, required this.subtitleColor});
+  const _ExpiryRow({
+    required this.item,
+    required this.textColor,
+    required this.subtitleColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     final days = item.daysUntilExpiry;
     final isToday = days == 0;
-    final urgencyColor = isToday
-        ? const Color(0xFFC62828)
-        : days <= 2
+    final urgencyColor =
+        isToday
+            ? const Color(0xFFC62828)
+            : days <= 2
             ? const Color(0xFFE65100)
             : const Color(0xFFE65100).withValues(alpha: 0.65);
 
-    return Row(children: [
-      Container(
-        width: 4, height: 38,
-        decoration: BoxDecoration(color: urgencyColor, borderRadius: BorderRadius.circular(2)),
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(item.name,
-              style: TextStyle(fontFamily: 'Roboto', fontSize: 13,
-                  fontWeight: FontWeight.w600, color: textColor)),
-          Text('${item.quantity} ${item.unit} · ${item.storageLocation}',
-              style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: subtitleColor)),
-        ]),
-      ),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: urgencyColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 38,
+          decoration: BoxDecoration(
+            color: urgencyColor,
+            borderRadius: BorderRadius.circular(2),
+          ),
         ),
-        child: Text(
-          isToday ? 'Today' : days == 1 ? 'Tomorrow' : '$days days',
-          style: TextStyle(fontFamily: 'Roboto', fontSize: 11,
-              fontWeight: FontWeight.w700, color: urgencyColor),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.name,
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+              ),
+              Text(
+                '${item.quantity} ${item.unit} · ${item.storageLocation}',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 11,
+                  color: subtitleColor,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    ]);
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: urgencyColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            isToday
+                ? 'Today'
+                : days == 1
+                ? 'Tomorrow'
+                : '$days days',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: urgencyColor,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

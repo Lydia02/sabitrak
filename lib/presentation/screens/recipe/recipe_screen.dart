@@ -67,10 +67,11 @@ class _RecipeScreenState extends State<RecipeScreen> {
       return;
     }
 
-    final query = await firebaseService.households
-        .where('members', arrayContains: uid)
-        .limit(1)
-        .get();
+    final query =
+        await firebaseService.households
+            .where('members', arrayContains: uid)
+            .limit(1)
+            .get();
 
     if (query.docs.isEmpty) {
       if (mounted) setState(() => _inventoryLoaded = true);
@@ -83,7 +84,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
       // Detect additions: compare by ID (unique per Firestore doc)
       final newIds = items.map((i) => i.id).toSet();
-      final itemAdded = newIds.length > _inventoryIds.length ||
+      final itemAdded =
+          newIds.length > _inventoryIds.length ||
           newIds.difference(_inventoryIds).isNotEmpty;
 
       _inventoryItems = items;
@@ -95,8 +97,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
       // Debounce by 800 ms so bulk additions trigger only one fetch.
       if (itemAdded || _recommendations.isEmpty) {
         _recommendationDebounce?.cancel();
-        _recommendationDebounce =
-            Timer(const Duration(milliseconds: 800), _fetchRecommendations);
+        _recommendationDebounce = Timer(
+          const Duration(milliseconds: 800),
+          _fetchRecommendations,
+        );
       }
     });
   }
@@ -137,7 +141,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
       final needsImage = {
         for (final item in _inventoryItems)
           if (item.imageUrl == null || item.imageUrl!.isEmpty)
-            item.name.toLowerCase().trim(): item
+            item.name.toLowerCase().trim(): item,
       };
       if (needsImage.isEmpty) return;
 
@@ -153,10 +157,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
           if (pantryItem == null || updated.contains(pantryItem.id)) continue;
 
           try {
-            await _inventoryRepo.updateFoodItem(
-              pantryItem.id,
-              {'imageUrl': recipe.thumbnailUrl},
-            );
+            await _inventoryRepo.updateFoodItem(pantryItem.id, {
+              'imageUrl': recipe.thumbnailUrl,
+            });
             updated.add(pantryItem.id);
           } catch (_) {
             // Best-effort — ignore failures
@@ -165,17 +168,15 @@ class _RecipeScreenState extends State<RecipeScreen> {
       }
 
       // For any items still missing an image, try FoodImageService as a last resort
-      final stillMissing = needsImage.values
-          .where((item) => !updated.contains(item.id))
-          .toList();
+      final stillMissing =
+          needsImage.values
+              .where((item) => !updated.contains(item.id))
+              .toList();
       for (final item in stillMissing) {
         final imgUrl = await FoodImageService.findImageUrl(item.name);
         if (imgUrl != null && imgUrl.isNotEmpty) {
           try {
-            await _inventoryRepo.updateFoodItem(
-              item.id,
-              {'imageUrl': imgUrl},
-            );
+            await _inventoryRepo.updateFoodItem(item.id, {'imageUrl': imgUrl});
           } catch (_) {}
         }
       }
@@ -197,8 +198,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _searchDebounce = Timer(const Duration(milliseconds: 600), () async {
       if (!mounted) return;
       setState(() => _searching = true);
-      final results =
-          await _recipeService.searchRecipes(query, _inventoryItems);
+      final results = await _recipeService.searchRecipes(
+        query,
+        _inventoryItems,
+      );
       if (mounted) {
         setState(() {
           _searchResults = results;
@@ -209,12 +212,15 @@ class _RecipeScreenState extends State<RecipeScreen> {
   }
 
   void _openDetail(MatchedRecipe recipe) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => RecipeDetailScreen(
-        recipe: recipe,
-        pantryItems: _inventoryItems,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder:
+            (_) => RecipeDetailScreen(
+              recipe: recipe,
+              pantryItems: _inventoryItems,
+            ),
       ),
-    ));
+    );
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -230,15 +236,29 @@ class _RecipeScreenState extends State<RecipeScreen> {
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
-        child: !_inventoryLoaded
-            ? const Center(
-                child: CircularProgressIndicator(
-                    color: AppTheme.primaryGreen, strokeWidth: 2))
-            : _inventoryItems.isEmpty
+        child:
+            !_inventoryLoaded
+                ? const Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primaryGreen,
+                    strokeWidth: 2,
+                  ),
+                )
+                : _inventoryItems.isEmpty
                 ? _buildEmptyState(
-                    isDark, textColor, subtitleColor, cardColor, bgColor)
+                  isDark,
+                  textColor,
+                  subtitleColor,
+                  cardColor,
+                  bgColor,
+                )
                 : _buildActiveState(
-                    isDark, textColor, subtitleColor, cardColor, bgColor),
+                  isDark,
+                  textColor,
+                  subtitleColor,
+                  cardColor,
+                  bgColor,
+                ),
       ),
     );
   }
@@ -246,8 +266,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
   // ══════════════════════════════════════════════════════════════════════════
   //  EMPTY STATE
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildEmptyState(bool isDark, Color textColor, Color subtitleColor,
-      Color cardColor, Color bgColor) {
+  Widget _buildEmptyState(
+    bool isDark,
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+    Color bgColor,
+  ) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,9 +303,11 @@ class _RecipeScreenState extends State<RecipeScreen> {
                           color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.restaurant,
-                            color: AppTheme.primaryGreen.withValues(alpha: 0.6),
-                            size: 32),
+                        child: Icon(
+                          Icons.restaurant,
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.6),
+                          size: 32,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -314,7 +341,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
                             backgroundColor: AppTheme.primaryGreen,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
@@ -332,8 +360,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
   // ══════════════════════════════════════════════════════════════════════════
   //  ACTIVE STATE
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildActiveState(bool isDark, Color textColor, Color subtitleColor,
-      Color cardColor, Color bgColor) {
+  Widget _buildActiveState(
+    bool isDark,
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+    Color bgColor,
+  ) {
     // If user is searching, show search results
     final showSearch = _searchQuery.trim().isNotEmpty;
 
@@ -350,7 +383,12 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
             if (showSearch)
               _buildSearchResults(
-                  isDark, textColor, subtitleColor, cardColor, bgColor)
+                isDark,
+                textColor,
+                subtitleColor,
+                cardColor,
+                bgColor,
+              )
             else ...[
               // Loading indicator while fetching recipes
               if (_recipesLoading)
@@ -360,14 +398,17 @@ class _RecipeScreenState extends State<RecipeScreen> {
                     child: Column(
                       children: [
                         const CircularProgressIndicator(
-                            color: AppTheme.primaryGreen, strokeWidth: 2),
+                          color: AppTheme.primaryGreen,
+                          strokeWidth: 2,
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           'Finding recipes from your pantry…',
                           style: TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 13,
-                              color: subtitleColor),
+                            fontFamily: 'Roboto',
+                            fontSize: 13,
+                            color: subtitleColor,
+                          ),
                         ),
                       ],
                     ),
@@ -394,18 +435,18 @@ class _RecipeScreenState extends State<RecipeScreen> {
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       itemCount: _recommendations.expiring.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(width: 12),
-                      itemBuilder: (_, i) => _RecipeCard(
-                        recipe: _recommendations.expiring[i],
-                        isDark: isDark,
-                        textColor: textColor,
-                        subtitleColor: subtitleColor,
-                        cardColor: cardColor,
-                        showExpiryBadge: true,
-                        onTap: () =>
-                            _openDetail(_recommendations.expiring[i]),
-                      ),
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder:
+                          (_, i) => _RecipeCard(
+                            recipe: _recommendations.expiring[i],
+                            isDark: isDark,
+                            textColor: textColor,
+                            subtitleColor: subtitleColor,
+                            cardColor: cardColor,
+                            showExpiryBadge: true,
+                            onTap:
+                                () => _openDetail(_recommendations.expiring[i]),
+                          ),
                     ),
                   ),
                   const SizedBox(height: 28),
@@ -429,15 +470,15 @@ class _RecipeScreenState extends State<RecipeScreen> {
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       itemCount: _snackSuggestions.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(width: 12),
-                      itemBuilder: (_, i) => _SnackCard(
-                        suggestion: _snackSuggestions[i],
-                        isDark: isDark,
-                        cardColor: cardColor,
-                        textColor: textColor,
-                        subtitleColor: subtitleColor,
-                      ),
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder:
+                          (_, i) => _SnackCard(
+                            suggestion: _snackSuggestions[i],
+                            isDark: isDark,
+                            cardColor: cardColor,
+                            textColor: textColor,
+                            subtitleColor: subtitleColor,
+                          ),
                     ),
                   ),
                   const SizedBox(height: 28),
@@ -461,21 +502,22 @@ class _RecipeScreenState extends State<RecipeScreen> {
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 14,
-                      crossAxisSpacing: 14,
-                      childAspectRatio: 0.78,
-                    ),
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 14,
+                          crossAxisSpacing: 14,
+                          childAspectRatio: 0.78,
+                        ),
                     itemCount: _recommendations.quickMatch.length,
-                    itemBuilder: (_, i) => _GridRecipeCard(
-                      recipe: _recommendations.quickMatch[i],
-                      isDark: isDark,
-                      textColor: textColor,
-                      subtitleColor: subtitleColor,
-                      cardColor: cardColor,
-                      onTap: () =>
-                          _openDetail(_recommendations.quickMatch[i]),
-                    ),
+                    itemBuilder:
+                        (_, i) => _GridRecipeCard(
+                          recipe: _recommendations.quickMatch[i],
+                          isDark: isDark,
+                          textColor: textColor,
+                          subtitleColor: subtitleColor,
+                          cardColor: cardColor,
+                          onTap:
+                              () => _openDetail(_recommendations.quickMatch[i]),
+                        ),
                   ),
                 ),
                 const SizedBox(height: 28),
@@ -488,8 +530,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
   }
 
   // ── Search results ────────────────────────────────────────────────────────
-  Widget _buildSearchResults(bool isDark, Color textColor, Color subtitleColor,
-      Color cardColor, Color bgColor) {
+  Widget _buildSearchResults(
+    bool isDark,
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+    Color bgColor,
+  ) {
     if (_searching) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 40),
@@ -497,13 +544,18 @@ class _RecipeScreenState extends State<RecipeScreen> {
           child: Column(
             children: [
               const CircularProgressIndicator(
-                  color: AppTheme.primaryGreen, strokeWidth: 2),
+                color: AppTheme.primaryGreen,
+                strokeWidth: 2,
+              ),
               const SizedBox(height: 12),
-              Text('Searching recipes…',
-                  style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 13,
-                      color: subtitleColor)),
+              Text(
+                'Searching recipes…',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 13,
+                  color: subtitleColor,
+                ),
+              ),
             ],
           ),
         ),
@@ -517,7 +569,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
             'No recipes found for "$_searchQuery"',
             textAlign: TextAlign.center,
             style: TextStyle(
-                fontFamily: 'Roboto', fontSize: 14, color: subtitleColor),
+              fontFamily: 'Roboto',
+              fontSize: 14,
+              color: subtitleColor,
+            ),
           ),
         ),
       );
@@ -530,9 +585,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
           Text(
             '${_searchResults.length} results for "$_searchQuery"',
             style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 13,
-                color: subtitleColor),
+              fontFamily: 'Roboto',
+              fontSize: 13,
+              color: subtitleColor,
+            ),
           ),
           const SizedBox(height: 12),
           GridView.builder(
@@ -545,14 +601,15 @@ class _RecipeScreenState extends State<RecipeScreen> {
               childAspectRatio: 0.78,
             ),
             itemCount: _searchResults.length,
-            itemBuilder: (_, i) => _GridRecipeCard(
-              recipe: _searchResults[i],
-              isDark: isDark,
-              textColor: textColor,
-              subtitleColor: subtitleColor,
-              cardColor: cardColor,
-              onTap: () => _openDetail(_searchResults[i]),
-            ),
+            itemBuilder:
+                (_, i) => _GridRecipeCard(
+                  recipe: _searchResults[i],
+                  isDark: isDark,
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
+                  onTap: () => _openDetail(_searchResults[i]),
+                ),
           ),
           const SizedBox(height: 28),
         ],
@@ -570,28 +627,38 @@ class _RecipeScreenState extends State<RecipeScreen> {
           color: bgColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-              color: AppTheme.primaryGreen.withValues(alpha: 0.15),
-              width: 1.5),
+            color: AppTheme.primaryGreen.withValues(alpha: 0.15),
+            width: 1.5,
+          ),
         ),
         child: Column(
           children: [
-            Icon(Icons.search_off,
-                size: 40, color: subtitleColor.withValues(alpha: 0.5)),
+            Icon(
+              Icons.search_off,
+              size: 40,
+              color: subtitleColor.withValues(alpha: 0.5),
+            ),
             const SizedBox(height: 12),
             Text(
               'No recipe matches found.\nTry adding more items to your pantry.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontFamily: 'Roboto', fontSize: 13, color: subtitleColor),
+                fontFamily: 'Roboto',
+                fontSize: 13,
+                color: subtitleColor,
+              ),
             ),
             const SizedBox(height: 16),
             TextButton(
               onPressed: _fetchRecommendations,
-              child: const Text('Try Again',
-                  style: TextStyle(
-                      fontFamily: 'Roboto',
-                      color: AppTheme.primaryGreen,
-                      fontWeight: FontWeight.w600)),
+              child: const Text(
+                'Try Again',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  color: AppTheme.primaryGreen,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ),
@@ -600,8 +667,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   }
 
   // ── Shared widgets ────────────────────────────────────────────────────────
-  Widget _buildHeader(
-      Color textColor, Color subtitleColor, Color bgColor) {
+  Widget _buildHeader(Color textColor, Color subtitleColor, Color bgColor) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Column(
@@ -637,7 +703,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
               color: bgColor,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                  color: AppTheme.primaryGreen.withValues(alpha: 0.15)),
+                color: AppTheme.primaryGreen.withValues(alpha: 0.15),
+              ),
             ),
             child: TextField(
               controller: _searchController,
@@ -646,21 +713,25 @@ class _RecipeScreenState extends State<RecipeScreen> {
               decoration: InputDecoration(
                 hintText: 'Search any recipe (e.g. jollof, chicken…)',
                 hintStyle: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 14,
-                    color: subtitleColor),
-                prefixIcon:
-                    Icon(Icons.search, color: subtitleColor, size: 20),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.close,
-                            color: subtitleColor, size: 18),
-                        onPressed: () {
-                          _searchController.clear();
-                          _onSearchChanged('');
-                        },
-                      )
-                    : null,
+                  fontFamily: 'Roboto',
+                  fontSize: 14,
+                  color: subtitleColor,
+                ),
+                prefixIcon: Icon(Icons.search, color: subtitleColor, size: 20),
+                suffixIcon:
+                    _searchQuery.isNotEmpty
+                        ? IconButton(
+                          icon: Icon(
+                            Icons.close,
+                            color: subtitleColor,
+                            size: 18,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            _onSearchChanged('');
+                          },
+                        )
+                        : null,
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -704,11 +775,14 @@ class _RecipeScreenState extends State<RecipeScreen> {
             ],
           ),
           const SizedBox(height: 2),
-          Text(subtitle,
-              style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 12,
-                  color: subtitleColor)),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 12,
+              color: subtitleColor,
+            ),
+          ),
         ],
       ),
     );
@@ -741,34 +815,44 @@ class _SnackCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+        boxShadow:
+            isDark
+                ? []
+                : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(16)),
-            child: suggestion.imageUrl != null
-                ? CachedNetworkImage(
-                    imageUrl: suggestion.imageUrl!,
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) =>
-                        _EmojiPlaceholder(emoji: suggestion.emoji, isDark: isDark),
-                    errorWidget: (_, __, ___) =>
-                        _EmojiPlaceholder(emoji: suggestion.emoji, isDark: isDark),
-                  )
-                : _EmojiPlaceholder(emoji: suggestion.emoji, isDark: isDark),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child:
+                suggestion.imageUrl != null
+                    ? CachedNetworkImage(
+                      imageUrl: suggestion.imageUrl!,
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder:
+                          (_, __) => _EmojiPlaceholder(
+                            emoji: suggestion.emoji,
+                            isDark: isDark,
+                          ),
+                      errorWidget:
+                          (_, __, ___) => _EmojiPlaceholder(
+                            emoji: suggestion.emoji,
+                            isDark: isDark,
+                          ),
+                    )
+                    : _EmojiPlaceholder(
+                      emoji: suggestion.emoji,
+                      isDark: isDark,
+                    ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -827,9 +911,7 @@ class _EmojiPlaceholder extends StatelessWidget {
       height: 120,
       width: double.infinity,
       color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFF8E1),
-      child: Center(
-        child: Text(emoji, style: const TextStyle(fontSize: 48)),
-      ),
+      child: Center(child: Text(emoji, style: const TextStyle(fontSize: 48))),
     );
   }
 }
@@ -866,15 +948,16 @@ class _RecipeCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: isDark
-              ? []
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+          boxShadow:
+              isDark
+                  ? []
+                  : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -883,50 +966,64 @@ class _RecipeCard extends StatelessWidget {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: recipe.thumbnailUrl.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: recipe.thumbnailUrl,
-                          height: 120,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => Container(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                  child:
+                      recipe.thumbnailUrl.isNotEmpty
+                          ? CachedNetworkImage(
+                            imageUrl: recipe.thumbnailUrl,
                             height: 120,
-                            color: isDark
-                                ? const Color(0xFF2A2A2A)
-                                : const Color(0xFFE8D5B7),
-                            child: const Center(
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                    color: AppTheme.primaryGreen,
-                                    strokeWidth: 2),
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            placeholder:
+                                (_, __) => Container(
+                                  height: 120,
+                                  color:
+                                      isDark
+                                          ? const Color(0xFF2A2A2A)
+                                          : const Color(0xFFE8D5B7),
+                                  child: const Center(
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        color: AppTheme.primaryGreen,
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            errorWidget:
+                                (_, __, ___) => Container(
+                                  height: 120,
+                                  color:
+                                      isDark
+                                          ? const Color(0xFF2A2A2A)
+                                          : const Color(0xFFE8D5B7),
+                                  child: Icon(
+                                    Icons.restaurant,
+                                    size: 40,
+                                    color: AppTheme.primaryGreen.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                  ),
+                                ),
+                          )
+                          : Container(
+                            height: 120,
+                            color:
+                                isDark
+                                    ? const Color(0xFF2A2A2A)
+                                    : const Color(0xFFE8D5B7),
+                            child: Icon(
+                              Icons.restaurant,
+                              size: 40,
+                              color: AppTheme.primaryGreen.withValues(
+                                alpha: 0.4,
                               ),
                             ),
                           ),
-                          errorWidget: (_, __, ___) => Container(
-                            height: 120,
-                            color: isDark
-                                ? const Color(0xFF2A2A2A)
-                                : const Color(0xFFE8D5B7),
-                            child: Icon(Icons.restaurant,
-                                size: 40,
-                                color: AppTheme.primaryGreen
-                                    .withValues(alpha: 0.4)),
-                          ),
-                        )
-                      : Container(
-                          height: 120,
-                          color: isDark
-                              ? const Color(0xFF2A2A2A)
-                              : const Color(0xFFE8D5B7),
-                          child: Icon(Icons.restaurant,
-                              size: 40,
-                              color:
-                                  AppTheme.primaryGreen.withValues(alpha: 0.4)),
-                        ),
                 ),
                 // Match % badge
                 Positioned(
@@ -934,7 +1031,9 @@ class _RecipeCard extends StatelessWidget {
                   left: 8,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryGreen,
                       borderRadius: BorderRadius.circular(8),
@@ -942,10 +1041,11 @@ class _RecipeCard extends StatelessWidget {
                     child: Text(
                       recipe.matchPercent,
                       style: const TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white),
+                        fontFamily: 'Roboto',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -956,13 +1056,18 @@ class _RecipeCard extends StatelessWidget {
                     right: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 3),
+                        horizontal: 6,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE65100),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.warning_amber_rounded,
-                          color: Colors.white, size: 12),
+                      child: const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.white,
+                        size: 12,
+                      ),
                     ),
                   ),
               ],
@@ -988,8 +1093,11 @@ class _RecipeCard extends StatelessWidget {
                   if (recipe.usesExpiringItem)
                     Row(
                       children: [
-                        const Icon(Icons.eco,
-                            size: 11, color: Color(0xFFE65100)),
+                        const Icon(
+                          Icons.eco,
+                          size: 11,
+                          color: Color(0xFFE65100),
+                        ),
                         const SizedBox(width: 3),
                         Expanded(
                           child: Text(
@@ -1010,21 +1118,29 @@ class _RecipeCard extends StatelessWidget {
                     children: [
                       Icon(Icons.schedule, size: 12, color: subtitleColor),
                       const SizedBox(width: 3),
-                      Text(recipe.estimatedPrepTime,
-                          style: TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 11,
-                              color: subtitleColor)),
+                      Text(
+                        recipe.estimatedPrepTime,
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 11,
+                          color: subtitleColor,
+                        ),
+                      ),
                       const SizedBox(width: 8),
-                      Icon(Icons.kitchen_outlined,
-                          size: 12, color: subtitleColor),
+                      Icon(
+                        Icons.kitchen_outlined,
+                        size: 12,
+                        color: subtitleColor,
+                      ),
                       const SizedBox(width: 3),
                       Text(
-                          '${recipe.matchedCount}/${recipe.ingredients.length}',
-                          style: TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 11,
-                              color: subtitleColor)),
+                        '${recipe.matchedCount}/${recipe.ingredients.length}',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 11,
+                          color: subtitleColor,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -1066,15 +1182,16 @@ class _GridRecipeCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: isDark
-              ? []
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+          boxShadow:
+              isDark
+                  ? []
+                  : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1085,45 +1202,59 @@ class _GridRecipeCard extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(16)),
-                    child: recipe.thumbnailUrl.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: recipe.thumbnailUrl,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            placeholder: (_, __) => Container(
-                              color: isDark
-                                  ? const Color(0xFF2A2A2A)
-                                  : const Color(0xFFE8D5B7),
-                              child: const Center(
-                                child: SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                      color: AppTheme.primaryGreen,
-                                      strokeWidth: 2),
+                      top: Radius.circular(16),
+                    ),
+                    child:
+                        recipe.thumbnailUrl.isNotEmpty
+                            ? CachedNetworkImage(
+                              imageUrl: recipe.thumbnailUrl,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              placeholder:
+                                  (_, __) => Container(
+                                    color:
+                                        isDark
+                                            ? const Color(0xFF2A2A2A)
+                                            : const Color(0xFFE8D5B7),
+                                    child: const Center(
+                                      child: SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          color: AppTheme.primaryGreen,
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              errorWidget:
+                                  (_, __, ___) => Container(
+                                    color:
+                                        isDark
+                                            ? const Color(0xFF2A2A2A)
+                                            : const Color(0xFFE8D5B7),
+                                    child: Icon(
+                                      Icons.restaurant,
+                                      size: 32,
+                                      color: AppTheme.primaryGreen.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                    ),
+                                  ),
+                            )
+                            : Container(
+                              color:
+                                  isDark
+                                      ? const Color(0xFF2A2A2A)
+                                      : const Color(0xFFE8D5B7),
+                              child: Icon(
+                                Icons.restaurant,
+                                size: 32,
+                                color: AppTheme.primaryGreen.withValues(
+                                  alpha: 0.4,
                                 ),
                               ),
                             ),
-                            errorWidget: (_, __, ___) => Container(
-                              color: isDark
-                                  ? const Color(0xFF2A2A2A)
-                                  : const Color(0xFFE8D5B7),
-                              child: Icon(Icons.restaurant,
-                                  size: 32,
-                                  color: AppTheme.primaryGreen
-                                      .withValues(alpha: 0.4)),
-                            ),
-                          )
-                        : Container(
-                            color: isDark
-                                ? const Color(0xFF2A2A2A)
-                                : const Color(0xFFE8D5B7),
-                            child: Icon(Icons.restaurant,
-                                size: 32,
-                                color: AppTheme.primaryGreen
-                                    .withValues(alpha: 0.4)),
-                          ),
                   ),
                   // Match badge
                   Positioned(
@@ -1131,20 +1262,24 @@ class _GridRecipeCard extends StatelessWidget {
                     left: 6,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 3),
+                        horizontal: 6,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
-                        color: recipe.usesExpiringItem
-                            ? const Color(0xFFE65100)
-                            : AppTheme.primaryGreen,
+                        color:
+                            recipe.usesExpiringItem
+                                ? const Color(0xFFE65100)
+                                : AppTheme.primaryGreen,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         recipe.matchPercent,
                         style: const TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white),
+                          fontFamily: 'Roboto',
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -1172,16 +1307,20 @@ class _GridRecipeCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.kitchen_outlined,
-                          size: 11, color: subtitleColor),
+                      Icon(
+                        Icons.kitchen_outlined,
+                        size: 11,
+                        color: subtitleColor,
+                      ),
                       const SizedBox(width: 3),
                       Expanded(
                         child: Text(
                           '${recipe.matchedCount}/${recipe.ingredients.length} have',
                           style: TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 10,
-                              color: subtitleColor),
+                            fontFamily: 'Roboto',
+                            fontSize: 10,
+                            color: subtitleColor,
+                          ),
                         ),
                       ),
                       Icon(Icons.schedule, size: 11, color: subtitleColor),
@@ -1189,9 +1328,10 @@ class _GridRecipeCard extends StatelessWidget {
                       Text(
                         recipe.estimatedPrepTime.split('–').first,
                         style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 10,
-                            color: subtitleColor),
+                          fontFamily: 'Roboto',
+                          fontSize: 10,
+                          color: subtitleColor,
+                        ),
                       ),
                     ],
                   ),

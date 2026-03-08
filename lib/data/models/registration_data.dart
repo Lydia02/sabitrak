@@ -36,6 +36,12 @@ class RegistrationData extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [firstName, lastName, email, occupation, country, password];
+  List<Object?> get props => [
+    firstName,
+    lastName,
+    email,
+    occupation,
+    country,
+    password,
+  ];
 }

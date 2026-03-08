@@ -2,7 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/repositories/inventory_repository.dart';
 import 'firebase_service.dart';
 
-enum NotificationType { expiringSoon, expired, lowStock, householdUpdate, recipeReminder }
+enum NotificationType {
+  expiringSoon,
+  expired,
+  lowStock,
+  householdUpdate,
+  recipeReminder,
+}
 
 class AppNotification {
   final String id;
@@ -10,8 +16,9 @@ class AppNotification {
   final String title;
   final String body;
   final DateTime createdAt;
-  final String? actorUid;   // uid of the member who triggered this (null = system)
-  final String? actorName;  // display name of that member
+  final String?
+  actorUid; // uid of the member who triggered this (null = system)
+  final String? actorName; // display name of that member
   bool isRead;
 
   AppNotification({
@@ -45,10 +52,11 @@ class NotificationService {
     final uid = _firebase.currentUser?.uid;
     if (uid == null) return [];
 
-    final hQuery = await _firebase.households
-        .where('members', arrayContains: uid)
-        .limit(1)
-        .get();
+    final hQuery =
+        await _firebase.households
+            .where('members', arrayContains: uid)
+            .limit(1)
+            .get();
     if (hQuery.docs.isEmpty) return [];
 
     final householdId = hQuery.docs.first.id;
@@ -57,10 +65,14 @@ class NotificationService {
 
     // Run in parallel with individual timeouts so one slow source never blocks
     final results = await Future.wait<List<AppNotification>>([
-      _fetchPersistedNotifications(householdId)
-          .timeout(const Duration(seconds: 6), onTimeout: () => []),
-      _deriveLiveNotifications(uid, householdId, memberCount)
-          .timeout(const Duration(seconds: 6), onTimeout: () => []),
+      _fetchPersistedNotifications(
+        householdId,
+      ).timeout(const Duration(seconds: 6), onTimeout: () => []),
+      _deriveLiveNotifications(
+        uid,
+        householdId,
+        memberCount,
+      ).timeout(const Duration(seconds: 6), onTimeout: () => []),
     ]);
 
     final persisted = results[0];
@@ -81,15 +93,17 @@ class NotificationService {
   // ── Persisted notifications (written by Cloud Functions) ──────────────────
 
   Future<List<AppNotification>> _fetchPersistedNotifications(
-      String householdId) async {
+    String householdId,
+  ) async {
     try {
-      final snap = await _firebase.firestore
-          .collection('household_notifications')
-          .doc(householdId)
-          .collection('items')
-          .orderBy('createdAt', descending: true)
-          .limit(50)
-          .get();
+      final snap =
+          await _firebase.firestore
+              .collection('household_notifications')
+              .doc(householdId)
+              .collection('items')
+              .orderBy('createdAt', descending: true)
+              .limit(50)
+              .get();
 
       final currentUid = _firebase.currentUser?.uid;
       return snap.docs.map((doc) {
@@ -111,7 +125,8 @@ class NotificationService {
           type: _parseType(typeStr),
           title: data['title'] as String? ?? 'SabiTrak',
           body: body,
-          createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          createdAt:
+              (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
           actorUid: actorUid,
           actorName: actorName,
         );
@@ -123,18 +138,26 @@ class NotificationService {
 
   NotificationType _parseType(String s) {
     switch (s) {
-      case 'expiringSoon': return NotificationType.expiringSoon;
-      case 'expired': return NotificationType.expired;
-      case 'lowStock': return NotificationType.lowStock;
-      case 'recipeReminder': return NotificationType.recipeReminder;
-      default: return NotificationType.householdUpdate;
+      case 'expiringSoon':
+        return NotificationType.expiringSoon;
+      case 'expired':
+        return NotificationType.expired;
+      case 'lowStock':
+        return NotificationType.lowStock;
+      case 'recipeReminder':
+        return NotificationType.recipeReminder;
+      default:
+        return NotificationType.householdUpdate;
     }
   }
 
   // ── Derived live notifications (local inventory scan) ─────────────────────
 
   Future<List<AppNotification>> _deriveLiveNotifications(
-      String uid, String householdId, int memberCount) async {
+    String uid,
+    String householdId,
+    int memberCount,
+  ) async {
     try {
       final items = await _repo.getFoodItems(householdId).first;
       final notifications = <AppNotification>[];
@@ -142,55 +165,67 @@ class NotificationService {
 
       // Expired items
       for (final item in items.where((i) => i.isExpired)) {
-        notifications.add(AppNotification(
-          id: 'expired_${item.id}',
-          type: NotificationType.expired,
-          title: '${item.name} has expired',
-          body: 'Remove it from your pantry to keep your inventory accurate.',
-          createdAt: now.subtract(Duration(days: item.daysUntilExpiry.abs())),
-        ));
+        notifications.add(
+          AppNotification(
+            id: 'expired_${item.id}',
+            type: NotificationType.expired,
+            title: '${item.name} has expired',
+            body: 'Remove it from your pantry to keep your inventory accurate.',
+            createdAt: now.subtract(Duration(days: item.daysUntilExpiry.abs())),
+          ),
+        );
       }
 
       // Expiring soon (within 3 days)
       for (final item in items.where((i) => i.isExpiringSoon && !i.isExpired)) {
         final days = item.daysUntilExpiry;
-        notifications.add(AppNotification(
-          id: 'expiring_${item.id}',
-          type: NotificationType.expiringSoon,
-          title:
-              '${item.name} expires ${days == 0 ? 'today' : 'in $days day${days == 1 ? '' : 's'}'}',
-          body: 'Use it soon or move it to the freezer.',
-          createdAt: now,
-        ));
+        notifications.add(
+          AppNotification(
+            id: 'expiring_${item.id}',
+            type: NotificationType.expiringSoon,
+            title:
+                '${item.name} expires ${days == 0 ? 'today' : 'in $days day${days == 1 ? '' : 's'}'}',
+            body: 'Use it soon or move it to the freezer.',
+            createdAt: now,
+          ),
+        );
       }
 
       // Low stock (qty <= 1, not expired)
       for (final item in items.where((i) => i.quantity <= 1 && !i.isExpired)) {
-        notifications.add(AppNotification(
-          id: 'low_${item.id}',
-          type: NotificationType.lowStock,
-          title: '${item.name} is running low',
-          body: 'Only ${item.quantity} ${item.unit} left. Consider restocking.',
-          createdAt: now.subtract(const Duration(hours: 2)),
-        ));
+        notifications.add(
+          AppNotification(
+            id: 'low_${item.id}',
+            type: NotificationType.lowStock,
+            title: '${item.name} is running low',
+            body:
+                'Only ${item.quantity} ${item.unit} left. Consider restocking.',
+            createdAt: now.subtract(const Duration(hours: 2)),
+          ),
+        );
       }
 
       // Recent additions by OTHER household members (last 24h)
       if (memberCount > 1) {
-        final recentByOthers = items
-            .where((i) =>
-                i.addedBy != uid &&
-                now.difference(i.createdAt).inHours < 24)
-            .toList();
+        final recentByOthers =
+            items
+                .where(
+                  (i) =>
+                      i.addedBy != uid &&
+                      now.difference(i.createdAt).inHours < 24,
+                )
+                .toList();
         if (recentByOthers.isNotEmpty) {
           final names = recentByOthers.map((i) => i.name).take(3).join(', ');
-          notifications.add(AppNotification(
-            id: 'household_recent',
-            type: NotificationType.householdUpdate,
-            title: 'Household update',
-            body: 'A member recently added: $names.',
-            createdAt: recentByOthers.first.createdAt,
-          ));
+          notifications.add(
+            AppNotification(
+              id: 'household_recent',
+              type: NotificationType.householdUpdate,
+              title: 'Household update',
+              body: 'A member recently added: $names.',
+              createdAt: recentByOthers.first.createdAt,
+            ),
+          );
         }
       }
 
@@ -221,15 +256,17 @@ class NotificationService {
         final firstName = userData?['firstName'] as String? ?? '';
         final lastName = userData?['lastName'] as String? ?? '';
         final fullName = '$firstName $lastName'.trim();
-        actorName = fullName.isNotEmpty
-            ? fullName
-            : _firebase.currentUser?.displayName ?? 'Someone';
+        actorName =
+            fullName.isNotEmpty
+                ? fullName
+                : _firebase.currentUser?.displayName ?? 'Someone';
       } catch (_) {}
 
-      final hQuery = await _firebase.households
-          .where('members', arrayContains: uid)
-          .limit(1)
-          .get();
+      final hQuery =
+          await _firebase.households
+              .where('members', arrayContains: uid)
+              .limit(1)
+              .get();
       if (hQuery.docs.isEmpty) return;
       final householdId = hQuery.docs.first.id;
 
@@ -238,23 +275,28 @@ class NotificationService {
           .doc(householdId)
           .collection('items')
           .add({
-        'type': _typeToString(type),
-        'title': title,
-        'body': body,
-        'actorUid': uid,
-        'actorName': actorName,
-        'createdAt': Timestamp.now(),
-      });
+            'type': _typeToString(type),
+            'title': title,
+            'body': body,
+            'actorUid': uid,
+            'actorName': actorName,
+            'createdAt': Timestamp.now(),
+          });
     } catch (_) {}
   }
 
   String _typeToString(NotificationType t) {
     switch (t) {
-      case NotificationType.expiringSoon: return 'expiringSoon';
-      case NotificationType.expired: return 'expired';
-      case NotificationType.lowStock: return 'lowStock';
-      case NotificationType.recipeReminder: return 'recipeReminder';
-      case NotificationType.householdUpdate: return 'householdUpdate';
+      case NotificationType.expiringSoon:
+        return 'expiringSoon';
+      case NotificationType.expired:
+        return 'expired';
+      case NotificationType.lowStock:
+        return 'lowStock';
+      case NotificationType.recipeReminder:
+        return 'recipeReminder';
+      case NotificationType.householdUpdate:
+        return 'householdUpdate';
     }
   }
 
@@ -263,20 +305,19 @@ class NotificationService {
   Future<void> markAllRead(String householdId) async {
     final uid = _firebase.currentUser?.uid;
     if (uid == null) return;
-    await _firebase.firestore
-        .collection('notification_read')
-        .doc(uid)
-        .set({'lastReadAt': Timestamp.fromDate(DateTime.now())},
-            SetOptions(merge: true));
+    await _firebase.firestore.collection('notification_read').doc(uid).set({
+      'lastReadAt': Timestamp.fromDate(DateTime.now()),
+    }, SetOptions(merge: true));
   }
 
   Future<DateTime?> getLastReadAt() async {
     final uid = _firebase.currentUser?.uid;
     if (uid == null) return null;
-    final doc = await _firebase.firestore
-        .collection('notification_read')
-        .doc(uid)
-        .get();
+    final doc =
+        await _firebase.firestore
+            .collection('notification_read')
+            .doc(uid)
+            .get();
     if (!doc.exists) return null;
     final ts = doc.data()?['lastReadAt'];
     return ts != null ? (ts as Timestamp).toDate() : null;

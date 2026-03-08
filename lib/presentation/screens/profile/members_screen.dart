@@ -36,8 +36,7 @@ class _MembersScreenState extends State<MembersScreen> {
       return;
     }
 
-    final hDoc =
-        await _firebase.households.doc(widget.householdId).get();
+    final hDoc = await _firebase.households.doc(widget.householdId).get();
     if (!hDoc.exists) {
       setState(() => _loading = false);
       return;
@@ -66,33 +65,44 @@ class _MembersScreenState extends State<MembersScreen> {
   Future<void> _removeMember(UserModel member) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Remove Member',
-            style: TextStyle(
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text(
+              'Remove Member',
+              style: TextStyle(
                 fontFamily: 'Roboto',
                 fontWeight: FontWeight.w700,
-                color: AppTheme.primaryGreen)),
-        content: Text(
-          'Remove ${member.firstName} ${member.lastName} from this household?',
-          style: const TextStyle(fontFamily: 'Roboto'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel',
-                style: TextStyle(
-                    fontFamily: 'Roboto', color: AppTheme.subtitleGrey)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Remove',
-                style: TextStyle(
+                color: AppTheme.primaryGreen,
+              ),
+            ),
+            content: Text(
+              'Remove ${member.firstName} ${member.lastName} from this household?',
+              style: const TextStyle(fontFamily: 'Roboto'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    color: AppTheme.subtitleGrey,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  'Remove',
+                  style: TextStyle(
                     fontFamily: 'Roboto',
                     color: Colors.red,
-                    fontWeight: FontWeight.w600)),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
 
     if (confirmed == true) {
@@ -107,7 +117,8 @@ class _MembersScreenState extends State<MembersScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
 
     return Scaffold(
@@ -129,58 +140,67 @@ class _MembersScreenState extends State<MembersScreen> {
         ),
         centerTitle: true,
       ),
-      body: _loading
-          ? const Center(
-              child:
-                  CircularProgressIndicator(color: AppTheme.primaryGreen))
-          : _members.isEmpty
+      body:
+          _loading
+              ? const Center(
+                child: CircularProgressIndicator(color: AppTheme.primaryGreen),
+              )
+              : _members.isEmpty
               ? Center(
-                  child: Text(
-                    'No members found',
-                    style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 16,
-                        color: subtitleColor),
+                child: Text(
+                  'No members found',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 16,
+                    color: subtitleColor,
                   ),
-                )
+                ),
+              )
               : ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-                  itemCount: _members.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final member = _members[index];
-                    final isAdmin = member.id == _adminUid;
-                    final isCurrentUser =
-                        member.id == _firebase.currentUser?.uid;
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 20,
+                ),
+                itemCount: _members.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final member = _members[index];
+                  final isAdmin = member.id == _adminUid;
+                  final isCurrentUser = member.id == _firebase.currentUser?.uid;
 
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: isDark
-                            ? []
-                            : [
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow:
+                          isDark
+                              ? []
+                              : [
                                 BoxShadow(
-                                  color:
-                                      Colors.black.withValues(alpha: 0.04),
+                                  color: Colors.black.withValues(alpha: 0.04),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
                               ],
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 22,
-                            backgroundColor:
-                                AppTheme.primaryGreen.withValues(alpha: 0.12),
-                            backgroundImage: member.photoUrl != null
-                                ? NetworkImage(member.photoUrl!)
-                                : null,
-                            child: member.photoUrl == null
-                                ? Text(
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundColor: AppTheme.primaryGreen.withValues(
+                            alpha: 0.12,
+                          ),
+                          backgroundImage:
+                              member.photoUrl != null
+                                  ? NetworkImage(member.photoUrl!)
+                                  : null,
+                          child:
+                              member.photoUrl == null
+                                  ? Text(
                                     '${member.firstName[0]}${member.lastName[0]}',
                                     style: const TextStyle(
                                       fontFamily: 'Roboto',
@@ -189,68 +209,73 @@ class _MembersScreenState extends State<MembersScreen> {
                                       color: AppTheme.primaryGreen,
                                     ),
                                   )
-                                : null,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${member.firstName} ${member.lastName}${isCurrentUser ? ' (You)' : ''}',
-                                  style: TextStyle(
-                                    fontFamily: 'Roboto',
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: textColor,
-                                  ),
+                                  : null,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${member.firstName} ${member.lastName}${isCurrentUser ? ' (You)' : ''}',
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  member.email,
-                                  style: TextStyle(
-                                    fontFamily: 'Roboto',
-                                    fontSize: 12,
-                                    color: subtitleColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: isAdmin
-                                  ? AppTheme.primaryGreen.withValues(alpha: 0.12)
-                                  : Colors.blue.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              isAdmin ? 'Admin' : 'Member',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: isAdmin
-                                    ? AppTheme.primaryGreen
-                                    : Colors.blue,
                               ),
+                              const SizedBox(height: 2),
+                              Text(
+                                member.email,
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 12,
+                                  color: subtitleColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                isAdmin
+                                    ? AppTheme.primaryGreen.withValues(
+                                      alpha: 0.12,
+                                    )
+                                    : Colors.blue.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            isAdmin ? 'Admin' : 'Member',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  isAdmin ? AppTheme.primaryGreen : Colors.blue,
                             ),
                           ),
-                          if (widget.isAdmin &&
-                              !isCurrentUser &&
-                              !isAdmin)
-                            IconButton(
-                              icon: const Icon(Icons.remove_circle_outline,
-                                  color: Colors.red, size: 20),
-                              onPressed: () => _removeMember(member),
+                        ),
+                        if (widget.isAdmin && !isCurrentUser && !isAdmin)
+                          IconButton(
+                            icon: const Icon(
+                              Icons.remove_circle_outline,
+                              color: Colors.red,
+                              size: 20,
                             ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                            onPressed: () => _removeMember(member),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
     );
   }
 }

@@ -18,8 +18,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => const WelcomeScreen(),
-        transitionsBuilder: (_, animation, __, child) =>
-            FadeTransition(opacity: animation, child: child),
+        transitionsBuilder:
+            (_, animation, __, child) =>
+                FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 500),
       ),
     );
@@ -80,11 +81,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         width: active ? 28 : 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: active
-                              ? AppTheme.primaryGreen
-                              : (isDark
-                                  ? Colors.white.withValues(alpha: 0.2)
-                                  : AppTheme.fieldBorderColor),
+                          color:
+                              active
+                                  ? AppTheme.primaryGreen
+                                  : (isDark
+                                      ? Colors.white.withValues(alpha: 0.2)
+                                      : AppTheme.fieldBorderColor),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       );
@@ -137,9 +139,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               fontFamily: 'Roboto',
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
-                              color: isDark
-                                  ? AppTheme.darkSubtitle
-                                  : AppTheme.subtitleGrey,
+                              color:
+                                  isDark
+                                      ? AppTheme.darkSubtitle
+                                      : AppTheme.subtitleGrey,
                             ),
                           ),
                         ),
@@ -178,7 +181,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // ─────────────────────────────────────────────────────────────────
   Widget _buildPage1(bool isDark) {
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
 
     return Column(
       children: [
@@ -281,7 +285,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // ─────────────────────────────────────────────────────────────
   Widget _buildPage2(bool isDark) {
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
 
     return Column(
       children: [
@@ -314,7 +319,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.white.withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(20),
@@ -350,7 +357,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 right: 24,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: (isDark ? AppTheme.darkCard : AppTheme.white)
                         .withValues(alpha: 0.95),
@@ -369,8 +378,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color:
-                              AppTheme.primaryGreen.withValues(alpha: 0.15),
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -465,7 +473,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // ─────────────────────────────────────────────────────────────
   Widget _buildPage3(bool isDark) {
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
 
     return Column(
       children: [
@@ -494,9 +503,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   bottomLeft: Radius.circular(40),
                   bottomRight: Radius.circular(40),
                 ),
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.2),
-                ),
+                child: Container(color: Colors.black.withValues(alpha: 0.2)),
               ),
               // Floating cards over the image
               Positioned(
@@ -537,8 +544,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 children: [
                   // Badge pill
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
