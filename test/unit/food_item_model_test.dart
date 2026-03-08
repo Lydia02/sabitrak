@@ -96,7 +96,9 @@ void main() {
 
     test('false when expiry is 4 days away', () {
       // Add extra hours to stay clearly beyond 3 full days regardless of execution time
-      final item = _makeItem(expiryDate: now.add(const Duration(days: 4, hours: 1)));
+      final item = _makeItem(
+        expiryDate: now.add(const Duration(days: 4, hours: 1)),
+      );
       expect(item.isExpiringSoon, isFalse);
     });
 
@@ -174,9 +176,18 @@ void main() {
     });
 
     test('itemType serialised as string name', () {
-      expect(_makeItem(itemType: ItemType.ingredient).toFirestore()['itemType'], 'ingredient');
-      expect(_makeItem(itemType: ItemType.leftover).toFirestore()['itemType'], 'leftover');
-      expect(_makeItem(itemType: ItemType.product).toFirestore()['itemType'], 'product');
+      expect(
+        _makeItem(itemType: ItemType.ingredient).toFirestore()['itemType'],
+        'ingredient',
+      );
+      expect(
+        _makeItem(itemType: ItemType.leftover).toFirestore()['itemType'],
+        'leftover',
+      );
+      expect(
+        _makeItem(itemType: ItemType.product).toFirestore()['itemType'],
+        'product',
+      );
     });
   });
 

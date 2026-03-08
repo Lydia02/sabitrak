@@ -44,10 +44,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() => _user = UserModel.fromFirestore(doc));
     }
 
-    final hQuery = await _firebase.households
-        .where('members', arrayContains: uid)
-        .limit(1)
-        .get();
+    final hQuery =
+        await _firebase.households
+            .where('members', arrayContains: uid)
+            .limit(1)
+            .get();
     if (hQuery.docs.isNotEmpty) {
       final hDoc = hQuery.docs.first;
       setState(() {
@@ -60,31 +61,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _handleLogout() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Log Out',
-            style: TextStyle(
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text(
+              'Log Out',
+              style: TextStyle(
                 fontFamily: 'Roboto',
                 fontWeight: FontWeight.w700,
-                color: AppTheme.primaryGreen)),
-        content: const Text('Are you sure you want to log out?',
-            style: TextStyle(fontFamily: 'Roboto')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel',
-                style: TextStyle(
-                    fontFamily: 'Roboto', color: AppTheme.subtitleGrey)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Log Out',
-                style: TextStyle(
+                color: AppTheme.primaryGreen,
+              ),
+            ),
+            content: const Text(
+              'Are you sure you want to log out?',
+              style: TextStyle(fontFamily: 'Roboto'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    color: AppTheme.subtitleGrey,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  'Log Out',
+                  style: TextStyle(
                     fontFamily: 'Roboto',
                     color: Colors.red,
-                    fontWeight: FontWeight.w600)),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
     if (confirmed == true && mounted) {
       await PushNotificationService().clearToken();
@@ -115,91 +129,108 @@ class _ProfileScreenState extends State<ProfileScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text('Share Invite Code',
-                style: TextStyle(
+      builder:
+          (ctx) => Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Share Invite Code',
+                  style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: textColor)),
-            const SizedBox(height: 8),
-            Text('Share this code with others to join your household',
-                textAlign: TextAlign.center,
-                style: TextStyle(
+                    color: textColor,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Share this code with others to join your household',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 13,
-                    color: isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey)),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                code,
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryGreen,
-                  letterSpacing: 4,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: code));
-                      Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Code copied!'),
-                            backgroundColor: AppTheme.primaryGreen),
-                      );
-                    },
-                    icon: const Icon(Icons.copy, size: 18),
-                    label: const Text('Copy Code'),
+                    color:
+                        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      Navigator.pop(ctx);
-                      final message =
-                          'Join my SabiTrak household! Use this invite code: $code';
-                      final encoded = Uri.encodeComponent(message);
-                      final waUrl = Uri.parse('https://wa.me/?text=$encoded');
-                      if (await canLaunchUrl(waUrl)) {
-                        await launchUrl(waUrl,
-                            mode: LaunchMode.externalApplication);
-                      }
-                    },
-                    icon: const Icon(Icons.send, size: 18),
-                    label: const Text('WhatsApp'),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 14,
                   ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    code,
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryGreen,
+                      letterSpacing: 4,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: code));
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Code copied!'),
+                              backgroundColor: AppTheme.primaryGreen,
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.copy, size: 18),
+                        label: const Text('Copy Code'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          final message =
+                              'Join my SabiTrak household! Use this invite code: $code';
+                          final encoded = Uri.encodeComponent(message);
+                          final waUrl = Uri.parse(
+                            'https://wa.me/?text=$encoded',
+                          );
+                          if (await canLaunchUrl(waUrl)) {
+                            await launchUrl(
+                              waUrl,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.send, size: 18),
+                        label: const Text('WhatsApp'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -211,10 +242,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
     final dividerColor =
-        isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.withValues(alpha: 0.15);
+        isDark
+            ? Colors.white.withValues(alpha: 0.08)
+            : Colors.grey.withValues(alpha: 0.15);
 
     return Scaffold(
       body: SafeArea(
@@ -228,23 +262,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.12),
-                    backgroundImage: _user?.photoUrl != null
-                        ? NetworkImage(_user!.photoUrl!)
-                        : null,
-                    child: _user?.photoUrl == null
-                        ? Text(
-                            _user != null
-                                ? '${_user!.firstName[0]}${_user!.lastName[0]}'
-                                : '',
-                            style: const TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryGreen,
-                            ),
-                          )
-                        : null,
+                    backgroundColor: AppTheme.primaryGreen.withValues(
+                      alpha: 0.12,
+                    ),
+                    backgroundImage:
+                        _user?.photoUrl != null
+                            ? NetworkImage(_user!.photoUrl!)
+                            : null,
+                    child:
+                        _user?.photoUrl == null
+                            ? Text(
+                              _user != null
+                                  ? '${_user!.firstName[0]}${_user!.lastName[0]}'
+                                  : '',
+                              style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primaryGreen,
+                              ),
+                            )
+                            : null,
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -286,15 +324,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: BoxDecoration(
                     color: cardColor,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: isDark
-                        ? []
-                        : [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                    boxShadow:
+                        isDark
+                            ? []
+                            : [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                   ),
                   child: Column(
                     children: [
@@ -311,10 +350,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         label: 'Household Members',
                         textColor: textColor,
                         subtitleColor: subtitleColor,
-                        onTap: () => _push(MembersScreen(
-                          householdId: _householdId ?? '',
-                          isAdmin: _isAdmin,
-                        )),
+                        onTap:
+                            () => _push(
+                              MembersScreen(
+                                householdId: _householdId ?? '',
+                                isAdmin: _isAdmin,
+                              ),
+                            ),
                       ),
                       _Divider(color: dividerColor),
                       _MenuItem(
@@ -437,10 +479,7 @@ class _ThemeMenuItem extends StatelessWidget {
   final Color textColor;
   final Color subtitleColor;
 
-  const _ThemeMenuItem({
-    required this.textColor,
-    required this.subtitleColor,
-  });
+  const _ThemeMenuItem({required this.textColor, required this.subtitleColor});
 
   @override
   Widget build(BuildContext context) {
@@ -478,11 +517,13 @@ class _ThemeMenuItem extends StatelessWidget {
                     value: isDark,
                     onChanged: (_) => ThemeNotifier.instance.toggle(),
                     activeColor: AppTheme.primaryGreen,
-                    activeTrackColor:
-                        AppTheme.primaryGreen.withValues(alpha: 0.3),
+                    activeTrackColor: AppTheme.primaryGreen.withValues(
+                      alpha: 0.3,
+                    ),
                     inactiveThumbColor: AppTheme.subtitleGrey,
-                    inactiveTrackColor:
-                        AppTheme.subtitleGrey.withValues(alpha: 0.3),
+                    inactiveTrackColor: AppTheme.subtitleGrey.withValues(
+                      alpha: 0.3,
+                    ),
                   ),
                 ),
               ],

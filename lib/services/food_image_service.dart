@@ -36,15 +36,19 @@ class FoodImageService {
 
   static Future<String?> _searchOff(String name) async {
     try {
-      final uri = Uri.parse(_offSearch).replace(queryParameters: {
-        'search_terms': name,
-        'json': '1',
-        'page_size': '3',
-        'fields': 'product_name,image_front_url',
-      });
+      final uri = Uri.parse(_offSearch).replace(
+        queryParameters: {
+          'search_terms': name,
+          'json': '1',
+          'page_size': '3',
+          'fields': 'product_name,image_front_url',
+        },
+      );
       final response = await http
-          .get(uri,
-              headers: {'User-Agent': 'SabiTrak/1.0 (pantry management app)'})
+          .get(
+            uri,
+            headers: {'User-Agent': 'SabiTrak/1.0 (pantry management app)'},
+          )
           .timeout(const Duration(seconds: 6));
 
       if (response.statusCode != 200) return null;

@@ -31,9 +31,10 @@ class NotificationBadge {
       final notifications = results[0] as List<AppNotification>;
       final lastRead = results[1] as DateTime?;
 
-      final unread = notifications
-          .where((n) => lastRead == null || n.createdAt.isAfter(lastRead))
-          .length;
+      final unread =
+          notifications
+              .where((n) => lastRead == null || n.createdAt.isAfter(lastRead))
+              .length;
       count.value = unread;
     } catch (_) {
       // Keep previous value on error
@@ -95,10 +96,8 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Keep last_active_ms fresh so the 30-day session window resets
     SharedPreferences.getInstance().then(
-      (prefs) => prefs.setInt(
-        'last_active_ms',
-        DateTime.now().millisecondsSinceEpoch,
-      ),
+      (prefs) =>
+          prefs.setInt('last_active_ms', DateTime.now().millisecondsSinceEpoch),
     );
     // Re-check badge when app comes back to foreground (catches expiry alerts)
     if (state == AppLifecycleState.resumed) {
@@ -115,10 +114,11 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       final uid = firebase.currentUser?.uid;
       if (uid == null) return;
 
-      final hQuery = await firebase.households
-          .where('members', arrayContains: uid)
-          .limit(1)
-          .get();
+      final hQuery =
+          await firebase.households
+              .where('members', arrayContains: uid)
+              .limit(1)
+              .get();
       if (hQuery.docs.isEmpty) return;
       final householdId = hQuery.docs.first.id;
 
@@ -152,10 +152,11 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     final uid = firebase.currentUser?.uid;
     if (uid == null) return;
 
-    final hQuery = await firebase.households
-        .where('members', arrayContains: uid)
-        .limit(1)
-        .get();
+    final hQuery =
+        await firebase.households
+            .where('members', arrayContains: uid)
+            .limit(1)
+            .get();
     if (hQuery.docs.isEmpty) return;
 
     final householdId = hQuery.docs.first.id;
@@ -174,13 +175,14 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   void _openNotifications() {
     Navigator.of(context)
-        .push(MaterialPageRoute(
-            builder: (_) => const NotificationInboxScreen()))
+        .push(
+          MaterialPageRoute(builder: (_) => const NotificationInboxScreen()),
+        )
         .then((_) {
-      // After closing inbox mark all read and reset badge
-      NotificationService().markAllRead('');
-      NotificationBadge.clear();
-    });
+          // After closing inbox mark all read and reset badge
+          NotificationService().markAllRead('');
+          NotificationBadge.clear();
+        });
   }
 
   @override
@@ -199,63 +201,73 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             right: 16,
             child: ValueListenableBuilder<int>(
               valueListenable: NotificationBadge.count,
-              builder: (_, badgeCount, __) => GestureDetector(
-                onTap: _openNotifications,
-                child: Stack(clipBehavior: Clip.none, children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppTheme.darkCard.withValues(alpha: 0.9)
-                          : Colors.white.withValues(alpha: 0.92),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.10),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      badgeCount > 0
-                          ? Icons.notifications
-                          : Icons.notifications_none_outlined,
-                      color: badgeCount > 0
-                          ? AppTheme.primaryGreen
-                          : (isDark
-                              ? AppTheme.darkSubtitle
-                              : AppTheme.subtitleGrey),
-                      size: 22,
-                    ),
-                  ),
-                  if (badgeCount > 0)
-                    Positioned(
-                      top: -2,
-                      right: -2,
-                      child: Container(
-                        constraints: const BoxConstraints(
-                            minWidth: 18, minHeight: 18),
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            badgeCount > 99 ? '99+' : '$badgeCount',
-                            style: const TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
+              builder:
+                  (_, badgeCount, __) => GestureDetector(
+                    onTap: _openNotifications,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color:
+                                isDark
+                                    ? AppTheme.darkCard.withValues(alpha: 0.9)
+                                    : Colors.white.withValues(alpha: 0.92),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.10),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            badgeCount > 0
+                                ? Icons.notifications
+                                : Icons.notifications_none_outlined,
+                            color:
+                                badgeCount > 0
+                                    ? AppTheme.primaryGreen
+                                    : (isDark
+                                        ? AppTheme.darkSubtitle
+                                        : AppTheme.subtitleGrey),
+                            size: 22,
                           ),
                         ),
-                      ),
+                        if (badgeCount > 0)
+                          Positioned(
+                            top: -2,
+                            right: -2,
+                            child: Container(
+                              constraints: const BoxConstraints(
+                                minWidth: 18,
+                                minHeight: 18,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  badgeCount > 99 ? '99+' : '$badgeCount',
+                                  style: const TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                ]),
-              ),
+                  ),
             ),
           ),
         ],
@@ -370,8 +382,7 @@ class _NavItem extends StatelessWidget {
                 fontFamily: 'Roboto',
                 fontSize: 10,
                 color: isActive ? activeColor : inactiveColor,
-                fontWeight:
-                    isActive ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ],

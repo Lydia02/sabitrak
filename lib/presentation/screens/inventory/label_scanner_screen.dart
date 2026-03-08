@@ -103,7 +103,8 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
     String? quantity;
     String? category;
     final allText = recognized.text;
-    final lines = allText.split('\n').where((l) => l.trim().isNotEmpty).toList();
+    final lines =
+        allText.split('\n').where((l) => l.trim().isNotEmpty).toList();
 
     // Filter blocks: discard junk text that's clearly not from a product label
     final blocks = List<TextBlock>.from(recognized.blocks);
@@ -111,22 +112,32 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
     // Remove blocks with text that looks like file paths, URLs, or system text
     final junkPatterns = [
       RegExp(r'[/\\][A-Za-z]', caseSensitive: false), // file paths
-      RegExp(r'https?://', caseSensitive: false),       // URLs
-      RegExp(r'\.dart|\.js|\.py|\.txt|\.md', caseSensitive: false), // file extensions
-      RegExp(r'Desktop|Documents|Users|project', caseSensitive: false), // OS paths
-      RegExp(r'import |class |void |final |const ', caseSensitive: false), // code
+      RegExp(r'https?://', caseSensitive: false), // URLs
+      RegExp(
+        r'\.dart|\.js|\.py|\.txt|\.md',
+        caseSensitive: false,
+      ), // file extensions
+      RegExp(
+        r'Desktop|Documents|Users|project',
+        caseSensitive: false,
+      ), // OS paths
+      RegExp(
+        r'import |class |void |final |const ',
+        caseSensitive: false,
+      ), // code
     ];
 
-    final filteredBlocks = blocks.where((block) {
-      final text = block.text.trim();
-      // Skip very short (1 char) or very long blocks (likely paragraphs from background)
-      if (text.length < 2 || text.length > 200) return false;
-      // Skip blocks that match junk patterns
-      for (final pattern in junkPatterns) {
-        if (pattern.hasMatch(text)) return false;
-      }
-      return true;
-    }).toList();
+    final filteredBlocks =
+        blocks.where((block) {
+          final text = block.text.trim();
+          // Skip very short (1 char) or very long blocks (likely paragraphs from background)
+          if (text.length < 2 || text.length > 200) return false;
+          // Skip blocks that match junk patterns
+          for (final pattern in junkPatterns) {
+            if (pattern.hasMatch(text)) return false;
+          }
+          return true;
+        }).toList();
 
     // Strategy: find the product name using text block font size (height relative to width)
     // The product name is typically the largest, most prominent text
@@ -166,8 +177,21 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
     for (final line in lines) {
       final lower = line.toLowerCase().trim();
       // Common brand indicators on Nigerian/African labels
-      if (lower.startsWith('by ') || lower.startsWith('brand:') || lower.startsWith('manufactured by') || lower.startsWith('produced by') || lower.startsWith('packed by')) {
-        brand = line.replaceFirst(RegExp(r'^(by|brand:|manufactured by|produced by|packed by)\s*', caseSensitive: false), '').trim();
+      if (lower.startsWith('by ') ||
+          lower.startsWith('brand:') ||
+          lower.startsWith('manufactured by') ||
+          lower.startsWith('produced by') ||
+          lower.startsWith('packed by')) {
+        brand =
+            line
+                .replaceFirst(
+                  RegExp(
+                    r'^(by|brand:|manufactured by|produced by|packed by)\s*',
+                    caseSensitive: false,
+                  ),
+                  '',
+                )
+                .trim();
         break;
       }
     }
@@ -181,8 +205,14 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
 
     // Look for weight/quantity patterns in all text
     final weightPatterns = [
-      RegExp(r'Net\s*(?:Weight|Wt|W)\.?\s*:?\s*(\d+\.?\d*)\s*(kg|g|ml|l)', caseSensitive: false),
-      RegExp(r'(\d+\.?\d*)\s*(grams|kilograms|litres|liters|millilitres|milliliters)', caseSensitive: false),
+      RegExp(
+        r'Net\s*(?:Weight|Wt|W)\.?\s*:?\s*(\d+\.?\d*)\s*(kg|g|ml|l)',
+        caseSensitive: false,
+      ),
+      RegExp(
+        r'(\d+\.?\d*)\s*(grams|kilograms|litres|liters|millilitres|milliliters)',
+        caseSensitive: false,
+      ),
       RegExp(r'(\d+\.?\d*)\s*(kg|g|ml|l|oz|lb|cl)\b', caseSensitive: false),
     ];
 
@@ -200,25 +230,64 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
 
     // Try to detect category from common keywords in the filtered text only
     final lowerText = filteredBlocks.map((b) => b.text.toLowerCase()).join(' ');
-    if (lowerText.contains('noodle') || lowerText.contains('pasta') || lowerText.contains('spaghetti') || lowerText.contains('rice') || lowerText.contains('bread')) {
+    if (lowerText.contains('noodle') ||
+        lowerText.contains('pasta') ||
+        lowerText.contains('spaghetti') ||
+        lowerText.contains('rice') ||
+        lowerText.contains('bread')) {
       category = 'Grains';
-    } else if (lowerText.contains('milk') || lowerText.contains('yogurt') || lowerText.contains('cheese') || lowerText.contains('butter') || lowerText.contains('cream')) {
+    } else if (lowerText.contains('milk') ||
+        lowerText.contains('yogurt') ||
+        lowerText.contains('cheese') ||
+        lowerText.contains('butter') ||
+        lowerText.contains('cream')) {
       category = 'Dairy';
-    } else if (lowerText.contains('juice') || lowerText.contains('drink') || lowerText.contains('water') || lowerText.contains('soda') || lowerText.contains('beverage')) {
+    } else if (lowerText.contains('juice') ||
+        lowerText.contains('drink') ||
+        lowerText.contains('water') ||
+        lowerText.contains('soda') ||
+        lowerText.contains('beverage')) {
       category = 'Beverages';
-    } else if (lowerText.contains('biscuit') || lowerText.contains('cookie') || lowerText.contains('chocolate') || lowerText.contains('candy') || lowerText.contains('snack') || lowerText.contains('chip')) {
+    } else if (lowerText.contains('biscuit') ||
+        lowerText.contains('cookie') ||
+        lowerText.contains('chocolate') ||
+        lowerText.contains('candy') ||
+        lowerText.contains('snack') ||
+        lowerText.contains('chip')) {
       category = 'Snacks';
-    } else if (lowerText.contains('groundnut') || lowerText.contains('kuli') || lowerText.contains('chin chin') || lowerText.contains('plantain') || lowerText.contains('puff puff')) {
+    } else if (lowerText.contains('groundnut') ||
+        lowerText.contains('kuli') ||
+        lowerText.contains('chin chin') ||
+        lowerText.contains('plantain') ||
+        lowerText.contains('puff puff')) {
       category = 'Snacks';
-    } else if (lowerText.contains('tomato') || lowerText.contains('pepper') || lowerText.contains('onion') || lowerText.contains('vegetable')) {
+    } else if (lowerText.contains('tomato') ||
+        lowerText.contains('pepper') ||
+        lowerText.contains('onion') ||
+        lowerText.contains('vegetable')) {
       category = 'Vegetables';
-    } else if (lowerText.contains('fruit') || lowerText.contains('mango') || lowerText.contains('orange') || lowerText.contains('apple') || lowerText.contains('banana')) {
+    } else if (lowerText.contains('fruit') ||
+        lowerText.contains('mango') ||
+        lowerText.contains('orange') ||
+        lowerText.contains('apple') ||
+        lowerText.contains('banana')) {
       category = 'Fruits';
-    } else if (lowerText.contains('meat') || lowerText.contains('chicken') || lowerText.contains('beef') || lowerText.contains('fish') || lowerText.contains('sardine') || lowerText.contains('tuna')) {
+    } else if (lowerText.contains('meat') ||
+        lowerText.contains('chicken') ||
+        lowerText.contains('beef') ||
+        lowerText.contains('fish') ||
+        lowerText.contains('sardine') ||
+        lowerText.contains('tuna')) {
       category = 'Meat & Fish';
-    } else if (lowerText.contains('sauce') || lowerText.contains('spice') || lowerText.contains('seasoning') || lowerText.contains('pepper') || lowerText.contains('curry')) {
+    } else if (lowerText.contains('sauce') ||
+        lowerText.contains('spice') ||
+        lowerText.contains('seasoning') ||
+        lowerText.contains('pepper') ||
+        lowerText.contains('curry')) {
       category = 'Spices';
-    } else if (lowerText.contains('canned') || lowerText.contains('tin') || lowerText.contains('preserved')) {
+    } else if (lowerText.contains('canned') ||
+        lowerText.contains('tin') ||
+        lowerText.contains('preserved')) {
       category = 'Canned';
     } else if (lowerText.contains('frozen') || lowerText.contains('ice')) {
       category = 'Frozen';
@@ -256,8 +325,18 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
     ];
 
     const monthNames = {
-      'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
-      'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
+      'jan': 1,
+      'feb': 2,
+      'mar': 3,
+      'apr': 4,
+      'may': 5,
+      'jun': 6,
+      'jul': 7,
+      'aug': 8,
+      'sep': 9,
+      'oct': 10,
+      'nov': 11,
+      'dec': 12,
     };
 
     DateTime? tryParse(RegExp pattern, String text) {
@@ -344,7 +423,8 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
   void _showParsedResult(ParsedLabelInfo info) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
 
     // Controllers for editable fields
@@ -360,229 +440,289 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Padding(
-          padding: EdgeInsets.fromLTRB(
-            24, 16, 24,
-            MediaQuery.of(ctx).viewInsets.bottom + 32,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Handle
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: subtitleColor.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
+      builder:
+          (ctx) => StatefulBuilder(
+            builder:
+                (ctx, setSheetState) => Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    24,
+                    16,
+                    24,
+                    MediaQuery.of(ctx).viewInsets.bottom + 32,
                   ),
-                ),
-                const SizedBox(height: 16),
-
-                // Header
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.document_scanner_outlined,
-                    color: AppTheme.primaryGreen,
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Label Scanned!',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: textColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Review and edit the detected info',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 13,
-                    color: subtitleColor,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Editable fields
-                _buildTextField('Product Name', nameController, textColor, subtitleColor, isDark),
-                const SizedBox(height: 12),
-                _buildTextField('Brand', brandController, textColor, subtitleColor, isDark),
-                const SizedBox(height: 12),
-                _buildTextField('Quantity', quantityController, textColor, subtitleColor, isDark),
-                const SizedBox(height: 12),
-
-                // Expiry date banner — shown when OCR detected a date
-                if (info.expiryDate != null) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.event_available_outlined, color: AppTheme.primaryGreen, size: 18),
-                        const SizedBox(width: 10),
-                        Expanded(
+                        // Handle
+                        Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: subtitleColor.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Header
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.document_scanner_outlined,
+                            color: AppTheme.primaryGreen,
+                            size: 26,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Label Scanned!',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Review and edit the detected info',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 13,
+                            color: subtitleColor,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Editable fields
+                        _buildTextField(
+                          'Product Name',
+                          nameController,
+                          textColor,
+                          subtitleColor,
+                          isDark,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          'Brand',
+                          brandController,
+                          textColor,
+                          subtitleColor,
+                          isDark,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          'Quantity',
+                          quantityController,
+                          textColor,
+                          subtitleColor,
+                          isDark,
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Expiry date banner — shown when OCR detected a date
+                        if (info.expiryDate != null) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryGreen.withValues(
+                                alpha: 0.08,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppTheme.primaryGreen.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.event_available_outlined,
+                                  color: AppTheme.primaryGreen,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Expiry date detected: ${info.expiryDate!.day.toString().padLeft(2, '0')}/${info.expiryDate!.month.toString().padLeft(2, '0')}/${info.expiryDate!.year}',
+                                    style: const TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.primaryGreen,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+
+                        // Category dropdown
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color:
+                                  isDark
+                                      ? Colors.white.withValues(alpha: 0.12)
+                                      : AppTheme.fieldBorderColor,
+                            ),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: selectedCategory,
+                              dropdownColor: cardColor,
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 14,
+                                color: textColor,
+                              ),
+                              items:
+                                  const [
+                                        'Fruits',
+                                        'Vegetables',
+                                        'Dairy',
+                                        'Meat & Fish',
+                                        'Grains',
+                                        'Canned',
+                                        'Spices',
+                                        'Beverages',
+                                        'Snacks',
+                                        'Frozen',
+                                        'Other',
+                                      ]
+                                      .map(
+                                        (c) => DropdownMenuItem(
+                                          value: c,
+                                          child: Text(c),
+                                        ),
+                                      )
+                                      .toList(),
+                              onChanged:
+                                  (v) => setSheetState(
+                                    () => selectedCategory = v!,
+                                  ),
+                            ),
+                          ),
+                        ),
+
+                        // Show raw OCR text for reference
+                        if (info.rawLines.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          ExpansionTile(
+                            title: Text(
+                              'Raw OCR Text (${info.rawLines.length} lines)',
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 12,
+                                color: subtitleColor,
+                              ),
+                            ),
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color:
+                                      isDark
+                                          ? Colors.white.withValues(alpha: 0.04)
+                                          : Colors.grey.withValues(alpha: 0.06),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  info.rawLines.join('\n'),
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 11,
+                                    color: subtitleColor,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 20),
+
+                        // Add to Inventory button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final name = nameController.text.trim();
+                              if (name.isEmpty) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Please enter a product name',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+                              _pendingNavigation = ManualEntryScreen(
+                                prefilledName: name,
+                                prefilledCategory: selectedCategory,
+                                prefilledBarcode: widget.prefilledBarcode,
+                                prefilledExpiryDate: info.expiryDate,
+                              );
+                              Navigator.of(context).pop();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryGreen,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Add to Inventory',
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+
+                        // Retake button
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(ctx).pop();
+                            setState(() => _isProcessing = false);
+                          },
                           child: Text(
-                            'Expiry date detected: ${info.expiryDate!.day.toString().padLeft(2, '0')}/${info.expiryDate!.month.toString().padLeft(2, '0')}/${info.expiryDate!.year}',
-                            style: const TextStyle(
+                            'Scan Again',
+                            style: TextStyle(
                               fontFamily: 'Roboto',
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryGreen,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: subtitleColor,
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                ],
-
-                // Category dropdown
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.12)
-                          : AppTheme.fieldBorderColor,
-                    ),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      value: selectedCategory,
-                      dropdownColor: cardColor,
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 14,
-                        color: textColor,
-                      ),
-                      items: const [
-                        'Fruits', 'Vegetables', 'Dairy', 'Meat & Fish',
-                        'Grains', 'Canned', 'Spices', 'Beverages',
-                        'Snacks', 'Frozen', 'Other',
-                      ].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                      onChanged: (v) => setSheetState(() => selectedCategory = v!),
-                    ),
-                  ),
                 ),
-
-                // Show raw OCR text for reference
-                if (info.rawLines.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  ExpansionTile(
-                    title: Text(
-                      'Raw OCR Text (${info.rawLines.length} lines)',
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 12,
-                        color: subtitleColor,
-                      ),
-                    ),
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.04)
-                              : Colors.grey.withValues(alpha: 0.06),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          info.rawLines.join('\n'),
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 11,
-                            color: subtitleColor,
-                            height: 1.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 20),
-
-                // Add to Inventory button
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final name = nameController.text.trim();
-                      if (name.isEmpty) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          const SnackBar(content: Text('Please enter a product name')),
-                        );
-                        return;
-                      }
-                      _pendingNavigation = ManualEntryScreen(
-                        prefilledName: name,
-                        prefilledCategory: selectedCategory,
-                        prefilledBarcode: widget.prefilledBarcode,
-                        prefilledExpiryDate: info.expiryDate,
-                      );
-                      Navigator.of(context).pop();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGreen,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Add to Inventory',
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Retake button
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    setState(() => _isProcessing = false);
-                  },
-                  child: Text(
-                    'Scan Again',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: subtitleColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
-        ),
-      ),
     ).whenComplete(() {
       if (!mounted) return;
       final nav = _pendingNavigation;
@@ -591,9 +731,9 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
       if (nav != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => nav),
-          );
+          Navigator.of(
+            context,
+          ).pushReplacement(MaterialPageRoute(builder: (_) => nav));
         });
       }
     });
@@ -616,21 +756,26 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
           fontSize: 13,
           color: subtitleColor,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.12)
-                : AppTheme.fieldBorderColor,
+            color:
+                isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : AppTheme.fieldBorderColor,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.12)
-                : AppTheme.fieldBorderColor,
+            color:
+                isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : AppTheme.fieldBorderColor,
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -643,10 +788,7 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.orange.shade700,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.orange.shade700),
     );
   }
 
@@ -658,9 +800,7 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
         children: [
           // Camera preview
           if (_isCameraInitialized && _cameraController != null)
-            SizedBox.expand(
-              child: CameraPreview(_cameraController!),
-            )
+            SizedBox.expand(child: CameraPreview(_cameraController!))
           else if (_errorMessage != null)
             Center(
               child: Text(
@@ -687,7 +827,11 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
                         color: Colors.black.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                     ),
                   ),
                   const Spacer(),
@@ -697,7 +841,8 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
                       onPressed: () async {
                         try {
                           await _cameraController!.setFlashMode(
-                            _cameraController!.value.flashMode == FlashMode.torch
+                            _cameraController!.value.flashMode ==
+                                    FlashMode.torch
                                 ? FlashMode.off
                                 : FlashMode.torch,
                           );
@@ -778,23 +923,23 @@ class _LabelScannerScreenState extends State<LabelScannerScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 4),
-                        color: _isProcessing
-                            ? Colors.grey
-                            : AppTheme.primaryGreen,
+                        color:
+                            _isProcessing ? Colors.grey : AppTheme.primaryGreen,
                       ),
-                      child: _isProcessing
-                          ? const Padding(
-                              padding: EdgeInsets.all(18),
-                              child: CircularProgressIndicator(
+                      child:
+                          _isProcessing
+                              ? const Padding(
+                                padding: EdgeInsets.all(18),
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 3,
+                                ),
+                              )
+                              : const Icon(
+                                Icons.camera_alt,
                                 color: Colors.white,
-                                strokeWidth: 3,
+                                size: 32,
                               ),
-                            )
-                          : const Icon(
-                              Icons.camera_alt,
-                              color: Colors.white,
-                              size: 32,
-                            ),
                     ),
                   ),
                 ],
@@ -811,7 +956,11 @@ class _ScoredBlock {
   final String text;
   final double score;
   final TextBlock block;
-  const _ScoredBlock({required this.text, required this.score, required this.block});
+  const _ScoredBlock({
+    required this.text,
+    required this.score,
+    required this.block,
+  });
 }
 
 class ParsedLabelInfo {

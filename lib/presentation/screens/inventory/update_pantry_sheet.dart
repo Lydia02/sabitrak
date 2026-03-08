@@ -10,11 +10,7 @@ class UpdatePantrySheet extends StatefulWidget {
   final FoodItem item;
   final InventoryRepository repo;
 
-  const UpdatePantrySheet({
-    super.key,
-    required this.item,
-    required this.repo,
-  });
+  const UpdatePantrySheet({super.key, required this.item, required this.repo});
 
   @override
   State<UpdatePantrySheet> createState() => _UpdatePantrySheetState();
@@ -54,15 +50,16 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
   @override
   void initState() {
     super.initState();
-    _qtyController =
-        TextEditingController(text: widget.item.quantity.toString());
-    _selectedUnit = _units.contains(widget.item.unit)
-        ? widget.item.unit
-        : _units.first;
+    _qtyController = TextEditingController(
+      text: widget.item.quantity.toString(),
+    );
+    _selectedUnit =
+        _units.contains(widget.item.unit) ? widget.item.unit : _units.first;
     _expiryDate = widget.item.expiryDate;
-    _selectedStorage = _storageLocations.contains(widget.item.storageLocation)
-        ? widget.item.storageLocation
-        : _storageLocations.first;
+    _selectedStorage =
+        _storageLocations.contains(widget.item.storageLocation)
+            ? widget.item.storageLocation
+            : _storageLocations.first;
   }
 
   @override
@@ -74,17 +71,21 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _expiryDate.isAfter(DateTime.now())
-          ? _expiryDate
-          : DateTime.now().add(const Duration(days: 1)),
+      initialDate:
+          _expiryDate.isAfter(DateTime.now())
+              ? _expiryDate
+              : DateTime.now().add(const Duration(days: 1)),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 1825)),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: AppTheme.primaryGreen),
-        ),
-        child: child!,
-      ),
+      builder:
+          (ctx, child) => Theme(
+            data: Theme.of(ctx).copyWith(
+              colorScheme: const ColorScheme.light(
+                primary: AppTheme.primaryGreen,
+              ),
+            ),
+            child: child!,
+          ),
     );
     if (picked != null) setState(() => _expiryDate = picked);
   }
@@ -123,47 +124,57 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
     if (isExpired) {
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Remove Expired Item'),
-          content: Text(
-            '"${widget.item.name}" has expired and will be recorded as wasted. Remove it?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
+        builder:
+            (_) => AlertDialog(
+              title: const Text('Remove Expired Item'),
+              content: Text(
+                '"${widget.item.name}" has expired and will be recorded as wasted. Remove it?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text(
+                    'Remove',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Remove', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        ),
       );
       if (confirmed != true) return;
       logAsWaste = true;
     } else {
       final reason = await showDialog<String>(
         context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Remove Item'),
-          content: Text('How was "${widget.item.name}" removed?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, 'cancel'),
-              child: const Text('Cancel'),
+        builder:
+            (_) => AlertDialog(
+              title: const Text('Remove Item'),
+              content: Text('How was "${widget.item.name}" removed?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, 'cancel'),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, 'used'),
+                  child: const Text(
+                    'Used Up',
+                    style: TextStyle(color: AppTheme.primaryGreen),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, 'wasted'),
+                  child: const Text(
+                    'Wasted',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, 'used'),
-              child: const Text('Used Up',
-                  style: TextStyle(color: AppTheme.primaryGreen)),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, 'wasted'),
-              child: const Text('Wasted', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        ),
       );
       if (reason == null || reason == 'cancel') return;
       logAsWaste = reason == 'wasted';
@@ -194,9 +205,9 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
   }
 
   void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: Colors.red),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
   }
 
   @override
@@ -262,15 +273,21 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
                       color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: _isDeleting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.red),
-                          )
-                        : const Icon(Icons.delete_outline,
-                            color: Colors.red, size: 20),
+                    child:
+                        _isDeleting
+                            ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.red,
+                              ),
+                            )
+                            : const Icon(
+                              Icons.delete_outline,
+                              color: Colors.red,
+                              size: 20,
+                            ),
                   ),
                 ),
               ],
@@ -325,9 +342,7 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
                     child: TextField(
                       controller: _qtyController,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: 'Roboto',
@@ -375,10 +390,13 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
                         fontWeight: FontWeight.w500,
                         color: textColor,
                       ),
-                      items: _units
-                          .map((u) =>
-                              DropdownMenuItem(value: u, child: Text(u)))
-                          .toList(),
+                      items:
+                          _units
+                              .map(
+                                (u) =>
+                                    DropdownMenuItem(value: u, child: Text(u)),
+                              )
+                              .toList(),
                       onChanged: (v) {
                         if (v != null) setState(() => _selectedUnit = v);
                       },
@@ -404,36 +422,35 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _storageLocations.map((loc) {
-                final isSelected = _selectedStorage == loc;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedStorage = loc),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 9),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppTheme.primaryGreen
-                          : fieldBg,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSelected
-                            ? AppTheme.primaryGreen
-                            : border,
+              children:
+                  _storageLocations.map((loc) {
+                    final isSelected = _selectedStorage == loc;
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedStorage = loc),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 9,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppTheme.primaryGreen : fieldBg,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected ? AppTheme.primaryGreen : border,
+                          ),
+                        ),
+                        child: Text(
+                          loc,
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: isSelected ? Colors.white : textColor,
+                          ),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      loc,
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: isSelected ? Colors.white : textColor,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
+                    );
+                  }).toList(),
             ),
             const SizedBox(height: 20),
 
@@ -453,7 +470,9 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
               onTap: _pickDate,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 14),
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: fieldBg,
                   borderRadius: BorderRadius.circular(10),
@@ -461,8 +480,11 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today_outlined,
-                        color: AppTheme.primaryGreen, size: 18),
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      color: AppTheme.primaryGreen,
+                      size: 18,
+                    ),
                     const SizedBox(width: 10),
                     Text(
                       _formatDate(_expiryDate),
@@ -494,23 +516,24 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: _isSaving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                child:
+                    _isSaving
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : const Text(
+                          'Update Pantry',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      )
-                    : const Text(
-                        'Update Pantry',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
               ),
             ),
           ],
@@ -521,8 +544,18 @@ class _UpdatePantrySheetState extends State<UpdatePantrySheet> {
 
   String _formatDate(DateTime d) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
   }
@@ -550,14 +583,18 @@ class _CircleButton extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: filled
-              ? AppTheme.primaryGreen
-              : (isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.07)),
+          color:
+              filled
+                  ? AppTheme.primaryGreen
+                  : (isDark
+                      ? Colors.white12
+                      : Colors.black.withValues(alpha: 0.07)),
         ),
         child: Icon(
           icon,
           size: 20,
-          color: filled ? Colors.white : (isDark ? Colors.white : Colors.black87),
+          color:
+              filled ? Colors.white : (isDark ? Colors.white : Colors.black87),
         ),
       ),
     );

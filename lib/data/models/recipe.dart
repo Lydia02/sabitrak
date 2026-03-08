@@ -28,9 +28,10 @@ class Recipe {
     return Recipe(
       id: doc.id,
       name: data['name'] ?? '',
-      ingredients: (data['ingredients'] as List)
-          .map((i) => Ingredient.fromMap(i))
-          .toList(),
+      ingredients:
+          (data['ingredients'] as List)
+              .map((i) => Ingredient.fromMap(i))
+              .toList(),
       instructions: data['instructions'] ?? '',
       prepTime: data['prepTime'] ?? 0,
       servings: data['servings'] ?? 0,
@@ -59,11 +60,7 @@ class Ingredient {
   final String quantity;
   final String unit;
 
-  Ingredient({
-    required this.name,
-    required this.quantity,
-    required this.unit,
-  });
+  Ingredient({required this.name, required this.quantity, required this.unit});
 
   factory Ingredient.fromMap(Map<String, dynamic> map) {
     return Ingredient(
@@ -74,10 +71,6 @@ class Ingredient {
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'quantity': quantity,
-      'unit': unit,
-    };
+    return {'name': name, 'quantity': quantity, 'unit': unit};
   }
 }

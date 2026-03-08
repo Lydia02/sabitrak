@@ -19,8 +19,10 @@ class ForgotPasswordOtpScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
-  final List<TextEditingController> _controllers =
-      List.generate(4, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    4,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
 
   Timer? _resendTimer;
@@ -31,14 +33,20 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
     super.initState();
     _startResendCooldown();
     for (final f in _focusNodes) {
-      f.addListener(() { if (mounted) setState(() {}); });
+      f.addListener(() {
+        if (mounted) setState(() {});
+      });
     }
   }
 
   @override
   void dispose() {
-    for (final c in _controllers) { c.dispose(); }
-    for (final f in _focusNodes) { f.dispose(); }
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
     _resendTimer?.cancel();
     super.dispose();
   }
@@ -75,16 +83,18 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
 
   void _submit(String code) {
     context.read<AuthBloc>().add(
-          ForgotPasswordOtpVerified(email: widget.email, otp: code),
-        );
+      ForgotPasswordOtpVerified(email: widget.email, otp: code),
+    );
   }
 
   void _resend() {
     context.read<AuthBloc>().add(
-          ForgotPasswordOtpRequested(email: widget.email),
-        );
+      ForgotPasswordOtpRequested(email: widget.email),
+    );
     _startResendCooldown();
-    for (final c in _controllers) { c.clear(); }
+    for (final c in _controllers) {
+      c.clear();
+    }
     _focusNodes[0].requestFocus();
   }
 
@@ -95,24 +105,36 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
     final subtitleColor =
         isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
-    final fieldBg = isDark
-        ? Colors.white.withValues(alpha: 0.06)
-        : AppTheme.primaryGreen.withValues(alpha: 0.04);
+    final fieldBg =
+        isDark
+            ? Colors.white.withValues(alpha: 0.06)
+            : AppTheme.primaryGreen.withValues(alpha: 0.04);
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is ForgotPasswordOtpVerifiedState) {
-          Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (_) => BlocProvider.value(
-              value: context.read<AuthBloc>(),
-              child: ResetPasswordScreen(email: state.email, resetToken: state.otp),
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder:
+                  (_) => BlocProvider.value(
+                    value: context.read<AuthBloc>(),
+                    child: ResetPasswordScreen(
+                      email: state.email,
+                      resetToken: state.otp,
+                    ),
+                  ),
             ),
-          ));
+          );
         } else if (state is ForgotPasswordOtpFailed) {
-          for (final c in _controllers) { c.clear(); }
+          for (final c in _controllers) {
+            c.clear();
+          }
           _focusNodes[0].requestFocus();
-          showErrorModal(context,
-              title: 'Invalid Code', message: state.message);
+          showErrorModal(
+            context,
+            title: 'Invalid Code',
+            message: state.message,
+          );
         } else if (state is AuthError) {
           showErrorModal(context, title: 'Error', message: state.message);
         }
@@ -135,15 +157,16 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                 decoration: BoxDecoration(
                   color: cardColor,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: isDark
-                      ? []
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 20,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                  boxShadow:
+                      isDark
+                          ? []
+                          : [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 20,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -176,9 +199,10 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                       'We sent a 4-digit reset code to',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 14,
-                          color: subtitleColor),
+                        fontFamily: 'Roboto',
+                        fontSize: 14,
+                        color: subtitleColor,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -205,11 +229,12 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                             color: fieldBg,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: focused
-                                  ? AppTheme.primaryGreen
-                                  : (isDark
-                                      ? Colors.white.withValues(alpha: 0.12)
-                                      : AppTheme.fieldBorderColor),
+                              color:
+                                  focused
+                                      ? AppTheme.primaryGreen
+                                      : (isDark
+                                          ? Colors.white.withValues(alpha: 0.12)
+                                          : AppTheme.fieldBorderColor),
                               width: focused ? 1.5 : 1,
                             ),
                           ),
@@ -247,40 +272,42 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                         return SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: isLoading
-                                ? null
-                                : () {
-                                    final code = _controllers
-                                        .map((c) => c.text)
-                                        .join();
-                                    if (code.length == 4) _submit(code);
-                                  },
+                            onPressed:
+                                isLoading
+                                    ? null
+                                    : () {
+                                      final code =
+                                          _controllers
+                                              .map((c) => c.text)
+                                              .join();
+                                      if (code.length == 4) _submit(code);
+                                    },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primaryGreen,
                               foregroundColor: Colors.white,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: isLoading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
+                            child:
+                                isLoading
+                                    ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                    : const Text(
+                                      'Verify Code',
+                                      style: TextStyle(
+                                        fontFamily: 'Roboto',
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
-                                  )
-                                : const Text(
-                                    'Verify Code',
-                                    style: TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
                           ),
                         );
                       },
@@ -296,9 +323,10 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                           fontFamily: 'Roboto',
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
-                          color: _resendCooldown > 0
-                              ? subtitleColor
-                              : AppTheme.primaryGreen,
+                          color:
+                              _resendCooldown > 0
+                                  ? subtitleColor
+                                  : AppTheme.primaryGreen,
                         ),
                       ),
                     ),

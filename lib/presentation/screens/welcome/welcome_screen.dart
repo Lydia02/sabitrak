@@ -77,7 +77,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               // Logo
               FadeTransition(
                 opacity: _textFade,
-                child: const Center(child: SabiTrakLogo(fontSize: 32, iconSize: 36)),
+                child: const Center(
+                  child: SabiTrakLogo(fontSize: 32, iconSize: 36),
+                ),
               ),
               const SizedBox(height: 16),
               // Tagline
@@ -107,19 +109,26 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         onPressed: () {
                           Navigator.of(context).push(
                             PageRouteBuilder(
-                              pageBuilder: (context, animation,
-                                      secondaryAnimation) =>
-                                  BlocProvider(
-                                create: (context) => AuthBloc(),
-                                child: const SignUpScreen(),
-                              ),
-                              transitionsBuilder: (context, animation,
-                                  secondaryAnimation, child) {
+                              pageBuilder:
+                                  (context, animation, secondaryAnimation) =>
+                                      BlocProvider(
+                                        create: (context) => AuthBloc(),
+                                        child: const SignUpScreen(),
+                                      ),
+                              transitionsBuilder: (
+                                context,
+                                animation,
+                                secondaryAnimation,
+                                child,
+                              ) {
                                 return FadeTransition(
-                                    opacity: animation, child: child);
+                                  opacity: animation,
+                                  child: child,
+                                );
                               },
-                              transitionDuration:
-                                  const Duration(milliseconds: 400),
+                              transitionDuration: const Duration(
+                                milliseconds: 400,
+                              ),
                             ),
                           );
                         },
@@ -130,24 +139,28 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         onPressed: () {
                           Navigator.of(context).push(
                             PageRouteBuilder(
-                              pageBuilder: (context, animation, _) =>
-                                  BlocProvider(
-                                create: (_) => AuthBloc(),
-                                child: const SignInScreen(),
-                              ),
+                              pageBuilder:
+                                  (context, animation, _) => BlocProvider(
+                                    create: (_) => AuthBloc(),
+                                    child: const SignInScreen(),
+                                  ),
                               transitionsBuilder:
                                   (context, animation, _, child) =>
                                       FadeTransition(
-                                          opacity: animation, child: child),
-                              transitionDuration:
-                                  const Duration(milliseconds: 400),
+                                        opacity: animation,
+                                        child: child,
+                                      ),
+                              transitionDuration: const Duration(
+                                milliseconds: 400,
+                              ),
                             ),
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark
-                              ? AppTheme.darkCard
-                              : const Color(0xFF4A5A2C),
+                          backgroundColor:
+                              isDark
+                                  ? AppTheme.darkCard
+                                  : const Color(0xFF4A5A2C),
                         ),
                         child: const Text('Log In'),
                       ),

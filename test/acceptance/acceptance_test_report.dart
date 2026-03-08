@@ -60,18 +60,35 @@ void main() {
      */
 
     final items = [
-      _buildItem(id: '1', name: 'Today',      expiry: now),
-      _buildItem(id: '2', name: 'Day 1',      expiry: now.add(const Duration(days: 1))),
-      _buildItem(id: '3', name: 'Day 3',      expiry: now.add(const Duration(days: 3))),
-      _buildItem(id: '4', name: 'Day 4',      expiry: now.add(const Duration(days: 4, hours: 1))),
-      _buildItem(id: '5', name: 'Expired',    expiry: now.subtract(const Duration(days: 1))),
+      _buildItem(id: '1', name: 'Today', expiry: now),
+      _buildItem(
+        id: '2',
+        name: 'Day 1',
+        expiry: now.add(const Duration(days: 1)),
+      ),
+      _buildItem(
+        id: '3',
+        name: 'Day 3',
+        expiry: now.add(const Duration(days: 3)),
+      ),
+      _buildItem(
+        id: '4',
+        name: 'Day 4',
+        expiry: now.add(const Duration(days: 4, hours: 1)),
+      ),
+      _buildItem(
+        id: '5',
+        name: 'Expired',
+        expiry: now.subtract(const Duration(days: 1)),
+      ),
     ];
 
     test('expiring-soon list contains items expiring 0–3 days from now', () {
-      final expiringSoon = items
-          .where((i) => i.isExpiringSoon && !i.isExpired)
-          .map((i) => i.name)
-          .toList();
+      final expiringSoon =
+          items
+              .where((i) => i.isExpiringSoon && !i.isExpired)
+              .map((i) => i.name)
+              .toList();
 
       expect(expiringSoon, containsAll(['Today', 'Day 1', 'Day 3']));
       expect(expiringSoon, isNot(contains('Day 4')));
@@ -86,7 +103,10 @@ void main() {
 
     test('item expiring exactly in 3 days is included (boundary check)', () {
       final item = _buildItem(
-          id: 'bc3', name: 'Boundary3', expiry: now.add(const Duration(days: 3)));
+        id: 'bc3',
+        name: 'Boundary3',
+        expiry: now.add(const Duration(days: 3)),
+      );
       expect(item.isExpiringSoon, isTrue);
     });
   });
@@ -108,7 +128,10 @@ void main() {
 
     test('item expired yesterday is flagged', () {
       final item = _buildItem(
-          id: 'exp', name: 'Old Milk', expiry: now.subtract(const Duration(days: 1)));
+        id: 'exp',
+        name: 'Old Milk',
+        expiry: now.subtract(const Duration(days: 1)),
+      );
       expect(item.isExpired, isTrue);
     });
 
@@ -118,7 +141,8 @@ void main() {
     });
 
     test('expired notification body mentions removal', () {
-      const body = 'Remove it from your pantry to keep your inventory accurate.';
+      const body =
+          'Remove it from your pantry to keep your inventory accurate.';
       expect(body, contains('Remove'));
     });
   });
@@ -139,20 +163,37 @@ void main() {
      */
 
     final items = [
-      _buildItem(id: '1', name: 'Salt',    expiry: now.add(const Duration(days: 30)), quantity: 1),
-      _buildItem(id: '2', name: 'Oil',     expiry: now.add(const Duration(days: 30)), quantity: 5),
-      _buildItem(id: '3', name: 'Vinegar', expiry: now.subtract(const Duration(days: 1)), quantity: 1),
+      _buildItem(
+        id: '1',
+        name: 'Salt',
+        expiry: now.add(const Duration(days: 30)),
+        quantity: 1,
+      ),
+      _buildItem(
+        id: '2',
+        name: 'Oil',
+        expiry: now.add(const Duration(days: 30)),
+        quantity: 5,
+      ),
+      _buildItem(
+        id: '3',
+        name: 'Vinegar',
+        expiry: now.subtract(const Duration(days: 1)),
+        quantity: 1,
+      ),
     ];
 
     test('only non-expired items with qty <= 1 appear in low-stock list', () {
-      final lowStock = items.where((i) => i.quantity <= 1 && !i.isExpired).toList();
+      final lowStock =
+          items.where((i) => i.quantity <= 1 && !i.isExpired).toList();
       expect(lowStock.length, 1);
       expect(lowStock.first.name, 'Salt');
     });
 
     test('notification body includes item name and quantity', () {
       final item = items.first; // Salt, qty 1
-      final body = 'Only ${item.quantity} ${item.unit} left. Consider restocking.';
+      final body =
+          'Only ${item.quantity} ${item.unit} left. Consider restocking.';
       expect(body, contains('1'));
       expect(body, contains('left'));
     });
@@ -175,21 +216,30 @@ void main() {
 
     test('leftover item is identified as a leftover', () {
       final item = _buildItem(
-          id: 'lo', name: 'Jollof Rice', expiry: now.add(const Duration(days: 2)),
-          type: ItemType.leftover);
+        id: 'lo',
+        name: 'Jollof Rice',
+        expiry: now.add(const Duration(days: 2)),
+        type: ItemType.leftover,
+      );
       expect(item.isLeftover, isTrue);
     });
 
     test('ingredient is not a leftover', () {
       final item = _buildItem(
-          id: 'ing', name: 'Tomatoes', expiry: now.add(const Duration(days: 5)));
+        id: 'ing',
+        name: 'Tomatoes',
+        expiry: now.add(const Duration(days: 5)),
+      );
       expect(item.isLeftover, isFalse);
     });
 
     test('product is not a leftover', () {
       final item = _buildItem(
-          id: 'prod', name: 'Ketchup', expiry: now.add(const Duration(days: 60)),
-          type: ItemType.product);
+        id: 'prod',
+        name: 'Ketchup',
+        expiry: now.add(const Duration(days: 60)),
+        type: ItemType.product,
+      );
       expect(item.isLeftover, isFalse);
     });
   });
@@ -211,7 +261,10 @@ void main() {
 
     test('all required fields are present in Firestore map', () {
       final item = _buildItem(
-          id: 'persist-1', name: 'Plantain', expiry: now.add(const Duration(days: 7)));
+        id: 'persist-1',
+        name: 'Plantain',
+        expiry: now.add(const Duration(days: 7)),
+      );
       final map = item.toFirestore();
 
       expect(map.containsKey('name'), isTrue);
@@ -226,7 +279,10 @@ void main() {
 
     test('dates are stored as Firestore Timestamp', () {
       final item = _buildItem(
-          id: 'persist-2', name: 'Yam', expiry: now.add(const Duration(days: 5)));
+        id: 'persist-2',
+        name: 'Yam',
+        expiry: now.add(const Duration(days: 5)),
+      );
       final map = item.toFirestore();
       expect(map['expiryDate'], isA<Timestamp>());
       expect(map['purchaseDate'], isA<Timestamp>());
@@ -285,18 +341,22 @@ void main() {
     const myUid = 'uid-me';
     const otherUid = 'uid-them';
 
-    test('item added by another member within 24h qualifies for household update', () {
-      final item = _buildItem(
-        id: 'hu-1',
-        name: 'Suya',
-        expiry: now.add(const Duration(days: 2)),
-        addedBy: otherUid,
-        createdAt: now.subtract(const Duration(hours: 12)),
-      );
-      final isRecent = item.addedBy != myUid &&
-          now.difference(item.createdAt).inHours < 24;
-      expect(isRecent, isTrue);
-    });
+    test(
+      'item added by another member within 24h qualifies for household update',
+      () {
+        final item = _buildItem(
+          id: 'hu-1',
+          name: 'Suya',
+          expiry: now.add(const Duration(days: 2)),
+          addedBy: otherUid,
+          createdAt: now.subtract(const Duration(hours: 12)),
+        );
+        final isRecent =
+            item.addedBy != myUid &&
+            now.difference(item.createdAt).inHours < 24;
+        expect(isRecent, isTrue);
+      },
+    );
 
     test('item added by current user is excluded from household update', () {
       final item = _buildItem(
@@ -306,8 +366,8 @@ void main() {
         addedBy: myUid,
         createdAt: now.subtract(const Duration(hours: 1)),
       );
-      final isRecent = item.addedBy != myUid &&
-          now.difference(item.createdAt).inHours < 24;
+      final isRecent =
+          item.addedBy != myUid && now.difference(item.createdAt).inHours < 24;
       expect(isRecent, isFalse);
     });
 
@@ -319,8 +379,8 @@ void main() {
         addedBy: otherUid,
         createdAt: now.subtract(const Duration(hours: 25)),
       );
-      final isRecent = item.addedBy != myUid &&
-          now.difference(item.createdAt).inHours < 24;
+      final isRecent =
+          item.addedBy != myUid && now.difference(item.createdAt).inHours < 24;
       expect(isRecent, isFalse);
     });
   });
