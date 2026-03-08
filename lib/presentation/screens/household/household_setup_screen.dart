@@ -11,7 +11,8 @@ class HouseholdSetupScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
 
     return Scaffold(
       body: SafeArea(
@@ -43,26 +44,32 @@ class HouseholdSetupScreen extends StatelessWidget {
               ),
               const SizedBox(height: 48),
               ElevatedButton(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (_) => const CreateHouseholdScreen()),
-                ),
+                onPressed:
+                    () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const CreateHouseholdScreen(),
+                      ),
+                    ),
                 child: const Text('Create Household'),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (_) => const JoinHouseholdScreen()),
-                ),
+                onPressed:
+                    () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const JoinHouseholdScreen(),
+                      ),
+                    ),
                 child: const Text('Join Household'),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (_) => const SoloSetupScreen()),
-                ),
+                onPressed:
+                    () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const SoloSetupScreen(),
+                      ),
+                    ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.backButtonColor,
                 ),

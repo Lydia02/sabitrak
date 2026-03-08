@@ -22,20 +22,21 @@ class RecipeService {
   // ────────────────────────────────────────────────────────────────────────────
 
   Future<RecipeRecommendationResult> getRecommendations(
-      List<FoodItem> pantryItems) async {
+    List<FoodItem> pantryItems,
+  ) async {
     if (pantryItems.isEmpty) {
       return const RecipeRecommendationResult(expiring: [], quickMatch: []);
     }
 
-    final allItems = pantryItems
-        .where((item) => !item.isExpired && item.name.trim().isNotEmpty)
-        .toList();
+    final allItems =
+        pantryItems
+            .where((item) => !item.isExpired && item.name.trim().isNotEmpty)
+            .toList();
     final expiringItems =
         allItems.where((item) => item.isExpiringSoon).toList();
 
     // African DB is primary — run it first
-    final africanMatched =
-        await _getAfricanDbMatches(allItems, expiringItems);
+    final africanMatched = await _getAfricanDbMatches(allItems, expiringItems);
 
     // Only query MealDB when African DB returned fewer than 6 results
     List<MatchedRecipe> mealDbMatched = [];
@@ -65,7 +66,9 @@ class RecipeService {
   /// Search by keyword — African DB is authoritative.
   /// MealDB is only consulted when African DB returns zero matches.
   Future<List<MatchedRecipe>> searchRecipes(
-      String query, List<FoodItem> pantryItems) async {
+    String query,
+    List<FoodItem> pantryItems,
+  ) async {
     if (query.trim().isEmpty) return [];
 
     final allItems = pantryItems.where((item) => !item.isExpired).toList();
@@ -73,8 +76,11 @@ class RecipeService {
         allItems.where((item) => item.isExpiringSoon).toList();
 
     // 1. Try African DB first
-    final africanResults =
-        await _searchAfricanDb(query, allItems, expiringItems);
+    final africanResults = await _searchAfricanDb(
+      query,
+      allItems,
+      expiringItems,
+    );
 
     if (africanResults.isNotEmpty) {
       final sorted = List<MatchedRecipe>.from(africanResults)
@@ -83,8 +89,7 @@ class RecipeService {
     }
 
     // 2. African DB found nothing → fall back to MealDB
-    final mealResults =
-        await _searchMealDb(query, allItems, expiringItems);
+    final mealResults = await _searchMealDb(query, allItems, expiringItems);
     mealResults.sort((a, b) => b.score.compareTo(a.score));
     return mealResults.take(20).toList();
   }
@@ -94,24 +99,34 @@ class RecipeService {
   // ────────────────────────────────────────────────────────────────────────────
 
   Future<List<MatchedRecipe>> _getMealDbMatches(
-      List<FoodItem> allItems, List<FoodItem> expiringItems) async {
+    List<FoodItem> allItems,
+    List<FoodItem> expiringItems,
+  ) async {
     try {
       final mealScoreMap = await _buildMealScoreMap(allItems, expiringItems);
       if (mealScoreMap.isEmpty) return [];
 
-      final sortedIds = mealScoreMap.entries
-          .where((e) => e.value.rawMatchCount >= _minMatchedIngredients)
-          .toList()
-        ..sort(
-            (a, b) => b.value.rawMatchCount.compareTo(a.value.rawMatchCount));
+      final sortedIds =
+          mealScoreMap.entries
+              .where((e) => e.value.rawMatchCount >= _minMatchedIngredients)
+              .toList()
+            ..sort(
+              (a, b) => b.value.rawMatchCount.compareTo(a.value.rawMatchCount),
+            );
 
       final topIds =
           sortedIds.take(_maxDetailFetches).map((e) => e.key).toList();
       final details = await _fetchMealDetails(topIds);
 
       return details
-          .map((meal) => _scoreRecipeFromMealDb(
-              meal, mealScoreMap[meal['idMeal']]!, allItems, expiringItems))
+          .map(
+            (meal) => _scoreRecipeFromMealDb(
+              meal,
+              mealScoreMap[meal['idMeal']]!,
+              allItems,
+              expiringItems,
+            ),
+          )
           .where((r) => r != null)
           .cast<MatchedRecipe>()
           .toList();
@@ -120,13 +135,16 @@ class RecipeService {
     }
   }
 
-  Future<List<MatchedRecipe>> _searchMealDb(String query,
-      List<FoodItem> allItems, List<FoodItem> expiringItems) async {
+  Future<List<MatchedRecipe>> _searchMealDb(
+    String query,
+    List<FoodItem> allItems,
+    List<FoodItem> expiringItems,
+  ) async {
     try {
       final uri = Uri.parse(
-          '$_mealDbBase/search.php?s=${Uri.encodeComponent(query.trim())}');
-      final response =
-          await http.get(uri).timeout(const Duration(seconds: 10));
+        '$_mealDbBase/search.php?s=${Uri.encodeComponent(query.trim())}',
+      );
+      final response = await http.get(uri).timeout(const Duration(seconds: 10));
       if (response.statusCode != 200) return [];
 
       final data = json.decode(response.body) as Map<String, dynamic>;
@@ -134,11 +152,14 @@ class RecipeService {
           (data['meals'] as List?)?.cast<Map<String, dynamic>>() ?? [];
 
       return meals
-          .map((meal) => _scoreRecipeFromMealDb(
+          .map(
+            (meal) => _scoreRecipeFromMealDb(
               meal,
               const _MealScore(rawMatchCount: 1, expiryMatchCount: 0),
               allItems,
-              expiringItems))
+              expiringItems,
+            ),
+          )
           .where((r) => r != null)
           .cast<MatchedRecipe>()
           .toList();
@@ -148,12 +169,15 @@ class RecipeService {
   }
 
   Future<Map<String, _MealScore>> _buildMealScoreMap(
-      List<FoodItem> allItems, List<FoodItem> expiringItems) async {
+    List<FoodItem> allItems,
+    List<FoodItem> expiringItems,
+  ) async {
     final Map<String, _MealScore> scores = {};
 
     final futures = allItems.map((item) async {
-      final isExpiring = expiringItems
-          .any((e) => e.name.toLowerCase() == item.name.toLowerCase());
+      final isExpiring = expiringItems.any(
+        (e) => e.name.toLowerCase() == item.name.toLowerCase(),
+      );
       final keywords = _ingredientKeywords(item.name);
 
       List<Map<String, dynamic>> meals = [];
@@ -170,10 +194,11 @@ class RecipeService {
             rawMatchCount: s.rawMatchCount + 1,
             expiryMatchCount: s.expiryMatchCount + (isExpiring ? 1 : 0),
           ),
-          ifAbsent: () => _MealScore(
-            rawMatchCount: 1,
-            expiryMatchCount: isExpiring ? 1 : 0,
-          ),
+          ifAbsent:
+              () => _MealScore(
+                rawMatchCount: 1,
+                expiryMatchCount: isExpiring ? 1 : 0,
+              ),
         );
       }
     });
@@ -183,12 +208,13 @@ class RecipeService {
   }
 
   Future<List<Map<String, dynamic>>> _filterByIngredient(
-      String ingredient) async {
+    String ingredient,
+  ) async {
     try {
       final uri = Uri.parse(
-          '$_mealDbBase/filter.php?i=${Uri.encodeComponent(ingredient)}');
-      final response =
-          await http.get(uri).timeout(const Duration(seconds: 8));
+        '$_mealDbBase/filter.php?i=${Uri.encodeComponent(ingredient)}',
+      );
+      final response = await http.get(uri).timeout(const Duration(seconds: 8));
       if (response.statusCode != 200) return [];
       final data = json.decode(response.body) as Map<String, dynamic>;
       return (data['meals'] as List?)?.cast<Map<String, dynamic>>() ?? [];
@@ -197,13 +223,13 @@ class RecipeService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> _fetchMealDetails(
-      List<String> ids) async {
+  Future<List<Map<String, dynamic>>> _fetchMealDetails(List<String> ids) async {
     final futures = ids.map((id) async {
       try {
         final uri = Uri.parse('$_mealDbBase/lookup.php?i=$id');
-        final response =
-            await http.get(uri).timeout(const Duration(seconds: 8));
+        final response = await http
+            .get(uri)
+            .timeout(const Duration(seconds: 8));
         if (response.statusCode != 200) return null;
         final data = json.decode(response.body) as Map<String, dynamic>;
         final meals =
@@ -244,16 +270,18 @@ class RecipeService {
 
     final matchRatio =
         ingredients.isEmpty ? 0.0 : matchedNames.length / ingredients.length;
-    final expiryBonus = ingredients.isEmpty
-        ? 0.0
-        : expiringMatchedNames.length / ingredients.length;
+    final expiryBonus =
+        ingredients.isEmpty
+            ? 0.0
+            : expiringMatchedNames.length / ingredients.length;
 
     final instructions = (meal['strInstructions'] as String?) ?? '';
     final stepCount =
         instructions.split('\r\n').where((s) => s.trim().isNotEmpty).length;
-    final prepBonus = stepCount <= 5
-        ? 1.0
-        : stepCount <= 10
+    final prepBonus =
+        stepCount <= 5
+            ? 1.0
+            : stepCount <= 10
             ? 0.6
             : 0.3;
 
@@ -277,8 +305,7 @@ class RecipeService {
     );
   }
 
-  List<RecipeIngredient> _extractMealDbIngredients(
-      Map<String, dynamic> meal) {
+  List<RecipeIngredient> _extractMealDbIngredients(Map<String, dynamic> meal) {
     final result = <RecipeIngredient>[];
     for (int i = 1; i <= 20; i++) {
       final name = (meal['strIngredient$i'] as String?)?.trim() ?? '';
@@ -295,14 +322,17 @@ class RecipeService {
   // ────────────────────────────────────────────────────────────────────────────
 
   Future<List<MatchedRecipe>> _getAfricanDbMatches(
-      List<FoodItem> allItems, List<FoodItem> expiringItems) async {
+    List<FoodItem> allItems,
+    List<FoodItem> expiringItems,
+  ) async {
     try {
       // Use each unique pantry item keyword — cap at 10 parallel calls
-      final keywords = allItems
-          .map((item) => _ingredientKeywords(item.name).first)
-          .toSet()
-          .take(10)
-          .toList();
+      final keywords =
+          allItems
+              .map((item) => _ingredientKeywords(item.name).first)
+              .toSet()
+              .take(10)
+              .toList();
 
       final futures = keywords.map((kw) => _africanSearchAll(kw));
       final batchResults = await Future.wait(futures);
@@ -321,10 +351,11 @@ class RecipeService {
         final isExpiring = expiringItems.any((e) => e.id == pantryItem.id);
 
         for (final food in foods) {
-          final id = ((food['id'] as String?) ??
-                  (food['_id'] as String?) ??
-                  (food['name'] as String? ?? ''))
-              .toLowerCase();
+          final id =
+              ((food['id'] as String?) ??
+                      (food['_id'] as String?) ??
+                      (food['name'] as String? ?? ''))
+                  .toLowerCase();
           if (id.isEmpty) continue;
           foodMap[id] = _AfricanFoodEntry(
             food: food,
@@ -337,9 +368,15 @@ class RecipeService {
       if (foodMap.isEmpty) return [];
 
       return foodMap.values
-          .map((entry) => _scoreRecipeFromAfricanDb(
-              entry.food, entry.matchCount, entry.expiryCount,
-              allItems, expiringItems))
+          .map(
+            (entry) => _scoreRecipeFromAfricanDb(
+              entry.food,
+              entry.matchCount,
+              entry.expiryCount,
+              allItems,
+              expiringItems,
+            ),
+          )
           .where((r) => r != null)
           .cast<MatchedRecipe>()
           .toList();
@@ -348,13 +385,18 @@ class RecipeService {
     }
   }
 
-  Future<List<MatchedRecipe>> _searchAfricanDb(String query,
-      List<FoodItem> allItems, List<FoodItem> expiringItems) async {
+  Future<List<MatchedRecipe>> _searchAfricanDb(
+    String query,
+    List<FoodItem> allItems,
+    List<FoodItem> expiringItems,
+  ) async {
     try {
       final foods = await _africanSearchAll(query.trim(), limit: 20);
       return foods
-          .map((food) =>
-              _scoreRecipeFromAfricanDb(food, 1, 0, allItems, expiringItems))
+          .map(
+            (food) =>
+                _scoreRecipeFromAfricanDb(food, 1, 0, allItems, expiringItems),
+          )
           .where((r) => r != null)
           .cast<MatchedRecipe>()
           .toList();
@@ -366,8 +408,10 @@ class RecipeService {
   /// Tries both search strategies and deduplicates results.
   ///   1. GET /api/search?q={keyword}       (fuzzy search)
   ///   2. GET /api/foods?search={keyword}    (keyword filter)
-  Future<List<Map<String, dynamic>>> _africanSearchAll(String keyword,
-      {int limit = 15}) async {
+  Future<List<Map<String, dynamic>>> _africanSearchAll(
+    String keyword, {
+    int limit = 15,
+  }) async {
     final results = await Future.wait([
       _africanFuzzySearch(keyword, limit: limit),
       _africanFoodSearch(keyword, limit: limit),
@@ -377,10 +421,11 @@ class RecipeService {
     final merged = <Map<String, dynamic>>[];
     for (final list in results) {
       for (final food in list) {
-        final key = ((food['id'] as String?) ??
-                (food['_id'] as String?) ??
-                (food['name'] as String? ?? ''))
-            .toLowerCase();
+        final key =
+            ((food['id'] as String?) ??
+                    (food['_id'] as String?) ??
+                    (food['name'] as String? ?? ''))
+                .toLowerCase();
         if (key.isNotEmpty && seen.add(key)) merged.add(food);
       }
     }
@@ -389,11 +434,14 @@ class RecipeService {
 
   /// GET /api/search?q={query}&limit={limit}
   /// Response per docs: { success: true, data: { items: [...], totalMatches: N } }
-  Future<List<Map<String, dynamic>>> _africanFuzzySearch(String keyword,
-      {int limit = 15}) async {
+  Future<List<Map<String, dynamic>>> _africanFuzzySearch(
+    String keyword, {
+    int limit = 15,
+  }) async {
     try {
       final uri = Uri.parse(
-          '$_africanBase/api/search?q=${Uri.encodeComponent(keyword)}&limit=$limit');
+        '$_africanBase/api/search?q=${Uri.encodeComponent(keyword)}&limit=$limit',
+      );
       final response = await http
           .get(uri, headers: {'Accept': 'application/json'})
           .timeout(const Duration(seconds: 10));
@@ -424,11 +472,14 @@ class RecipeService {
 
   /// GET /api/foods?search={keyword}&limit={limit}
   /// Response: { success: true, data: { items: [...] } }
-  Future<List<Map<String, dynamic>>> _africanFoodSearch(String keyword,
-      {int limit = 15}) async {
+  Future<List<Map<String, dynamic>>> _africanFoodSearch(
+    String keyword, {
+    int limit = 15,
+  }) async {
     try {
       final uri = Uri.parse(
-          '$_africanBase/api/foods?search=${Uri.encodeComponent(keyword)}&limit=$limit');
+        '$_africanBase/api/foods?search=${Uri.encodeComponent(keyword)}&limit=$limit',
+      );
       final response = await http
           .get(uri, headers: {'Accept': 'application/json'})
           .timeout(const Duration(seconds: 10));
@@ -476,23 +527,24 @@ class RecipeService {
           final q = (ing['quantity'] as String?)?.trim() ?? '';
           final u = (ing['unit'] as String?)?.trim() ?? '';
           if (n.isNotEmpty) {
-            final measure =
-                [q, u].where((s) => s.isNotEmpty).join(' ').trim();
+            final measure = [q, u].where((s) => s.isNotEmpty).join(' ').trim();
             ingredients.add(RecipeIngredient(name: n, measure: measure));
           }
         } else {
           final s = ing.toString().trim();
           if (s.isNotEmpty) {
-            ingredients
-                .add(RecipeIngredient(name: _extractFoodNoun(s), measure: ''));
+            ingredients.add(
+              RecipeIngredient(name: _extractFoodNoun(s), measure: ''),
+            );
           }
         }
       }
     }
     // Don't drop recipes with no parsed ingredients — use the dish name itself
-    final effectiveIngredients = ingredients.isNotEmpty
-        ? ingredients
-        : [RecipeIngredient(name: name, measure: '')];
+    final effectiveIngredients =
+        ingredients.isNotEmpty
+            ? ingredients
+            : [RecipeIngredient(name: name, measure: '')];
 
     // Match against pantry
     final matchedNames = <String>[];
@@ -510,12 +562,14 @@ class RecipeService {
       }
     }
 
-    final matchRatio = effectiveIngredients.isEmpty
-        ? 0.0
-        : matchedNames.length / effectiveIngredients.length;
-    final expiryBonus = effectiveIngredients.isEmpty
-        ? 0.0
-        : expiringMatchedNames.length / effectiveIngredients.length;
+    final matchRatio =
+        effectiveIngredients.isEmpty
+            ? 0.0
+            : matchedNames.length / effectiveIngredients.length;
+    final expiryBonus =
+        effectiveIngredients.isEmpty
+            ? 0.0
+            : expiringMatchedNames.length / effectiveIngredients.length;
 
     // Build instructions string — handles List<Map {step,description}> or List<String>
     final rawInstructions = food['instructions'];
@@ -541,16 +595,18 @@ class RecipeService {
 
     final stepCount =
         instructionsStr.split('\n').where((s) => s.trim().isNotEmpty).length;
-    final prepBonus = stepCount <= 5
-        ? 1.0
-        : stepCount <= 10
+    final prepBonus =
+        stepCount <= 5
+            ? 1.0
+            : stepCount <= 10
             ? 0.6
             : 0.3;
 
     // African DB results always get a base score bonus (0.20)
     // so they rank above MealDB results with similar pantry matches
     const double africanBonus = 1.0;
-    final score = (africanBonus * 0.20) +
+    final score =
+        (africanBonus * 0.20) +
         (expiryBonus * 0.40) +
         (matchRatio * 0.30) +
         (prepBonus * 0.10);
@@ -558,9 +614,10 @@ class RecipeService {
     final prepTime = food['prepTime'] as int? ?? 0;
     final cookTime = food['cookTime'] as int? ?? 0;
     final totalMin = prepTime + cookTime;
-    final prepTimeStr = totalMin > 0
-        ? '$totalMin min'
-        : instructionsStr.isNotEmpty
+    final prepTimeStr =
+        totalMin > 0
+            ? '$totalMin min'
+            : instructionsStr.isNotEmpty
             ? null
             : null;
 
@@ -568,9 +625,10 @@ class RecipeService {
     final area = countryName.isNotEmpty ? countryName : 'African';
 
     final categories = food['categories'];
-    final category = (categories is List && categories.isNotEmpty)
-        ? categories.first.toString()
-        : 'African';
+    final category =
+        (categories is List && categories.isNotEmpty)
+            ? categories.first.toString()
+            : 'African';
 
     return MatchedRecipe(
       id: 'afd_${food['id'] ?? food['_id'] ?? name.hashCode}',
@@ -602,18 +660,58 @@ class RecipeService {
   /// "2 unripe plantains" → "plantains"
   String _extractFoodNoun(String raw) {
     // Remove leading quantity: digits, fractions (1/2), decimals
-    var s = raw
-        .replaceAll(RegExp(r'^[\d/\.\s]+'), '')
-        .trim();
+    var s = raw.replaceAll(RegExp(r'^[\d/\.\s]+'), '').trim();
     // Remove common unit words at start
     const units = [
-      'cups', 'cup', 'tablespoons', 'tablespoon', 'tbsp', 'teaspoons',
-      'teaspoon', 'tsp', 'kg', 'g', 'ml', 'litres', 'litre', 'liter',
-      'pieces', 'piece', 'pcs', 'packs', 'pack', 'bunch', 'cloves', 'clove',
-      'cans', 'can', 'bottles', 'bottle', 'large', 'medium', 'small',
-      'fresh', 'dried', 'ground', 'sliced', 'chopped', 'diced', 'unripe',
-      'ripe', 'cooked', 'raw', 'whole', 'halved', 'cubed', 'grated',
-      'heaped', 'level', 'pinch', 'handful', 'sprigs', 'sprig',
+      'cups',
+      'cup',
+      'tablespoons',
+      'tablespoon',
+      'tbsp',
+      'teaspoons',
+      'teaspoon',
+      'tsp',
+      'kg',
+      'g',
+      'ml',
+      'litres',
+      'litre',
+      'liter',
+      'pieces',
+      'piece',
+      'pcs',
+      'packs',
+      'pack',
+      'bunch',
+      'cloves',
+      'clove',
+      'cans',
+      'can',
+      'bottles',
+      'bottle',
+      'large',
+      'medium',
+      'small',
+      'fresh',
+      'dried',
+      'ground',
+      'sliced',
+      'chopped',
+      'diced',
+      'unripe',
+      'ripe',
+      'cooked',
+      'raw',
+      'whole',
+      'halved',
+      'cubed',
+      'grated',
+      'heaped',
+      'level',
+      'pinch',
+      'handful',
+      'sprigs',
+      'sprig',
     ];
     for (final unit in units) {
       if (s.toLowerCase().startsWith('$unit ')) {
@@ -633,20 +731,24 @@ class RecipeService {
   }
 
   List<String> _ingredientKeywords(String name) {
-    final cleaned = name
-        .replaceAll(RegExp(r'^\d+[\s]*(g|kg|ml|l|oz|lb|pcs|pack)?\s*',
-            caseSensitive: false), '')
-        .replaceAll(RegExp(r'[,.].*'), '')
-        .trim()
-        .toLowerCase();
+    final cleaned =
+        name
+            .replaceAll(
+              RegExp(
+                r'^\d+[\s]*(g|kg|ml|l|oz|lb|pcs|pack)?\s*',
+                caseSensitive: false,
+              ),
+              '',
+            )
+            .replaceAll(RegExp(r'[,.].*'), '')
+            .trim()
+            .toLowerCase();
 
     final keywords = <String>[];
     if (cleaned.isNotEmpty) keywords.add(cleaned);
 
-    final words = cleaned
-        .split(RegExp(r'[\s]+'))
-        .where((w) => w.length > 2)
-        .toList();
+    final words =
+        cleaned.split(RegExp(r'[\s]+')).where((w) => w.length > 2).toList();
     for (final w in words) {
       if (!keywords.contains(w)) keywords.add(w);
     }
@@ -674,18 +776,21 @@ class RecipeService {
 class _MealScore {
   final int rawMatchCount;
   final int expiryMatchCount;
-  const _MealScore(
-      {required this.rawMatchCount, required this.expiryMatchCount});
+  const _MealScore({
+    required this.rawMatchCount,
+    required this.expiryMatchCount,
+  });
 }
 
 class _AfricanFoodEntry {
   final Map<String, dynamic> food;
   final int matchCount;
   final int expiryCount;
-  const _AfricanFoodEntry(
-      {required this.food,
-      required this.matchCount,
-      required this.expiryCount});
+  const _AfricanFoodEntry({
+    required this.food,
+    required this.matchCount,
+    required this.expiryCount,
+  });
 }
 
 // ── Result container ──────────────────────────────────────────────────────────

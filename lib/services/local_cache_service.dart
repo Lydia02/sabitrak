@@ -25,14 +25,12 @@ class LocalCacheService {
 
   /// Replace the cached inventory for one household.
   Future<void> saveFoodItems(String householdId, List<FoodItem> items) async {
-    final maps = {
-      for (final item in items)
-        item.id: _toMap(item),
-    };
+    final maps = {for (final item in items) item.id: _toMap(item)};
     // Clear old entries for this household first
-    final keysToDelete = _box.keys
-        .where((k) => k.toString().startsWith('${householdId}_'))
-        .toList();
+    final keysToDelete =
+        _box.keys
+            .where((k) => k.toString().startsWith('${householdId}_'))
+            .toList();
     await _box.deleteAll(keysToDelete);
 
     // Write each item with a compound key: <householdId>_<itemId>
@@ -133,16 +131,15 @@ class LocalCacheService {
       category: m['category'] as String? ?? '',
       quantity: m['quantity'] as int? ?? 0,
       unit: m['unit'] as String? ?? '',
-      purchaseDate:
-          DateTime.fromMillisecondsSinceEpoch(m['purchaseDate'] as int),
-      expiryDate:
-          DateTime.fromMillisecondsSinceEpoch(m['expiryDate'] as int),
+      purchaseDate: DateTime.fromMillisecondsSinceEpoch(
+        m['purchaseDate'] as int,
+      ),
+      expiryDate: DateTime.fromMillisecondsSinceEpoch(m['expiryDate'] as int),
       storageLocation: m['storageLocation'] as String? ?? '',
       imageUrl: m['imageUrl'] as String?,
       householdId: m['householdId'] as String? ?? '',
       addedBy: m['addedBy'] as String? ?? '',
-      createdAt:
-          DateTime.fromMillisecondsSinceEpoch(m['createdAt'] as int),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(m['createdAt'] as int),
       itemType: itemType,
     );
   }

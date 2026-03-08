@@ -70,10 +70,10 @@ class PushNotificationService {
     final uid = _firebase.currentUser?.uid;
     if (uid == null) return;
     try {
-      await _firebase.users.doc(uid).set(
-        {'fcmToken': token, 'fcmUpdatedAt': Timestamp.now()},
-        SetOptions(merge: true),
-      );
+      await _firebase.users.doc(uid).set({
+        'fcmToken': token,
+        'fcmUpdatedAt': Timestamp.now(),
+      }, SetOptions(merge: true));
     } catch (_) {}
   }
 
@@ -122,11 +122,12 @@ class PushNotificationService {
     final overlay = Overlay.of(context);
     late OverlayEntry entry;
     entry = OverlayEntry(
-      builder: (_) => _InAppBanner(
-        title: title,
-        body: body,
-        onDismiss: () => entry.remove(),
-      ),
+      builder:
+          (_) => _InAppBanner(
+            title: title,
+            body: body,
+            onDismiss: () => entry.remove(),
+          ),
     );
     overlay.insert(entry);
 
@@ -163,7 +164,9 @@ class _InAppBannerState extends State<_InAppBanner>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 320));
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
+    );
     _slide = Tween<Offset>(
       begin: const Offset(0, -1),
       end: Offset.zero,
@@ -193,8 +196,7 @@ class _InAppBannerState extends State<_InAppBanner>
             borderRadius: BorderRadius.circular(14),
             onTap: widget.onDismiss,
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   const Icon(Icons.eco, color: Colors.white, size: 22),
@@ -230,8 +232,11 @@ class _InAppBannerState extends State<_InAppBanner>
                   const SizedBox(width: 8),
                   GestureDetector(
                     onTap: widget.onDismiss,
-                    child: const Icon(Icons.close,
-                        color: Colors.white70, size: 16),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white70,
+                      size: 16,
+                    ),
                   ),
                 ],
               ),

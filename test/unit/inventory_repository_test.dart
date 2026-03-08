@@ -39,11 +39,7 @@ FoodItem _item({
 
 // Pure duplicate-search logic extracted from InventoryRepository.findDuplicate
 // (mirrors the algorithm exactly — if the algorithm changes, this test catches it)
-FoodItem? _findDuplicate(
-  List<FoodItem> items,
-  String name,
-  ItemType itemType,
-) {
+FoodItem? _findDuplicate(List<FoodItem> items, String name, ItemType itemType) {
   final normalised = name.trim().toLowerCase();
   final sameType = items.where((i) => i.itemType == itemType).toList();
 
@@ -85,7 +81,11 @@ void main() {
     });
 
     test('returns fuzzy match when existing name is substring of search', () {
-      final result = _findDuplicate(items, 'Tomatoes Fresh', ItemType.ingredient);
+      final result = _findDuplicate(
+        items,
+        'Tomatoes Fresh',
+        ItemType.ingredient,
+      );
       // 'tomatoes fresh' contains 'tomatoes' → match id 1
       expect(result?.id, '1');
     });
@@ -97,7 +97,11 @@ void main() {
 
     test('does not match across item types', () {
       // 'Leftover Rice' exists as leftover, not ingredient
-      final result = _findDuplicate(items, 'Leftover Rice', ItemType.ingredient);
+      final result = _findDuplicate(
+        items,
+        'Leftover Rice',
+        ItemType.ingredient,
+      );
       expect(result, isNull);
     });
 
@@ -120,8 +124,14 @@ void main() {
 
     test('isExpired items are correctly identified', () {
       final items = [
-        _item(id: '1', name: 'Old Milk').copyWithExpiry(now.subtract(const Duration(days: 1))),
-        _item(id: '2', name: 'Fresh Eggs').copyWithExpiry(now.add(const Duration(days: 5))),
+        _item(
+          id: '1',
+          name: 'Old Milk',
+        ).copyWithExpiry(now.subtract(const Duration(days: 1))),
+        _item(
+          id: '2',
+          name: 'Fresh Eggs',
+        ).copyWithExpiry(now.add(const Duration(days: 5))),
       ];
 
       final expired = items.where((i) => i.isExpired).toList();
@@ -131,27 +141,47 @@ void main() {
 
     test('isExpiringSoon items do not include already expired items', () {
       final items = [
-        _item(id: '1', name: 'Expired').copyWithExpiry(now.subtract(const Duration(days: 1))),
+        _item(
+          id: '1',
+          name: 'Expired',
+        ).copyWithExpiry(now.subtract(const Duration(days: 1))),
         _item(id: '2', name: 'Today').copyWithExpiry(now),
-        _item(id: '3', name: 'In 2 days').copyWithExpiry(now.add(const Duration(days: 2))),
-        _item(id: '4', name: 'In 5 days').copyWithExpiry(now.add(const Duration(days: 5))),
+        _item(
+          id: '3',
+          name: 'In 2 days',
+        ).copyWithExpiry(now.add(const Duration(days: 2))),
+        _item(
+          id: '4',
+          name: 'In 5 days',
+        ).copyWithExpiry(now.add(const Duration(days: 5))),
       ];
 
-      final expiringSoon = items.where((i) => i.isExpiringSoon && !i.isExpired).toList();
+      final expiringSoon =
+          items.where((i) => i.isExpiringSoon && !i.isExpired).toList();
       expect(expiringSoon.map((i) => i.id).toSet(), {'2', '3'});
     });
 
     test('low stock filter: qty <= 1 and not expired', () {
       final items = [
-        _item(id: '1', name: 'Almost Gone', quantity: 1)
-            .copyWithExpiry(now.add(const Duration(days: 3))),
-        _item(id: '2', name: 'Expired Low', quantity: 1)
-            .copyWithExpiry(now.subtract(const Duration(days: 1))),
-        _item(id: '3', name: 'Enough Stock', quantity: 5)
-            .copyWithExpiry(now.add(const Duration(days: 3))),
+        _item(
+          id: '1',
+          name: 'Almost Gone',
+          quantity: 1,
+        ).copyWithExpiry(now.add(const Duration(days: 3))),
+        _item(
+          id: '2',
+          name: 'Expired Low',
+          quantity: 1,
+        ).copyWithExpiry(now.subtract(const Duration(days: 1))),
+        _item(
+          id: '3',
+          name: 'Enough Stock',
+          quantity: 5,
+        ).copyWithExpiry(now.add(const Duration(days: 3))),
       ];
 
-      final lowStock = items.where((i) => i.quantity <= 1 && !i.isExpired).toList();
+      final lowStock =
+          items.where((i) => i.quantity <= 1 && !i.isExpired).toList();
       expect(lowStock.length, 1);
       expect(lowStock.first.id, '1');
     });
@@ -162,8 +192,7 @@ void main() {
   group('toFirestore / fromMap serialisation', () {
     test('Timestamp values survive round-trip', () {
       final expiry = DateTime(2025, 6, 15, 12, 0);
-      final item = _item(id: 'ts-test', name: 'Avocado')
-          .copyWithExpiry(expiry);
+      final item = _item(id: 'ts-test', name: 'Avocado').copyWithExpiry(expiry);
 
       final map = item.toFirestore();
       final restored = FoodItem.fromMap(item.id, map);
@@ -185,19 +214,19 @@ void main() {
 // Extension to allow setting expiryDate in tests without modifying the model
 extension _FoodItemTestExt on FoodItem {
   FoodItem copyWithExpiry(DateTime newExpiry) => FoodItem(
-        id: id,
-        name: name,
-        barcode: barcode,
-        category: category,
-        quantity: quantity,
-        unit: unit,
-        purchaseDate: purchaseDate,
-        expiryDate: newExpiry,
-        storageLocation: storageLocation,
-        imageUrl: imageUrl,
-        householdId: householdId,
-        addedBy: addedBy,
-        createdAt: createdAt,
-        itemType: itemType,
-      );
+    id: id,
+    name: name,
+    barcode: barcode,
+    category: category,
+    quantity: quantity,
+    unit: unit,
+    purchaseDate: purchaseDate,
+    expiryDate: newExpiry,
+    storageLocation: storageLocation,
+    imageUrl: imageUrl,
+    householdId: householdId,
+    addedBy: addedBy,
+    createdAt: createdAt,
+    itemType: itemType,
+  );
 }
