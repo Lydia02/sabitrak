@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'firebase_options.dart';
+import 'firebase_options.dart'; // ignore: uri_does_not_exist
 import 'config/theme/app_theme.dart';
 import 'config/theme/theme_notifier.dart';
 import 'presentation/screens/splash/splash_screen.dart';
@@ -18,7 +18,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform); // ignore: undefined_identifier
 
   // Register background message handler before runApp
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
