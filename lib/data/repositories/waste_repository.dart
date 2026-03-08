@@ -29,15 +29,18 @@ class WasteRepository {
         .where('householdId', isEqualTo: householdId)
         .orderBy('wastedAt', descending: true)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((doc) => WasteLog.fromFirestore(doc)).toList());
+        .map(
+          (snap) =>
+              snap.docs.map((doc) => WasteLog.fromFirestore(doc)).toList(),
+        );
   }
 
   /// Total number of items wasted for a household.
   Future<int> getWasteCount(String householdId) async {
-    final snap = await _firebaseService.wasteLog
-        .where('householdId', isEqualTo: householdId)
-        .get();
+    final snap =
+        await _firebaseService.wasteLog
+            .where('householdId', isEqualTo: householdId)
+            .get();
     return snap.docs.length;
   }
 
@@ -45,11 +48,14 @@ class WasteRepository {
   Future<int> getWasteCountThisMonth(String householdId) async {
     final now = DateTime.now();
     final startOfMonth = DateTime(now.year, now.month, 1);
-    final snap = await _firebaseService.wasteLog
-        .where('householdId', isEqualTo: householdId)
-        .where('wastedAt',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
-        .get();
+    final snap =
+        await _firebaseService.wasteLog
+            .where('householdId', isEqualTo: householdId)
+            .where(
+              'wastedAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth),
+            )
+            .get();
     return snap.docs.length;
   }
 }

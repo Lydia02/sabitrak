@@ -29,8 +29,8 @@ void main() {
   group('Password validation', () {
     group('valid passwords', () {
       final validPasswords = [
-        'Fixture@1234',  // fake test string — not a real credential
-        'MyFx@ss9',      // 8 chars
+        'Fixture@1234', // fake test string — not a real credential
+        'MyFx@ss9', // 8 chars
         'Fixture#99xx',
         'Fixture!Word2',
         'abc.fix1G',
@@ -38,9 +38,7 @@ void main() {
       ];
 
       // 'MyP@ss9' is only 7 characters — remove it
-      final actualValid = validPasswords
-          .where((p) => p.length >= 8)
-          .toList();
+      final actualValid = validPasswords.where((p) => p.length >= 8).toList();
 
       for (final pw in actualValid) {
         test('accepts "$pw"', () {
@@ -80,9 +78,12 @@ void main() {
     });
 
     group('password edge cases', () {
-      test('exactly 8 characters with all required character types is valid', () {
-        expect(_isPasswordValid('Fx@12345'), isTrue);
-      });
+      test(
+        'exactly 8 characters with all required character types is valid',
+        () {
+          expect(_isPasswordValid('Fx@12345'), isTrue);
+        },
+      );
 
       test('password with spaces is valid if other rules pass', () {
         expect(_isPasswordValid('Fx 1@3456'), isTrue);
@@ -131,19 +132,19 @@ void main() {
     final now = DateTime.now();
 
     FoodItem makeItem({required int quantity}) => FoodItem(
-          id: 'q-test',
-          name: 'Test',
-          barcode: '',
-          category: 'Test',
-          quantity: quantity,
-          unit: 'pcs',
-          purchaseDate: now.subtract(const Duration(days: 1)),
-          expiryDate: now.add(const Duration(days: 5)),
-          storageLocation: 'Pantry',
-          householdId: 'hh-001',
-          addedBy: 'uid-abc',
-          createdAt: now,
-        );
+      id: 'q-test',
+      name: 'Test',
+      barcode: '',
+      category: 'Test',
+      quantity: quantity,
+      unit: 'pcs',
+      purchaseDate: now.subtract(const Duration(days: 1)),
+      expiryDate: now.add(const Duration(days: 5)),
+      storageLocation: 'Pantry',
+      householdId: 'hh-001',
+      addedBy: 'uid-abc',
+      createdAt: now,
+    );
 
     test('quantity of 0 triggers low stock (0 <= 1)', () {
       final item = makeItem(quantity: 0);
@@ -214,11 +215,10 @@ void main() {
     });
 
     test('contains ingredient, leftover, product', () {
-      expect(ItemType.values, containsAll([
-        ItemType.ingredient,
-        ItemType.leftover,
-        ItemType.product,
-      ]));
+      expect(
+        ItemType.values,
+        containsAll([ItemType.ingredient, ItemType.leftover, ItemType.product]),
+      );
     });
 
     test('each value name matches its string representation', () {
@@ -257,9 +257,10 @@ void main() {
         createdAt: now,
       );
       final days = item.daysUntilExpiry;
-      final title = days == 0
-          ? '${item.name} expires today'
-          : '${item.name} expires in $days day${days == 1 ? '' : 's'}';
+      final title =
+          days == 0
+              ? '${item.name} expires today'
+              : '${item.name} expires in $days day${days == 1 ? '' : 's'}';
       expect(title, 'Avocado expires today');
     });
 
@@ -282,16 +283,23 @@ void main() {
         createdAt: today,
       );
       final days = item.daysUntilExpiry;
-      final title = days == 0
-          ? '${item.name} expires today'
-          : '${item.name} expires in $days day${days == 1 ? '' : 's'}';
+      final title =
+          days == 0
+              ? '${item.name} expires today'
+              : '${item.name} expires in $days day${days == 1 ? '' : 's'}';
       expect(title, 'Banana expires in 1 day');
     });
 
     test('expiry title uses plural "days" when daysUntilExpiry > 1', () {
       final today = DateTime.now();
       // Use midnight + 3 full days so inDays truncation always gives exactly 3
-      final inThreeDays = DateTime(today.year, today.month, today.day + 3, 23, 59);
+      final inThreeDays = DateTime(
+        today.year,
+        today.month,
+        today.day + 3,
+        23,
+        59,
+      );
       final item = FoodItem(
         id: 'n-test-3',
         name: 'Mango',
@@ -307,9 +315,10 @@ void main() {
         createdAt: today,
       );
       final days = item.daysUntilExpiry;
-      final title = days == 0
-          ? '${item.name} expires today'
-          : '${item.name} expires in $days day${days == 1 ? '' : 's'}';
+      final title =
+          days == 0
+              ? '${item.name} expires today'
+              : '${item.name} expires in $days day${days == 1 ? '' : 's'}';
       expect(title, 'Mango expires in 3 days');
     });
   });
