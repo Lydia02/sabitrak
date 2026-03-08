@@ -1759,19 +1759,74 @@ class FoodIntelligenceService {
     ),
     'cornflakes': _s('Grains', 'Cupboard', 365, 'Keep sealed in dry cupboard.'),
     'cereal': _s('Grains', 'Cupboard', 365, 'Store in cool dry place.'),
-    'golden morn': _s('Grains', 'Cupboard', 365, 'Nestle maize cereal — store sealed in cool dry place.'),
-    'golden morns': _s('Grains', 'Cupboard', 365, 'Nestle maize cereal — store sealed in cool dry place.'),
-    'quaker oats': _s('Grains', 'Cupboard', 365, 'Keep sealed in cool dry cupboard. Up to 1 year.'),
-    'weetabix': _s('Grains', 'Cupboard', 365, 'Keep in sealed pack in dry cupboard.'),
-    'muesli': _s('Grains', 'Cupboard', 180, 'Store in airtight container. Up to 6 months.'),
-    'granola': _s('Grains', 'Cupboard', 180, 'Airtight container, cool and dry. 6 months.'),
+    'golden morn': _s(
+      'Grains',
+      'Cupboard',
+      365,
+      'Nestle maize cereal — store sealed in cool dry place.',
+    ),
+    'golden morns': _s(
+      'Grains',
+      'Cupboard',
+      365,
+      'Nestle maize cereal — store sealed in cool dry place.',
+    ),
+    'quaker oats': _s(
+      'Grains',
+      'Cupboard',
+      365,
+      'Keep sealed in cool dry cupboard. Up to 1 year.',
+    ),
+    'weetabix': _s(
+      'Grains',
+      'Cupboard',
+      365,
+      'Keep in sealed pack in dry cupboard.',
+    ),
+    'muesli': _s(
+      'Grains',
+      'Cupboard',
+      180,
+      'Store in airtight container. Up to 6 months.',
+    ),
+    'granola': _s(
+      'Grains',
+      'Cupboard',
+      180,
+      'Airtight container, cool and dry. 6 months.',
+    ),
     'coco pops': _s('Grains', 'Cupboard', 365, 'Keep sealed in dry cupboard.'),
-    'frosted flakes': _s('Grains', 'Cupboard', 365, 'Keep sealed in dry cupboard.'),
-    'honey loops': _s('Grains', 'Cupboard', 365, 'Keep sealed in dry cupboard.'),
-    'honey bunches': _s('Grains', 'Cupboard', 365, 'Keep sealed in dry cupboard.'),
+    'frosted flakes': _s(
+      'Grains',
+      'Cupboard',
+      365,
+      'Keep sealed in dry cupboard.',
+    ),
+    'honey loops': _s(
+      'Grains',
+      'Cupboard',
+      365,
+      'Keep sealed in dry cupboard.',
+    ),
+    'honey bunches': _s(
+      'Grains',
+      'Cupboard',
+      365,
+      'Keep sealed in dry cupboard.',
+    ),
     'cheerios': _s('Grains', 'Cupboard', 365, 'Keep sealed in dry cupboard.'),
-    'porridge': _s('Grains', 'Cupboard', 365, 'Store in cool dry place. Keep sealed.'),
-    'breakfast cereal': _s('Grains', 'Cupboard', 365, 'Store in cool dry place, sealed after opening.'),
+    'porridge': _s(
+      'Grains',
+      'Cupboard',
+      365,
+      'Store in cool dry place. Keep sealed.',
+    ),
+    'breakfast cereal': _s(
+      'Grains',
+      'Cupboard',
+      365,
+      'Store in cool dry place, sealed after opening.',
+    ),
 
     // ── LEGUMES ───────────────────────────────────────────────────────────────
     'beans': _s(
@@ -2217,6 +2272,7 @@ class FoodSuggestion {
   final int shelfLifeDays;
   final String tip;
   final bool isGuessed;
+
   /// Suggested unit for this food (e.g. 'Kg', 'Pieces', 'Cups'). May be null.
   final String? suggestedUnit;
 

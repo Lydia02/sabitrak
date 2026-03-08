@@ -31,15 +31,17 @@ class PasswordResetService {
         .collection('password_reset_codes')
         .doc(email)
         .set({
-      'code': otp,
-      'email': email,
-      'expiresAt': Timestamp.fromDate(expiresAt),
-      'createdAt': FieldValue.serverTimestamp(),
-      'used': false,
-    });
+          'code': otp,
+          'email': email,
+          'expiresAt': Timestamp.fromDate(expiresAt),
+          'createdAt': FieldValue.serverTimestamp(),
+          'used': false,
+        });
 
     // Send via Cloud Function proxy (EmailJS blocks non-browser calls)
-    final url = Uri.parse('https://us-central1-sabitrak-63dc2.cloudfunctions.net/sendEmail');
+    final url = Uri.parse(
+      'https://us-central1-sabitrak-63dc2.cloudfunctions.net/sendEmail',
+    );
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -55,20 +57,17 @@ class PasswordResetService {
       }),
     );
     if (response.statusCode != 200) {
-      throw Exception(
-          'Email error (${response.statusCode}): ${response.body}');
+      throw Exception('Email error (${response.statusCode}): ${response.body}');
     }
   }
 
   /// Verify the OTP — returns true and marks it used if valid
-  Future<bool> verifyOtp({
-    required String email,
-    required String code,
-  }) async {
-    final doc = await _firebaseService.firestore
-        .collection('password_reset_codes')
-        .doc(email)
-        .get();
+  Future<bool> verifyOtp({required String email, required String code}) async {
+    final doc =
+        await _firebaseService.firestore
+            .collection('password_reset_codes')
+            .doc(email)
+            .get();
 
     if (!doc.exists) return false;
 
@@ -95,9 +94,7 @@ class PasswordResetService {
     required String newPassword,
     required String resetToken,
   }) async {
-    final url = Uri.parse(
-      'https://resetpassword-6vvfcstgua-uc.a.run.app',
-    );
+    final url = Uri.parse('https://resetpassword-6vvfcstgua-uc.a.run.app');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -109,7 +106,8 @@ class PasswordResetService {
     );
 
     if (response.statusCode != 200) {
-      final error = jsonDecode(response.body)['error'] ?? 'Failed to reset password.';
+      final error =
+          jsonDecode(response.body)['error'] ?? 'Failed to reset password.';
       throw Exception(error);
     }
   }

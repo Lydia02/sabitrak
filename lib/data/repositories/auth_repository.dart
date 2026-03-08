@@ -12,11 +12,11 @@ class AuthRepository {
   User? get currentUser => _firebaseService.currentUser;
 
   Future<User> registerWithEmailAndPassword(RegistrationData data) async {
-    final UserCredential credential =
-        await _firebaseService.auth.createUserWithEmailAndPassword(
-      email: data.email,
-      password: data.password,
-    );
+    final UserCredential credential = await _firebaseService.auth
+        .createUserWithEmailAndPassword(
+          email: data.email,
+          password: data.password,
+        );
 
     final User user = credential.user!;
 
@@ -46,8 +46,8 @@ class AuthRepository {
     googleProvider.addScope('email');
     googleProvider.addScope('profile');
 
-    final UserCredential userCredential =
-        await _firebaseService.auth.signInWithPopup(googleProvider);
+    final UserCredential userCredential = await _firebaseService.auth
+        .signInWithPopup(googleProvider);
 
     final bool isNewUser =
         userCredential.additionalUserInfo?.isNewUser ?? false;
@@ -71,8 +71,8 @@ class AuthRepository {
       idToken: googleAuth.idToken,
     );
 
-    final UserCredential userCredential =
-        await _firebaseService.auth.signInWithCredential(credential);
+    final UserCredential userCredential = await _firebaseService.auth
+        .signInWithCredential(credential);
 
     final bool isNewUser =
         userCredential.additionalUserInfo?.isNewUser ?? false;
@@ -101,11 +101,8 @@ class AuthRepository {
   }
 
   Future<User> signInWithEmailAndPassword(String email, String password) async {
-    final UserCredential credential =
-        await _firebaseService.auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    final UserCredential credential = await _firebaseService.auth
+        .signInWithEmailAndPassword(email: email, password: password);
     return credential.user!;
   }
 

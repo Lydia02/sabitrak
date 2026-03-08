@@ -11,7 +11,11 @@ import 'sign_in_screen.dart';
 class ResetPasswordScreen extends StatefulWidget {
   final String email;
   final String resetToken;
-  const ResetPasswordScreen({super.key, required this.email, required this.resetToken});
+  const ResetPasswordScreen({
+    super.key,
+    required this.email,
+    required this.resetToken,
+  });
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -26,7 +30,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   String? _validatePassword(String pw) {
     if (pw.length < 8) return 'At least 8 characters';
     if (!RegExp(r'[0-9]').hasMatch(pw)) return 'Must contain a number';
-    if (!RegExp(r'[!@#\$%\^&\*\.\-_]').hasMatch(pw)) return 'Must contain a symbol';
+    if (!RegExp(r'[!@#\$%\^&\*\.\-_]').hasMatch(pw))
+      return 'Must contain a symbol';
     return null;
   }
 
@@ -40,15 +45,21 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       return;
     }
     if (pw != confirm) {
-      showErrorModal(context, title: 'Mismatch', message: 'Passwords do not match.');
+      showErrorModal(
+        context,
+        title: 'Mismatch',
+        message: 'Passwords do not match.',
+      );
       return;
     }
 
-    context.read<AuthBloc>().add(ForgotPasswordReset(
-          email: widget.email,
-          newPassword: pw,
-          resetToken: widget.resetToken,
-        ));
+    context.read<AuthBloc>().add(
+      ForgotPasswordReset(
+        email: widget.email,
+        newPassword: pw,
+        resetToken: widget.resetToken,
+      ),
+    );
   }
 
   @override
@@ -62,13 +73,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : AppTheme.fieldBorderColor;
-    final fieldBg = isDark
-        ? Colors.white.withValues(alpha: 0.04)
-        : Colors.transparent;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final borderColor =
+        isDark
+            ? Colors.white.withValues(alpha: 0.12)
+            : AppTheme.fieldBorderColor;
+    final fieldBg =
+        isDark ? Colors.white.withValues(alpha: 0.04) : Colors.transparent;
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
@@ -82,14 +94,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         body: Stack(
           children: [
             // Blurred sign-in background
-            SizedBox.expand(
-              child: _BlurredSignInBackground(isDark: isDark),
-            ),
+            SizedBox.expand(child: _BlurredSignInBackground(isDark: isDark)),
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
               child: Container(
-                color: (isDark ? Colors.black : Colors.white)
-                    .withValues(alpha: 0.45),
+                color: (isDark ? Colors.black : Colors.white).withValues(
+                  alpha: 0.45,
+                ),
               ),
             ),
 
@@ -107,7 +118,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.12),
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.4 : 0.12,
+                            ),
                             blurRadius: 32,
                             offset: const Offset(0, 8),
                           ),
@@ -121,7 +134,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             width: 56,
                             height: 56,
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                              color: AppTheme.primaryGreen.withValues(
+                                alpha: 0.1,
+                              ),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -158,7 +173,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             controller: _passwordCtrl,
                             label: 'New Password',
                             obscure: _obscurePassword,
-                            onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
+                            onToggle:
+                                () => setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
                             textColor: textColor,
                             borderColor: borderColor,
                             fieldBg: fieldBg,
@@ -170,7 +188,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             controller: _confirmCtrl,
                             label: 'Confirm Password',
                             obscure: _obscureConfirm,
-                            onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                            onToggle:
+                                () => setState(
+                                  () => _obscureConfirm = !_obscureConfirm,
+                                ),
                             textColor: textColor,
                             borderColor: borderColor,
                             fieldBg: fieldBg,
@@ -185,37 +206,43 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primaryGreen,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                disabledBackgroundColor:
-                                    AppTheme.primaryGreen.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                disabledBackgroundColor: AppTheme.primaryGreen
+                                    .withValues(alpha: 0.5),
                               ),
-                              child: isLoading
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
+                              child:
+                                  isLoading
+                                      ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                      : const Text(
+                                        'Confirm',
+                                        style: TextStyle(
+                                          fontFamily: 'Roboto',
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
-                                    )
-                                  : const Text(
-                                      'Confirm',
-                                      style: TextStyle(
-                                        fontFamily: 'Roboto',
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
                             ),
                           ),
                           const SizedBox(height: 12),
 
                           // Cancel
                           TextButton(
-                            onPressed: () =>
-                                Navigator.of(context).popUntil((r) => r.isFirst),
+                            onPressed:
+                                () => Navigator.of(
+                                  context,
+                                ).popUntil((r) => r.isFirst),
                             child: Text(
                               'Cancel',
                               style: TextStyle(
@@ -263,12 +290,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         TextField(
           controller: controller,
           obscureText: obscure,
-          style: TextStyle(fontFamily: 'Roboto', color: textColor, fontSize: 14),
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            color: textColor,
+            fontSize: 14,
+          ),
           decoration: InputDecoration(
             filled: true,
             fillColor: fieldBg,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: borderColor),
@@ -279,7 +312,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppTheme.primaryGreen,
+                width: 1.5,
+              ),
             ),
             suffixIcon: IconButton(
               icon: Icon(
@@ -296,88 +332,97 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   }
 
   void _showSuccessDialog(
-      BuildContext context, bool isDark, Color textColor, Color subtitleColor) {
+    BuildContext context,
+    bool isDark,
+    Color textColor,
+    Color subtitleColor,
+  ) {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: isDark ? AppTheme.darkCard : Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check_circle_outline,
-                  color: AppTheme.primaryGreen,
-                  size: 36,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Password Reset!',
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Your password has been updated.\nYou can now sign in with your new password.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 13,
-                  color: subtitleColor,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (_) => BlocProvider(
-                          create: (_) => AuthBloc(),
-                          child: const SignInScreen(),
-                        ),
-                      ),
-                      (r) => false,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text(
-                    'Back to Sign In',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+      builder:
+          (_) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            backgroundColor: isDark ? AppTheme.darkCard : Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_outline,
+                      color: AppTheme.primaryGreen,
+                      size: 36,
                     ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Password Reset!',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Your password has been updated.\nYou can now sign in with your new password.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 13,
+                      color: subtitleColor,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder:
+                                (_) => BlocProvider(
+                                  create: (_) => AuthBloc(),
+                                  child: const SignInScreen(),
+                                ),
+                          ),
+                          (r) => false,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Back to Sign In',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -461,15 +506,19 @@ class _FakeField extends StatelessWidget {
   final String label;
   final bool isDark;
   final bool isPassword;
-  const _FakeField(
-      {required this.label, required this.isDark, this.isPassword = false});
+  const _FakeField({
+    required this.label,
+    required this.isDark,
+    this.isPassword = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : AppTheme.fieldBorderColor;
+    final borderColor =
+        isDark
+            ? Colors.white.withValues(alpha: 0.12)
+            : AppTheme.fieldBorderColor;
     final bg =
         isDark ? Colors.white.withValues(alpha: 0.04) : Colors.transparent;
 
@@ -503,8 +552,11 @@ class _FakeField extends StatelessWidget {
                 ),
               ),
               if (isPassword)
-                Icon(Icons.visibility_off,
-                    color: textColor.withValues(alpha: 0.3), size: 18),
+                Icon(
+                  Icons.visibility_off,
+                  color: textColor.withValues(alpha: 0.3),
+                  size: 18,
+                ),
             ],
           ),
         ),

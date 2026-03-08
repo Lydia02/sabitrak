@@ -31,7 +31,8 @@ class _AddItemDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
 
     return Center(
@@ -136,9 +137,10 @@ class _AddItemDialog extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: textColor,
                     side: BorderSide(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.2)
-                          : AppTheme.primaryGreen,
+                      color:
+                          isDark
+                              ? Colors.white.withValues(alpha: 0.2)
+                              : AppTheme.primaryGreen,
                       width: 1.5,
                     ),
                     shape: RoundedRectangleBorder(
@@ -183,18 +185,20 @@ class _AddItemDialog extends StatelessWidget {
                     Navigator.of(context).pop();
                     Navigator.of(parentContext).push(
                       MaterialPageRoute(
-                        builder: (_) => const ManualEntryScreen(
-                          initialItemType: ItemType.leftover,
-                        ),
+                        builder:
+                            (_) => const ManualEntryScreen(
+                              initialItemType: ItemType.leftover,
+                            ),
                       ),
                     );
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFE65100),
                     side: BorderSide(
-                      color: isDark
-                          ? const Color(0xFFE65100).withValues(alpha: 0.4)
-                          : const Color(0xFFE65100),
+                      color:
+                          isDark
+                              ? const Color(0xFFE65100).withValues(alpha: 0.4)
+                              : const Color(0xFFE65100),
                       width: 1.5,
                     ),
                     shape: RoundedRectangleBorder(
@@ -214,8 +218,11 @@ class _AddItemDialog extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 8),
-                      Icon(Icons.rice_bowl_outlined,
-                          size: 18, color: Color(0xFFE65100)),
+                      Icon(
+                        Icons.rice_bowl_outlined,
+                        size: 18,
+                        color: Color(0xFFE65100),
+                      ),
                     ],
                   ),
                 ),

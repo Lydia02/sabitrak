@@ -25,9 +25,10 @@ class _NoInternetBannerState extends State<NoInternetBanner>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _slideAnim = Tween<double>(begin: -1, end: 0).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
-    );
+    _slideAnim = Tween<double>(
+      begin: -1,
+      end: 0,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
     _checkAndSchedule();
   }
 

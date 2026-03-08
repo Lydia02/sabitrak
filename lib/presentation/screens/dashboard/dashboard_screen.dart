@@ -73,10 +73,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     int members = 1;
     String? householdId;
     if (uid != null) {
-      final query = await firebaseService.households
-          .where('members', arrayContains: uid)
-          .limit(1)
-          .get();
+      final query =
+          await firebaseService.households
+              .where('members', arrayContains: uid)
+              .limit(1)
+              .get();
       if (query.docs.isNotEmpty) {
         householdId = query.docs.first.id;
         final data = query.docs.first.data() as Map<String, dynamic>;
@@ -91,16 +92,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _loaded = true;
       });
       if (householdId != null) {
-        _inventorySub = _inventoryRepo.getFoodItems(householdId).listen((items) {
+        _inventorySub = _inventoryRepo.getFoodItems(householdId).listen((
+          items,
+        ) {
           if (mounted) {
             final changed = items.length != _inventoryItems.length;
             setState(() {
               _inventoryItems = items;
               _totalItems = items.length;
-              _expiringItems = items.where((item) => item.isExpiringSoon || item.isExpired).length;
+              _expiringItems =
+                  items
+                      .where((item) => item.isExpiringSoon || item.isExpired)
+                      .length;
             });
             if (items.isNotEmpty) _showPantryCheckPopup();
-            if (changed || _recommendedRecipes.isEmpty) _fetchDashboardRecipes(items);
+            if (changed || _recommendedRecipes.isEmpty)
+              _fetchDashboardRecipes(items);
           }
         });
         _wasteSub = _wasteRepo.getWasteLogs(householdId).listen((logs) {
@@ -115,7 +122,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final result = await _recipeService.getRecommendations(items);
     if (!mounted) return;
     // Show expiring-first, fallback to quickMatch
-    final recipes = result.expiring.isNotEmpty ? result.expiring : result.quickMatch;
+    final recipes =
+        result.expiring.isNotEmpty ? result.expiring : result.quickMatch;
     setState(() => _recommendedRecipes = recipes.take(6).toList());
   }
 
@@ -147,14 +155,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double get _wasteReductionPercent {
     final totalEverAdded = _totalItems + _wasteCount;
     if (totalEverAdded == 0) return 0;
-    return ((totalEverAdded - _wasteCount) / totalEverAdded * 100).clamp(0, 100);
+    return ((totalEverAdded - _wasteCount) / totalEverAdded * 100).clamp(
+      0,
+      100,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
 
     return Scaffold(
@@ -163,33 +175,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             const NoInternetBanner(),
             Expanded(
-              child: _loaded
-                  ? SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHeader(textColor, subtitleColor, cardColor, isDark),
-                          const SizedBox(height: 16),
-                          _buildStatCards(textColor, subtitleColor, cardColor, isDark),
-                          const SizedBox(height: 16),
-                          _buildAnalyticalOverview(textColor, subtitleColor, cardColor, isDark),
-                          const SizedBox(height: 16),
-                          _buildQuickActions(textColor, cardColor, isDark),
-                          const SizedBox(height: 16),
-                          if (_isEmpty)
-                            _buildEmptyState(textColor, subtitleColor)
-                          else
-                            _buildRecommended(textColor, subtitleColor, cardColor, isDark),
-                          const SizedBox(height: 16),
-                        ],
+              child:
+                  _loaded
+                      ? SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeader(
+                              textColor,
+                              subtitleColor,
+                              cardColor,
+                              isDark,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildStatCards(
+                              textColor,
+                              subtitleColor,
+                              cardColor,
+                              isDark,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildAnalyticalOverview(
+                              textColor,
+                              subtitleColor,
+                              cardColor,
+                              isDark,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildQuickActions(textColor, cardColor, isDark),
+                            const SizedBox(height: 16),
+                            if (_isEmpty)
+                              _buildEmptyState(textColor, subtitleColor)
+                            else
+                              _buildRecommended(
+                                textColor,
+                                subtitleColor,
+                                cardColor,
+                                isDark,
+                              ),
+                            const SizedBox(height: 16),
+                          ],
+                        ),
+                      )
+                      : const Center(
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primaryGreen,
+                          strokeWidth: 2,
+                        ),
                       ),
-                    )
-                  : const Center(
-                      child: CircularProgressIndicator(
-                        color: AppTheme.primaryGreen,
-                        strokeWidth: 2,
-                      ),
-                    ),
             ),
           ],
         ),
@@ -197,7 +230,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildHeader(Color textColor, Color subtitleColor, Color cardColor, bool isDark) {
+  Widget _buildHeader(
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+    bool isDark,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
@@ -207,15 +245,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             height: 44,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isDark
-                  ? AppTheme.darkSurface
-                  : AppTheme.fieldBorderColor.withValues(alpha: 0.3),
+              color:
+                  isDark
+                      ? AppTheme.darkSurface
+                      : AppTheme.fieldBorderColor.withValues(alpha: 0.3),
             ),
-            child: Icon(
-              Icons.person,
-              color: subtitleColor,
-              size: 24,
-            ),
+            child: Icon(Icons.person, color: subtitleColor, size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -251,7 +286,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildStatCards(Color textColor, Color subtitleColor, Color cardColor, bool isDark) {
+  Widget _buildStatCards(
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+    bool isDark,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
@@ -299,7 +339,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildAnalyticalOverview(Color textColor, Color subtitleColor, Color cardColor, bool isDark) {
+  Widget _buildAnalyticalOverview(
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+    bool isDark,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: GestureDetector(
@@ -309,96 +354,100 @@ class _DashboardScreenState extends State<DashboardScreen> {
           decoration: BoxDecoration(
             color: cardColor,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: isDark
-              ? []
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    'ANALYTICAL OVERVIEW',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: subtitleColor,
-                      letterSpacing: 1.2,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Icon(
-                  Icons.bar_chart,
-                  size: 20,
-                  color: AppTheme.primaryGreen.withValues(alpha: 0.5),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                SizedBox(
-                  width: 96,
-                  height: 96,
-                  child: CustomPaint(
-                    painter: _DashRingPainter(
-                      value: _wasteReductionPercent / 100,
-                      trackColor: isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : AppTheme.fieldBorderColor.withValues(alpha: 0.3),
-                      fillColor: AppTheme.primaryGreen,
-                      textColor: textColor,
-                      label: '${_wasteReductionPercent.round()}%',
-                      strokeWidth: 8,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Waste Reduction Goal',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _isEmpty
-                            ? 'Start tracking your food to see your reduction progress.'
-                            : _wasteReductionPercent >= 80
-                                ? 'You\'re doing great! Keep using items before they expire.'
-                                : 'Log wasted items to track your reduction progress.',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 12,
-                          color: subtitleColor,
-                        ),
+            boxShadow:
+                isDark
+                    ? []
+                    : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
                     ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'ANALYTICAL OVERVIEW',
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: subtitleColor,
+                        letterSpacing: 1.2,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  Icon(
+                    Icons.bar_chart,
+                    size: 20,
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.5),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 96,
+                    height: 96,
+                    child: CustomPaint(
+                      painter: _DashRingPainter(
+                        value: _wasteReductionPercent / 100,
+                        trackColor:
+                            isDark
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : AppTheme.fieldBorderColor.withValues(
+                                  alpha: 0.3,
+                                ),
+                        fillColor: AppTheme.primaryGreen,
+                        textColor: textColor,
+                        label: '${_wasteReductionPercent.round()}%',
+                        strokeWidth: 8,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Waste Reduction Goal',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _isEmpty
+                              ? 'Start tracking your food to see your reduction progress.'
+                              : _wasteReductionPercent >= 80
+                              ? 'You\'re doing great! Keep using items before they expire.'
+                              : 'Log wasted items to track your reduction progress.',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 12,
+                            color: subtitleColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -415,9 +464,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             textColor: textColor,
             cardColor: cardColor,
             isDark: isDark,
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
-            ),
+            onTap:
+                () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const BarcodeScannerScreen(),
+                  ),
+                ),
           ),
           _QuickActionButton(
             icon: Icons.add_circle_outline,
@@ -453,9 +505,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : AppTheme.fieldBorderColor.withValues(alpha: 0.5),
+                color:
+                    isDark
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : AppTheme.fieldBorderColor.withValues(alpha: 0.5),
                 width: 2,
                 strokeAlign: BorderSide.strokeAlignInside,
               ),
@@ -499,7 +552,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildRecommended(Color textColor, Color subtitleColor, Color cardColor, bool isDark) {
+  Widget _buildRecommended(
+    Color textColor,
+    Color subtitleColor,
+    Color cardColor,
+    bool isDark,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(left: 20),
       child: Column(
@@ -537,40 +595,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 12),
           _recommendedRecipes.isEmpty
               ? SizedBox(
-                  height: 100,
-                  child: Center(
-                    child: Text(
-                      'Finding recipes from your pantry…',
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 13,
-                        color: subtitleColor,
-                      ),
+                height: 100,
+                child: Center(
+                  child: Text(
+                    'Finding recipes from your pantry…',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 13,
+                      color: subtitleColor,
                     ),
                   ),
-                )
-              : SizedBox(
-                  height: 220,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.only(right: 20),
-                    itemCount: _recommendedRecipes.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (_, i) {
-                      final recipe = _recommendedRecipes[i];
-                      return _DashRecipeCard(
-                        recipe: recipe,
-                        isDark: isDark,
-                        textColor: textColor,
-                        subtitleColor: subtitleColor,
-                        cardColor: cardColor,
-                        onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => RecipeDetailScreen(recipe: recipe),
-                        )),
-                      );
-                    },
-                  ),
                 ),
+              )
+              : SizedBox(
+                height: 220,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.only(right: 20),
+                  itemCount: _recommendedRecipes.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (_, i) {
+                    final recipe = _recommendedRecipes[i];
+                    return _DashRecipeCard(
+                      recipe: recipe,
+                      isDark: isDark,
+                      textColor: textColor,
+                      subtitleColor: subtitleColor,
+                      cardColor: cardColor,
+                      onTap:
+                          () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => RecipeDetailScreen(recipe: recipe),
+                            ),
+                          ),
+                    );
+                  },
+                ),
+              ),
         ],
       ),
     );
@@ -605,15 +667,16 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+        boxShadow:
+            isDark
+                ? []
+                : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
       ),
       child: Column(
         children: [
@@ -674,15 +737,16 @@ class _QuickActionButton extends StatelessWidget {
             decoration: BoxDecoration(
               color: cardColor,
               borderRadius: BorderRadius.circular(14),
-              boxShadow: isDark
-                  ? []
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+              boxShadow:
+                  isDark
+                      ? []
+                      : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
             ),
             child: Icon(icon, color: textColor, size: 26),
           ),
@@ -729,15 +793,16 @@ class _DashRecipeCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: isDark
-              ? []
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+          boxShadow:
+              isDark
+                  ? []
+                  : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -746,50 +811,64 @@ class _DashRecipeCard extends StatelessWidget {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: recipe.thumbnailUrl.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: recipe.thumbnailUrl,
-                          height: 110,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => Container(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                  child:
+                      recipe.thumbnailUrl.isNotEmpty
+                          ? CachedNetworkImage(
+                            imageUrl: recipe.thumbnailUrl,
                             height: 110,
-                            color: isDark
-                                ? const Color(0xFF2A2A2A)
-                                : const Color(0xFFE8D5B7),
-                            child: const Center(
-                              child: SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                    color: AppTheme.primaryGreen,
-                                    strokeWidth: 2),
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            placeholder:
+                                (_, __) => Container(
+                                  height: 110,
+                                  color:
+                                      isDark
+                                          ? const Color(0xFF2A2A2A)
+                                          : const Color(0xFFE8D5B7),
+                                  child: const Center(
+                                    child: SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        color: AppTheme.primaryGreen,
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            errorWidget:
+                                (_, __, ___) => Container(
+                                  height: 110,
+                                  color:
+                                      isDark
+                                          ? const Color(0xFF2A2A2A)
+                                          : const Color(0xFFE8D5B7),
+                                  child: Icon(
+                                    Icons.restaurant,
+                                    size: 36,
+                                    color: AppTheme.primaryGreen.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                  ),
+                                ),
+                          )
+                          : Container(
+                            height: 110,
+                            color:
+                                isDark
+                                    ? const Color(0xFF2A2A2A)
+                                    : const Color(0xFFE8D5B7),
+                            child: Icon(
+                              Icons.restaurant,
+                              size: 36,
+                              color: AppTheme.primaryGreen.withValues(
+                                alpha: 0.4,
                               ),
                             ),
                           ),
-                          errorWidget: (_, __, ___) => Container(
-                            height: 110,
-                            color: isDark
-                                ? const Color(0xFF2A2A2A)
-                                : const Color(0xFFE8D5B7),
-                            child: Icon(Icons.restaurant,
-                                size: 36,
-                                color: AppTheme.primaryGreen
-                                    .withValues(alpha: 0.4)),
-                          ),
-                        )
-                      : Container(
-                          height: 110,
-                          color: isDark
-                              ? const Color(0xFF2A2A2A)
-                              : const Color(0xFFE8D5B7),
-                          child: Icon(Icons.restaurant,
-                              size: 36,
-                              color:
-                                  AppTheme.primaryGreen.withValues(alpha: 0.4)),
-                        ),
                 ),
                 // Badge: expiring or match %
                 Positioned(
@@ -797,11 +876,14 @@ class _DashRecipeCard extends StatelessWidget {
                   left: 8,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 7, vertical: 3),
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
-                      color: recipe.usesExpiringItem
-                          ? const Color(0xFFE65100)
-                          : AppTheme.primaryGreen,
+                      color:
+                          recipe.usesExpiringItem
+                              ? const Color(0xFFE65100)
+                              : AppTheme.primaryGreen,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -846,9 +928,10 @@ class _DashRecipeCard extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 11,
-                      color: recipe.usesExpiringItem
-                          ? const Color(0xFFE65100)
-                          : subtitleColor,
+                      color:
+                          recipe.usesExpiringItem
+                              ? const Color(0xFFE65100)
+                              : subtitleColor,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -859,9 +942,10 @@ class _DashRecipeCard extends StatelessWidget {
                       Text(
                         recipe.estimatedPrepTime,
                         style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 11,
-                            color: subtitleColor),
+                          fontFamily: 'Roboto',
+                          fontSize: 11,
+                          color: subtitleColor,
+                        ),
                       ),
                     ],
                   ),
@@ -898,17 +982,24 @@ class _DashRingPainter extends CustomPainter {
     final cy = size.height / 2;
     final radius = (size.width - strokeWidth) / 2;
     final rect = Rect.fromCircle(center: Offset(cx, cy), radius: radius);
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
+    final paint =
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth
+          ..strokeCap = StrokeCap.round;
 
     paint.color = trackColor;
     canvas.drawCircle(Offset(cx, cy), radius, paint);
 
     if (value > 0) {
       paint.color = fillColor;
-      canvas.drawArc(rect, -3.14159 / 2, 2 * 3.14159 * value.clamp(0.0, 1.0), false, paint);
+      canvas.drawArc(
+        rect,
+        -3.14159 / 2,
+        2 * 3.14159 * value.clamp(0.0, 1.0),
+        false,
+        paint,
+      );
     }
 
     final tp = TextPainter(
@@ -928,8 +1019,10 @@ class _DashRingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DashRingPainter old) =>
-      old.value != value || old.fillColor != fillColor ||
-      old.trackColor != trackColor || old.textColor != textColor;
+      old.value != value ||
+      old.fillColor != fillColor ||
+      old.trackColor != trackColor ||
+      old.textColor != textColor;
 }
 
 // ── Pantry Check Popup ───────────────────────────────────────────────────────
@@ -940,7 +1033,8 @@ class _PantryCheckDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
 
     return Dialog(

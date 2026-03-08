@@ -141,21 +141,53 @@ class ScannedProduct {
   String get appCategory {
     final cat = (category ?? '').toLowerCase();
     if (cat.contains('fruit')) return 'Fruits';
-    if (cat.contains('vegetable') || cat.contains('legume')) return 'Vegetables';
-    if (cat.contains('dairy') || cat.contains('milk') || cat.contains('cheese') || cat.contains('yogurt')) return 'Dairy';
-    if (cat.contains('meat') || cat.contains('fish') || cat.contains('poultry') || cat.contains('seafood')) return 'Meat & Fish';
-    if (cat.contains('grain') || cat.contains('cereal') || cat.contains('bread') || cat.contains('pasta') || cat.contains('rice')) return 'Grains';
+    if (cat.contains('vegetable') || cat.contains('legume'))
+      return 'Vegetables';
+    if (cat.contains('dairy') ||
+        cat.contains('milk') ||
+        cat.contains('cheese') ||
+        cat.contains('yogurt'))
+      return 'Dairy';
+    if (cat.contains('meat') ||
+        cat.contains('fish') ||
+        cat.contains('poultry') ||
+        cat.contains('seafood'))
+      return 'Meat & Fish';
+    if (cat.contains('grain') ||
+        cat.contains('cereal') ||
+        cat.contains('bread') ||
+        cat.contains('pasta') ||
+        cat.contains('rice'))
+      return 'Grains';
     if (cat.contains('canned') || cat.contains('preserved')) return 'Canned';
-    if (cat.contains('spice') || cat.contains('sauce') || cat.contains('condiment') || cat.contains('seasoning')) return 'Spices';
-    if (cat.contains('beverage') || cat.contains('drink') || cat.contains('juice') || cat.contains('water') || cat.contains('soda')) return 'Beverages';
-    if (cat.contains('snack') || cat.contains('chip') || cat.contains('biscuit') || cat.contains('cookie') || cat.contains('chocolate') || cat.contains('candy') || cat.contains('sweet')) return 'Snacks';
+    if (cat.contains('spice') ||
+        cat.contains('sauce') ||
+        cat.contains('condiment') ||
+        cat.contains('seasoning'))
+      return 'Spices';
+    if (cat.contains('beverage') ||
+        cat.contains('drink') ||
+        cat.contains('juice') ||
+        cat.contains('water') ||
+        cat.contains('soda'))
+      return 'Beverages';
+    if (cat.contains('snack') ||
+        cat.contains('chip') ||
+        cat.contains('biscuit') ||
+        cat.contains('cookie') ||
+        cat.contains('chocolate') ||
+        cat.contains('candy') ||
+        cat.contains('sweet'))
+      return 'Snacks';
     if (cat.contains('frozen')) return 'Frozen';
     return 'Other';
   }
 
   /// Display name combining brand + name
   String get displayName {
-    if (brand != null && brand!.isNotEmpty && !name.toLowerCase().contains(brand!.toLowerCase())) {
+    if (brand != null &&
+        brand!.isNotEmpty &&
+        !name.toLowerCase().contains(brand!.toLowerCase())) {
       return '$brand $name';
     }
     return name;
@@ -176,9 +208,11 @@ class BarcodeLookupResult {
 }
 
 class OpenFoodFactsService {
-  static const String _offBaseUrl = 'https://world.openfoodfacts.org/api/v2/product';
+  static const String _offBaseUrl =
+      'https://world.openfoodfacts.org/api/v2/product';
   static const String _goUpcBaseUrl = 'https://go-upc.com/api/v1/code';
-  static const String _upcitemdbBaseUrl = 'https://api.upcitemdb.com/prod/trial/lookup';
+  static const String _upcitemdbBaseUrl =
+      'https://api.upcitemdb.com/prod/trial/lookup';
   static const Duration _timeout = Duration(seconds: 10);
 
   final String? _goUpcApiKey;
@@ -234,10 +268,7 @@ class OpenFoodFactsService {
     }
 
     // No product found, but still return country info
-    return BarcodeLookupResult(
-      countryInfo: countryInfo,
-      barcode: barcode,
-    );
+    return BarcodeLookupResult(countryInfo: countryInfo, barcode: barcode);
   }
 
   /// Save a product to the community database for other users
@@ -279,10 +310,8 @@ class OpenFoodFactsService {
   /// Get community product count for stats
   Future<int> getCommunityProductCount() async {
     try {
-      final snapshot = await _firestore
-          .collection('community_products')
-          .count()
-          .get();
+      final snapshot =
+          await _firestore.collection('community_products').count().get();
       return snapshot.count ?? 0;
     } catch (_) {
       return 0;
@@ -298,10 +327,8 @@ class OpenFoodFactsService {
   /// 1. Community Database lookup (Firebase Firestore)
   Future<ScannedProduct?> _getFromCommunityDB(String barcode) async {
     try {
-      final doc = await _firestore
-          .collection('community_products')
-          .doc(barcode)
-          .get();
+      final doc =
+          await _firestore.collection('community_products').doc(barcode).get();
 
       if (!doc.exists) return null;
 
@@ -327,12 +354,14 @@ class OpenFoodFactsService {
   Future<ScannedProduct?> _getFromOpenFoodFacts(String barcode) async {
     try {
       final url = Uri.parse('$_offBaseUrl/$barcode.json');
-      final response = await http.get(
-        url,
-        headers: {
-          'User-Agent': 'SabiTrak/1.0 (Flutter; contact@sabitrak.com)',
-        },
-      ).timeout(_timeout);
+      final response = await http
+          .get(
+            url,
+            headers: {
+              'User-Agent': 'SabiTrak/1.0 (Flutter; contact@sabitrak.com)',
+            },
+          )
+          .timeout(_timeout);
 
       if (response.statusCode != 200) return null;
 
@@ -363,12 +392,9 @@ class OpenFoodFactsService {
   Future<ScannedProduct?> _getFromGoUpc(String barcode) async {
     try {
       final url = Uri.parse('$_goUpcBaseUrl/$barcode');
-      final response = await http.get(
-        url,
-        headers: {
-          'Authorization': 'Bearer $_goUpcApiKey',
-        },
-      ).timeout(_timeout);
+      final response = await http
+          .get(url, headers: {'Authorization': 'Bearer $_goUpcApiKey'})
+          .timeout(_timeout);
 
       if (response.statusCode != 200) return null;
 
@@ -396,13 +422,15 @@ class OpenFoodFactsService {
   Future<ScannedProduct?> _getFromUpcitemdb(String barcode) async {
     try {
       final url = Uri.parse('$_upcitemdbBaseUrl?upc=$barcode');
-      final response = await http.get(
-        url,
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'SabiTrak/1.0',
-        },
-      ).timeout(_timeout);
+      final response = await http
+          .get(
+            url,
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'SabiTrak/1.0',
+            },
+          )
+          .timeout(_timeout);
 
       if (response.statusCode != 200) return null;
 
