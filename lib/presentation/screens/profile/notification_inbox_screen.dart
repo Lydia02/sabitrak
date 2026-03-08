@@ -47,27 +47,42 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen>
         }
       }
 
-      if (mounted) setState(() { _all = items; _loading = false; });
+      if (mounted)
+        setState(() {
+          _all = items;
+          _loading = false;
+        });
       svc.markAllRead('');
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  List<AppNotification> get _alerts => _all.where((n) =>
-      n.type == NotificationType.expiringSoon ||
-      n.type == NotificationType.expired ||
-      n.type == NotificationType.lowStock).toList();
+  List<AppNotification> get _alerts =>
+      _all
+          .where(
+            (n) =>
+                n.type == NotificationType.expiringSoon ||
+                n.type == NotificationType.expired ||
+                n.type == NotificationType.lowStock,
+          )
+          .toList();
 
-  List<AppNotification> get _activity => _all.where((n) =>
-      n.type == NotificationType.householdUpdate ||
-      n.type == NotificationType.recipeReminder).toList();
+  List<AppNotification> get _activity =>
+      _all
+          .where(
+            (n) =>
+                n.type == NotificationType.householdUpdate ||
+                n.type == NotificationType.recipeReminder,
+          )
+          .toList();
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final surfaceBg = isDark ? AppTheme.darkSurface : const Color(0xFFF7F7F6);
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
 
@@ -128,9 +143,12 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen>
                       if (_alerts.any((n) => !n.isRead)) ...[
                         const SizedBox(width: 6),
                         Container(
-                          width: 7, height: 7,
+                          width: 7,
+                          height: 7,
                           decoration: const BoxDecoration(
-                              color: Colors.red, shape: BoxShape.circle),
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ],
                     ],
@@ -142,30 +160,34 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen>
           ),
         ),
       ),
-      body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(
-                  color: AppTheme.primaryGreen, strokeWidth: 2))
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _AlertsTab(
-                  alerts: _alerts,
-                  textColor: textColor,
-                  subtitleColor: subtitleColor,
-                  cardColor: cardColor,
-                  isDark: isDark,
-                  onTap: _handleTap,
+      body:
+          _loading
+              ? const Center(
+                child: CircularProgressIndicator(
+                  color: AppTheme.primaryGreen,
+                  strokeWidth: 2,
                 ),
-                _ActivityTab(
-                  activity: _activity,
-                  textColor: textColor,
-                  subtitleColor: subtitleColor,
-                  cardColor: cardColor,
-                  isDark: isDark,
-                ),
-              ],
-            ),
+              )
+              : TabBarView(
+                controller: _tabController,
+                children: [
+                  _AlertsTab(
+                    alerts: _alerts,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
+                    cardColor: cardColor,
+                    isDark: isDark,
+                    onTap: _handleTap,
+                  ),
+                  _ActivityTab(
+                    activity: _activity,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
+                    cardColor: cardColor,
+                    isDark: isDark,
+                  ),
+                ],
+              ),
     );
   }
 
@@ -217,42 +239,60 @@ class _AlertsTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         if (expiringSoon.isNotEmpty) ...[
-          _SectionHeader(label: 'Expiring Soon', count: expiringSoon.length, subtitleColor: subtitleColor),
+          _SectionHeader(
+            label: 'Expiring Soon',
+            count: expiringSoon.length,
+            subtitleColor: subtitleColor,
+          ),
           const SizedBox(height: 8),
-          ...expiringSoon.map((n) => _AlertCard(
-                notif: n,
-                textColor: textColor,
-                subtitleColor: subtitleColor,
-                cardColor: cardColor,
-                isDark: isDark,
-                onTap: () => onTap(n),
-              )),
+          ...expiringSoon.map(
+            (n) => _AlertCard(
+              notif: n,
+              textColor: textColor,
+              subtitleColor: subtitleColor,
+              cardColor: cardColor,
+              isDark: isDark,
+              onTap: () => onTap(n),
+            ),
+          ),
           const SizedBox(height: 16),
         ],
         if (expired.isNotEmpty) ...[
-          _SectionHeader(label: 'Expired', count: expired.length, subtitleColor: subtitleColor),
+          _SectionHeader(
+            label: 'Expired',
+            count: expired.length,
+            subtitleColor: subtitleColor,
+          ),
           const SizedBox(height: 8),
-          ...expired.map((n) => _AlertCard(
-                notif: n,
-                textColor: textColor,
-                subtitleColor: subtitleColor,
-                cardColor: cardColor,
-                isDark: isDark,
-                onTap: () => onTap(n),
-              )),
+          ...expired.map(
+            (n) => _AlertCard(
+              notif: n,
+              textColor: textColor,
+              subtitleColor: subtitleColor,
+              cardColor: cardColor,
+              isDark: isDark,
+              onTap: () => onTap(n),
+            ),
+          ),
           const SizedBox(height: 16),
         ],
         if (lowStock.isNotEmpty) ...[
-          _SectionHeader(label: 'Low Stock', count: lowStock.length, subtitleColor: subtitleColor),
+          _SectionHeader(
+            label: 'Low Stock',
+            count: lowStock.length,
+            subtitleColor: subtitleColor,
+          ),
           const SizedBox(height: 8),
-          ...lowStock.map((n) => _AlertCard(
-                notif: n,
-                textColor: textColor,
-                subtitleColor: subtitleColor,
-                cardColor: cardColor,
-                isDark: isDark,
-                onTap: () => onTap(n),
-              )),
+          ...lowStock.map(
+            (n) => _AlertCard(
+              notif: n,
+              textColor: textColor,
+              subtitleColor: subtitleColor,
+              cardColor: cardColor,
+              isDark: isDark,
+              onTap: () => onTap(n),
+            ),
+          ),
         ],
       ],
     );
@@ -325,9 +365,16 @@ class _AlertCard extends StatelessWidget {
           color: cardColor,
           borderRadius: BorderRadius.circular(14),
           border: Border(left: BorderSide(color: accent, width: 4)),
-          boxShadow: isDark
-              ? []
-              : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+          boxShadow:
+              isDark
+                  ? []
+                  : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,7 +382,10 @@ class _AlertCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: accent,
                     borderRadius: BorderRadius.circular(5),
@@ -386,7 +436,8 @@ class _AlertCard extends StatelessWidget {
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: Text(
                   _actionLabel,
@@ -448,13 +499,15 @@ class _ActivityTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        ...activity.map((n) => _ActivityRow(
-              notif: n,
-              textColor: textColor,
-              subtitleColor: subtitleColor,
-              cardColor: cardColor,
-              isDark: isDark,
-            )),
+        ...activity.map(
+          (n) => _ActivityRow(
+            notif: n,
+            textColor: textColor,
+            subtitleColor: subtitleColor,
+            cardColor: cardColor,
+            isDark: isDark,
+          ),
+        ),
       ],
     );
   }
@@ -514,9 +567,16 @@ class _ActivityRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: isDark
-            ? []
-            : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
+        boxShadow:
+            isDark
+                ? []
+                : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -540,7 +600,8 @@ class _ActivityRow extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 13,
-                    fontWeight: notif.isRead ? FontWeight.w500 : FontWeight.w700,
+                    fontWeight:
+                        notif.isRead ? FontWeight.w500 : FontWeight.w700,
                     color: textColor,
                   ),
                 ),
@@ -558,9 +619,12 @@ class _ActivityRow extends StatelessWidget {
           ),
           if (!notif.isRead)
             Container(
-              width: 8, height: 8,
+              width: 8,
+              height: 8,
               decoration: const BoxDecoration(
-                  color: AppTheme.primaryGreen, shape: BoxShape.circle),
+                color: AppTheme.primaryGreen,
+                shape: BoxShape.circle,
+              ),
             ),
         ],
       ),

@@ -47,7 +47,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
     if (toDeduct.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No pantry items to deduct for this recipe.')),
+        const SnackBar(
+          content: Text('No pantry items to deduct for this recipe.'),
+        ),
       );
       return;
     }
@@ -59,59 +61,103 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
         final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
         final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-        final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+        final subtitleColor =
+            isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
         return AlertDialog(
           backgroundColor: cardColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
-              const Icon(Icons.restaurant, color: AppTheme.primaryGreen, size: 22),
+              const Icon(
+                Icons.restaurant,
+                color: AppTheme.primaryGreen,
+                size: 22,
+              ),
               const SizedBox(width: 8),
-              Text('Use This Recipe?',
-                  style: TextStyle(fontFamily: 'Roboto', fontSize: 17, fontWeight: FontWeight.w700, color: textColor)),
+              Text(
+                'Use This Recipe?',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: textColor,
+                ),
+              ),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('These pantry items will have their quantity reduced by 1:',
-                  style: TextStyle(fontFamily: 'Roboto', fontSize: 13, color: subtitleColor)),
-              const SizedBox(height: 12),
-              ...toDeduct.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    const Icon(Icons.remove_circle_outline, color: Color(0xFFE65100), size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '${item.name} (${item.quantity} ${item.unit} → ${item.quantity - 1} ${item.unit})',
-                        style: TextStyle(fontFamily: 'Roboto', fontSize: 13, color: textColor),
-                      ),
-                    ),
-                  ],
+              Text(
+                'These pantry items will have their quantity reduced by 1:',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 13,
+                  color: subtitleColor,
                 ),
-              )),
+              ),
+              const SizedBox(height: 12),
+              ...toDeduct.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.remove_circle_outline,
+                        color: Color(0xFFE65100),
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${item.name} (${item.quantity} ${item.unit} → ${item.quantity - 1} ${item.unit})',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 13,
+                            color: textColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               if (toDeduct.any((i) => i.quantity <= 1)) ...[
                 const SizedBox(height: 8),
-                const Text('Items reaching 0 will be removed from your pantry.',
-                    style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: Color(0xFFE65100))),
+                const Text(
+                  'Items reaching 0 will be removed from your pantry.',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 11,
+                    color: Color(0xFFE65100),
+                  ),
+                ),
               ],
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text('Cancel', style: TextStyle(fontFamily: 'Roboto', color: subtitleColor)),
+              child: Text(
+                'Cancel',
+                style: TextStyle(fontFamily: 'Roboto', color: subtitleColor),
+              ),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(ctx).pop(true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryGreen,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              child: const Text('Yes, I used it', style: TextStyle(fontFamily: 'Roboto', color: Colors.white)),
+              child: const Text(
+                'Yes, I used it',
+                style: TextStyle(fontFamily: 'Roboto', color: Colors.white),
+              ),
             ),
           ],
         );
@@ -130,28 +176,37 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         if (item.quantity <= 1) {
           await _inventoryRepo.deleteFoodItem(item.id);
         } else {
-          await _inventoryRepo.updateFoodItem(item.id, {'quantity': item.quantity - 1});
+          await _inventoryRepo.updateFoodItem(item.id, {
+            'quantity': item.quantity - 1,
+          });
         }
       }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(children: [
-            Icon(Icons.check_circle, color: Colors.white, size: 18),
-            SizedBox(width: 8),
-            Text('Pantry updated! Enjoy your meal.', style: TextStyle(fontFamily: 'Roboto')),
-          ]),
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Pantry updated! Enjoy your meal.',
+                style: TextStyle(fontFamily: 'Roboto'),
+              ),
+            ],
+          ),
           backgroundColor: AppTheme.primaryGreen,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update pantry: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to update pantry: $e')));
     } finally {
       if (mounted) setState(() => _usingRecipe = false);
     }
@@ -167,11 +222,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
     final bgColor = isDark ? AppTheme.darkSurface : AppTheme.backgroundColor;
 
-    final steps = recipe.instructions
-        .split(RegExp(r'\r\n|\n'))
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
+    final steps =
+        recipe.instructions
+            .split(RegExp(r'\r\n|\n'))
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -181,8 +237,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           SliverAppBar(
             expandedHeight: 260,
             pinned: true,
-            backgroundColor:
-                isDark ? AppTheme.darkCard : AppTheme.primaryGreen,
+            backgroundColor: isDark ? AppTheme.darkCard : AppTheme.primaryGreen,
             leading: GestureDetector(
               onTap: () => Navigator.of(context).pop(),
               child: Container(
@@ -191,45 +246,58 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   color: Colors.black.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back,
-                    color: Colors.white, size: 20),
+                child: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              background: recipe.thumbnailUrl.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: recipe.thumbnailUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(
-                        color: isDark
-                            ? const Color(0xFF2A2A2A)
-                            : const Color(0xFFE8D5B7),
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            color: AppTheme.primaryGreen,
-                            strokeWidth: 2,
-                          ),
+              background:
+                  recipe.thumbnailUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                        imageUrl: recipe.thumbnailUrl,
+                        fit: BoxFit.cover,
+                        placeholder:
+                            (_, __) => Container(
+                              color:
+                                  isDark
+                                      ? const Color(0xFF2A2A2A)
+                                      : const Color(0xFFE8D5B7),
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  color: AppTheme.primaryGreen,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                        errorWidget:
+                            (_, __, ___) => Container(
+                              color:
+                                  isDark
+                                      ? const Color(0xFF2A2A2A)
+                                      : const Color(0xFFE8D5B7),
+                              child: Icon(
+                                Icons.restaurant,
+                                size: 64,
+                                color: AppTheme.primaryGreen.withValues(
+                                  alpha: 0.4,
+                                ),
+                              ),
+                            ),
+                      )
+                      : Container(
+                        color:
+                            isDark
+                                ? const Color(0xFF2A2A2A)
+                                : const Color(0xFFE8D5B7),
+                        child: Icon(
+                          Icons.restaurant,
+                          size: 64,
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.4),
                         ),
                       ),
-                      errorWidget: (_, __, ___) => Container(
-                        color: isDark
-                            ? const Color(0xFF2A2A2A)
-                            : const Color(0xFFE8D5B7),
-                        child: Icon(Icons.restaurant,
-                            size: 64,
-                            color: AppTheme.primaryGreen
-                                .withValues(alpha: 0.4)),
-                      ),
-                    )
-                  : Container(
-                      color: isDark
-                          ? const Color(0xFF2A2A2A)
-                          : const Color(0xFFE8D5B7),
-                      child: Icon(Icons.restaurant,
-                          size: 64,
-                          color:
-                              AppTheme.primaryGreen.withValues(alpha: 0.4)),
-                    ),
             ),
           ),
 
@@ -277,7 +345,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   // ── Match badge ───────────────────────────────────────────
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryGreen.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
@@ -285,8 +355,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.eco,
-                            color: AppTheme.primaryGreen, size: 16),
+                        const Icon(
+                          Icons.eco,
+                          color: AppTheme.primaryGreen,
+                          size: 16,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'You have ${recipe.matchedCount} of ${recipe.ingredients.length} ingredients — ${recipe.matchPercent} match',
@@ -305,7 +378,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     const SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE65100).withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(10),
@@ -313,8 +388,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.warning_amber_rounded,
-                              color: Color(0xFFE65100), size: 16),
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: Color(0xFFE65100),
+                            size: 16,
+                          ),
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
@@ -354,25 +432,27 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: recipe.ingredients.length,
-                      separatorBuilder: (_, __) => Divider(
-                        height: 1,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.07)
-                            : Colors.black.withValues(alpha: 0.05),
-                      ),
+                      separatorBuilder:
+                          (_, __) => Divider(
+                            height: 1,
+                            color:
+                                isDark
+                                    ? Colors.white.withValues(alpha: 0.07)
+                                    : Colors.black.withValues(alpha: 0.05),
+                          ),
                       itemBuilder: (_, i) {
                         final ing = recipe.ingredients[i];
                         final inPantry = recipe.matchedPantryItems.any(
-                          (m) => m.toLowerCase() ==
-                              ing.name.toLowerCase(),
+                          (m) => m.toLowerCase() == ing.name.toLowerCase(),
                         );
                         final isExpiring = recipe.expiringMatchedItems.any(
-                          (e) => e.toLowerCase() ==
-                              ing.name.toLowerCase(),
+                          (e) => e.toLowerCase() == ing.name.toLowerCase(),
                         );
                         return Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           child: Row(
                             children: [
                               // Status dot
@@ -380,26 +460,31 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                 width: 28,
                                 height: 28,
                                 decoration: BoxDecoration(
-                                  color: isExpiring
-                                      ? const Color(0xFFE65100)
-                                          .withValues(alpha: 0.12)
-                                      : inPantry
-                                          ? AppTheme.primaryGreen
-                                              .withValues(alpha: 0.12)
-                                          : subtitleColor
-                                              .withValues(alpha: 0.1),
+                                  color:
+                                      isExpiring
+                                          ? const Color(
+                                            0xFFE65100,
+                                          ).withValues(alpha: 0.12)
+                                          : inPantry
+                                          ? AppTheme.primaryGreen.withValues(
+                                            alpha: 0.12,
+                                          )
+                                          : subtitleColor.withValues(
+                                            alpha: 0.1,
+                                          ),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
                                   isExpiring
                                       ? Icons.warning_amber_rounded
                                       : inPantry
-                                          ? Icons.check
-                                          : Icons.add,
+                                      ? Icons.check
+                                      : Icons.add,
                                   size: 16,
-                                  color: isExpiring
-                                      ? const Color(0xFFE65100)
-                                      : inPantry
+                                  color:
+                                      isExpiring
+                                          ? const Color(0xFFE65100)
+                                          : inPantry
                                           ? AppTheme.primaryGreen
                                           : subtitleColor,
                                 ),
@@ -412,9 +497,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                     fontFamily: 'Roboto',
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
-                                    color: inPantry
-                                        ? textColor
-                                        : subtitleColor,
+                                    color: inPantry ? textColor : subtitleColor,
                                   ),
                                 ),
                               ),
@@ -438,15 +521,16 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   Row(
                     children: [
                       const _LegendItem(
-                          color: AppTheme.primaryGreen,
-                          label: 'In your pantry'),
+                        color: AppTheme.primaryGreen,
+                        label: 'In your pantry',
+                      ),
                       const SizedBox(width: 16),
                       const _LegendItem(
-                          color: Color(0xFFE65100),
-                          label: 'Expiring soon'),
+                        color: Color(0xFFE65100),
+                        label: 'Expiring soon',
+                      ),
                       const SizedBox(width: 16),
-                      _LegendItem(
-                          color: subtitleColor, label: 'Need to buy'),
+                      _LegendItem(color: subtitleColor, label: 'Need to buy'),
                     ],
                   ),
 
@@ -515,16 +599,25 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     height: 52,
                     child: ElevatedButton.icon(
                       onPressed: _usingRecipe ? null : _onUseRecipe,
-                      icon: _usingRecipe
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white))
-                          : const Icon(Icons.check_circle_outline,
-                              size: 20, color: Colors.white),
+                      icon:
+                          _usingRecipe
+                              ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : const Icon(
+                                Icons.check_circle_outline,
+                                size: 20,
+                                color: Colors.white,
+                              ),
                       label: Text(
-                        _usingRecipe ? 'Updating pantry…' : 'I Used This Recipe',
+                        _usingRecipe
+                            ? 'Updating pantry…'
+                            : 'I Used This Recipe',
                         style: const TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 15,
@@ -535,7 +628,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryGreen,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                         elevation: 0,
                       ),
                     ),
@@ -551,12 +645,16 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         onPressed: () async {
                           final uri = Uri.parse(recipe.youtubeUrl);
                           if (await canLaunchUrl(uri)) {
-                            await launchUrl(uri,
-                                mode: LaunchMode.externalApplication);
+                            await launchUrl(
+                              uri,
+                              mode: LaunchMode.externalApplication,
+                            );
                           }
                         },
-                        icon: const Icon(Icons.play_circle_outline,
-                            color: Colors.red),
+                        icon: const Icon(
+                          Icons.play_circle_outline,
+                          color: Colors.red,
+                        ),
                         label: const Text(
                           'Watch on YouTube',
                           style: TextStyle(
@@ -589,8 +687,11 @@ class _MetaChip extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _MetaChip(
-      {required this.icon, required this.label, required this.color});
+  const _MetaChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -599,9 +700,10 @@ class _MetaChip extends StatelessWidget {
       children: [
         Icon(icon, size: 14, color: color),
         const SizedBox(width: 4),
-        Text(label,
-            style: TextStyle(
-                fontFamily: 'Roboto', fontSize: 13, color: color)),
+        Text(
+          label,
+          style: TextStyle(fontFamily: 'Roboto', fontSize: 13, color: color),
+        ),
       ],
     );
   }
@@ -624,11 +726,10 @@ class _LegendItem extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 4),
-        Text(label,
-            style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 11,
-                color: color)),
+        Text(
+          label,
+          style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: color),
+        ),
       ],
     );
   }

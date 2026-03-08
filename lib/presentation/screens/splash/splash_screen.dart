@@ -47,10 +47,7 @@ class _SplashScreenState extends State<SplashScreen>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut));
 
     _taglineFade = CurvedAnimation(
       parent: _slideController,
@@ -84,7 +81,8 @@ class _SplashScreenState extends State<SplashScreen>
     // If a Google signup was started but never completed verification,
     // delete that Firebase account so it doesn't linger
     final pendingGoogleUid = prefs.getString('pending_google_uid');
-    if (pendingGoogleUid != null && currentUser != null &&
+    if (pendingGoogleUid != null &&
+        currentUser != null &&
         currentUser.uid == pendingGoogleUid) {
       if (isOnline) {
         try {
@@ -100,7 +98,8 @@ class _SplashScreenState extends State<SplashScreen>
       if (isOnline) {
         // Check if user was active within the last 10 minutes
         final lastActiveMs = prefs.getInt('last_active_ms');
-        final withinGrace = lastActiveMs != null &&
+        final withinGrace =
+            lastActiveMs != null &&
             DateTime.now().millisecondsSinceEpoch - lastActiveMs <
                 const Duration(minutes: 10).inMilliseconds;
 
@@ -111,8 +110,9 @@ class _SplashScreenState extends State<SplashScreen>
           Navigator.of(context).pushReplacement(
             PageRouteBuilder(
               pageBuilder: (_, __, ___) => MainShell(key: MainShell.shellKey),
-              transitionsBuilder: (_, animation, __, child) =>
-                  FadeTransition(opacity: animation, child: child),
+              transitionsBuilder:
+                  (_, animation, __, child) =>
+                      FadeTransition(opacity: animation, child: child),
               transitionDuration: const Duration(milliseconds: 600),
             ),
           );
@@ -128,10 +128,10 @@ class _SplashScreenState extends State<SplashScreen>
           if (!mounted) return;
           Navigator.of(context).pushReplacement(
             PageRouteBuilder(
-              pageBuilder: (_, __, ___) =>
-                  MainShell(key: MainShell.shellKey),
-              transitionsBuilder: (_, animation, __, child) =>
-                  FadeTransition(opacity: animation, child: child),
+              pageBuilder: (_, __, ___) => MainShell(key: MainShell.shellKey),
+              transitionsBuilder:
+                  (_, animation, __, child) =>
+                      FadeTransition(opacity: animation, child: child),
               transitionDuration: const Duration(milliseconds: 600),
             ),
           );
@@ -155,8 +155,9 @@ class _SplashScreenState extends State<SplashScreen>
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => destination,
-        transitionsBuilder: (_, animation, __, child) =>
-            FadeTransition(opacity: animation, child: child),
+        transitionsBuilder:
+            (_, animation, __, child) =>
+                FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 600),
       ),
     );
@@ -173,7 +174,8 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
 
     return Scaffold(
       body: Center(

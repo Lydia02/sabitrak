@@ -30,10 +30,8 @@ class FirebaseService {
   Future<bool> hasHousehold() async {
     final uid = currentUser?.uid;
     if (uid == null) return false;
-    final query = await households
-        .where('members', arrayContains: uid)
-        .limit(1)
-        .get();
+    final query =
+        await households.where('members', arrayContains: uid).limit(1).get();
     return query.docs.isNotEmpty;
   }
 
@@ -41,10 +39,8 @@ class FirebaseService {
   Future<String?> getHouseholdName() async {
     final uid = currentUser?.uid;
     if (uid == null) return null;
-    final query = await households
-        .where('members', arrayContains: uid)
-        .limit(1)
-        .get();
+    final query =
+        await households.where('members', arrayContains: uid).limit(1).get();
     if (query.docs.isEmpty) return null;
     return query.docs.first['name'] as String?;
   }

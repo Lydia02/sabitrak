@@ -32,7 +32,12 @@ class _InventoryScreenState extends State<InventoryScreen>
   int _selectedTabIndex = 0;
 
   // Status filter chips
-  static const List<String> _statusFilters = ['All Status', 'Expiring Soon', 'Expired', 'Fresh'];
+  static const List<String> _statusFilters = [
+    'All Status',
+    'Expiring Soon',
+    'Expired',
+    'Fresh',
+  ];
   String _selectedStatus = 'All Status';
 
   @override
@@ -44,11 +49,11 @@ class _InventoryScreenState extends State<InventoryScreen>
   Future<void> _loadHouseholdId() async {
     final uid = FirebaseService().currentUser?.uid;
     if (uid == null) return;
-    final query = await FirebaseService()
-        .households
-        .where('members', arrayContains: uid)
-        .limit(1)
-        .get();
+    final query =
+        await FirebaseService().households
+            .where('members', arrayContains: uid)
+            .limit(1)
+            .get();
     if (query.docs.isNotEmpty && mounted) {
       setState(() => _householdId = query.docs.first.id);
     }
@@ -66,35 +71,42 @@ class _InventoryScreenState extends State<InventoryScreen>
     // Storage tab filter
     if (_selectedTabIndex != 0) {
       final tab = _storageTabs[_selectedTabIndex].toLowerCase();
-      filtered = filtered.where((item) {
-        final loc = item.storageLocation.toLowerCase();
-        if (tab == 'pantry') {
-          // Pantry = anything not fridge/freezer
-          return !loc.contains('fridge') && !loc.contains('freezer');
-        }
-        return loc.contains(tab);
-      }).toList();
+      filtered =
+          filtered.where((item) {
+            final loc = item.storageLocation.toLowerCase();
+            if (tab == 'pantry') {
+              // Pantry = anything not fridge/freezer
+              return !loc.contains('fridge') && !loc.contains('freezer');
+            }
+            return loc.contains(tab);
+          }).toList();
     }
 
     // Status chip filter
     switch (_selectedStatus) {
       case 'Expiring Soon':
-        filtered = filtered.where((i) => i.isExpiringSoon && !i.isExpired).toList();
+        filtered =
+            filtered.where((i) => i.isExpiringSoon && !i.isExpired).toList();
         break;
       case 'Expired':
         filtered = filtered.where((i) => i.isExpired).toList();
         break;
       case 'Fresh':
-        filtered = filtered.where((i) => !i.isExpiringSoon && !i.isExpired).toList();
+        filtered =
+            filtered.where((i) => !i.isExpiringSoon && !i.isExpired).toList();
         break;
     }
 
     // Search
     if (_searchQuery.isNotEmpty) {
-      filtered = filtered
-          .where((item) =>
-              item.name.toLowerCase().contains(_searchQuery.toLowerCase()))
-          .toList();
+      filtered =
+          filtered
+              .where(
+                (item) => item.name.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                ),
+              )
+              .toList();
     }
 
     // FIFO sort: use soonest-expiring items first (expired pushed to bottom)
@@ -123,7 +135,8 @@ class _InventoryScreenState extends State<InventoryScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5);
+    final scaffoldBg =
+        isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5);
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
     final subtitleColor = isDark ? Colors.white60 : Colors.black45;
     final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
@@ -135,269 +148,347 @@ class _InventoryScreenState extends State<InventoryScreen>
           children: [
             const NoInternetBanner(),
             Expanded(
-              child: _householdId == null
-            ? const Center(
-                child: CircularProgressIndicator(
-                  color: AppTheme.primaryGreen,
-                  strokeWidth: 2,
-                ),
-              )
-            : StreamBuilder<List<FoodItem>>(
-                stream: _repo.getFoodItems(_householdId!),
-                builder: (context, snapshot) {
-                  final allItems = snapshot.data ?? [];
-                  final filteredItems = _filterItems(allItems);
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ── Top bar ───────────────────────────────────────────
-                      Container(
-                        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  'My Inventory',
-                                  style: TextStyle(
-                                    fontFamily: 'Roboto',
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w700,
-                                    color: textColor,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primaryGreen
-                                        .withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    '${allItems.length} items',
-                                    style: const TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.primaryGreen,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Search bar
-                            Container(
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF2A2A2A)
-                                    : const Color(0xFFF0F0F0),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: TextField(
-                                controller: _searchController,
-                                onChanged: (val) =>
-                                    setState(() => _searchQuery = val),
-                                style: TextStyle(color: textColor, fontSize: 14),
-                                decoration: InputDecoration(
-                                  hintText: 'Search food items...',
-                                  hintStyle: TextStyle(
-                                    fontFamily: 'Roboto',
-                                    fontSize: 14,
-                                    color: subtitleColor,
-                                  ),
-                                  prefixIcon: Icon(Icons.search,
-                                      color: subtitleColor, size: 20),
-                                  suffixIcon: _searchQuery.isNotEmpty
-                                      ? GestureDetector(
-                                          onTap: () {
-                                            _searchController.clear();
-                                            setState(() => _searchQuery = '');
-                                          },
-                                          child: Icon(Icons.close,
-                                              color: subtitleColor, size: 18),
-                                        )
-                                      : null,
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  contentPadding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Storage tabs
-                            Row(
-                              children: List.generate(_storageTabs.length, (i) {
-                                final isSelected = _selectedTabIndex == i;
-                                return Expanded(
-                                  child: GestureDetector(
-                                    onTap: () =>
-                                        setState(() => _selectedTabIndex = i),
-                                    child: Container(
-                                      margin: EdgeInsets.only(
-                                          right: i < _storageTabs.length - 1
-                                              ? 8
-                                              : 0),
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? AppTheme.primaryGreen
-                                            : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? AppTheme.primaryGreen
-                                              : (isDark
-                                                  ? Colors.white24
-                                                  : Colors.black12),
-                                        ),
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        _storageTabs[i],
-                                        style: TextStyle(
-                                          fontFamily: 'Roboto',
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: isSelected
-                                              ? Colors.white
-                                              : subtitleColor,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }),
-                            ),
-                            const SizedBox(height: 10),
-
-                            // Status filter chips
-                            SizedBox(
-                              height: 32,
-                              child: ListView.separated(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: _statusFilters.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(width: 8),
-                                itemBuilder: (_, i) {
-                                  final f = _statusFilters[i];
-                                  final isSelected = _selectedStatus == f;
-                                  Color chipColor;
-                                  if (f == 'Expiring Soon') {
-                                    chipColor = const Color(0xFFD97706);
-                                  } else if (f == 'Expired') {
-                                    chipColor = const Color(0xFFDC2626);
-                                  } else if (f == 'Fresh') {
-                                    chipColor = AppTheme.primaryGreen;
-                                  } else {
-                                    chipColor = isDark
-                                        ? Colors.white54
-                                        : Colors.black54;
-                                  }
-                                  return GestureDetector(
-                                    onTap: () =>
-                                        setState(() => _selectedStatus = f),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 14, vertical: 6),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? chipColor.withValues(alpha: 0.15)
-                                            : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? chipColor
-                                              : (isDark
-                                                  ? Colors.white24
-                                                  : Colors.black12),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        f.toUpperCase(),
-                                        style: TextStyle(
-                                          fontFamily: 'Roboto',
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.5,
-                                          color: isSelected
-                                              ? chipColor
-                                              : subtitleColor,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                          ],
+              child:
+                  _householdId == null
+                      ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primaryGreen,
+                          strokeWidth: 2,
                         ),
-                      ),
+                      )
+                      : StreamBuilder<List<FoodItem>>(
+                        stream: _repo.getFoodItems(_householdId!),
+                        builder: (context, snapshot) {
+                          final allItems = snapshot.data ?? [];
+                          final filteredItems = _filterItems(allItems);
 
-                      // ── List ────────────────────────────────────────────
-                      Expanded(
-                        child: snapshot.connectionState ==
-                                ConnectionState.waiting
-                            ? const Center(
-                                child: CircularProgressIndicator(
-                                  color: AppTheme.primaryGreen,
-                                  strokeWidth: 2,
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // ── Top bar ───────────────────────────────────────────
+                              Container(
+                                color:
+                                    isDark
+                                        ? const Color(0xFF1A1A1A)
+                                        : Colors.white,
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  12,
+                                  16,
+                                  0,
                                 ),
-                              )
-                            : allItems.isEmpty
-                                ? _buildEmptyState(textColor, subtitleColor)
-                                : filteredItems.isEmpty
-                                    ? Center(
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(40),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          'My Inventory',
+                                          style: TextStyle(
+                                            fontFamily: 'Roboto',
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.w700,
+                                            color: textColor,
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.primaryGreen
+                                                .withValues(alpha: 0.12),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
                                           child: Text(
-                                            'No items match your filter',
-                                            style: TextStyle(
+                                            '${allItems.length} items',
+                                            style: const TextStyle(
                                               fontFamily: 'Roboto',
-                                              fontSize: 14,
-                                              color: subtitleColor,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppTheme.primaryGreen,
                                             ),
                                           ),
                                         ),
-                                      )
-                                    : ListView.separated(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            16, 12, 16, 100),
-                                        itemCount: filteredItems.length,
-                                        separatorBuilder: (_, __) =>
-                                            const SizedBox(height: 12),
-                                        itemBuilder: (_, i) {
-                                          // Mark the first non-expired item as "USE FIRST" (FIFO)
-                                          final firstNonExpiredIndex = filteredItems
-                                              .indexWhere((item) => !item.isExpired);
-                                          return _InventoryItemCard(
-                                            item: filteredItems[i],
-                                            isDark: isDark,
-                                            cardColor: cardColor,
-                                            textColor: textColor,
-                                            subtitleColor: subtitleColor,
-                                            onTap: () => _openUpdateSheet(filteredItems[i]),
-                                            showUseFist: i == firstNonExpiredIndex,
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+
+                                    // Search bar
+                                    Container(
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        color:
+                                            isDark
+                                                ? const Color(0xFF2A2A2A)
+                                                : const Color(0xFFF0F0F0),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: TextField(
+                                        controller: _searchController,
+                                        onChanged:
+                                            (val) => setState(
+                                              () => _searchQuery = val,
+                                            ),
+                                        style: TextStyle(
+                                          color: textColor,
+                                          fontSize: 14,
+                                        ),
+                                        decoration: InputDecoration(
+                                          hintText: 'Search food items...',
+                                          hintStyle: TextStyle(
+                                            fontFamily: 'Roboto',
+                                            fontSize: 14,
+                                            color: subtitleColor,
+                                          ),
+                                          prefixIcon: Icon(
+                                            Icons.search,
+                                            color: subtitleColor,
+                                            size: 20,
+                                          ),
+                                          suffixIcon:
+                                              _searchQuery.isNotEmpty
+                                                  ? GestureDetector(
+                                                    onTap: () {
+                                                      _searchController.clear();
+                                                      setState(
+                                                        () => _searchQuery = '',
+                                                      );
+                                                    },
+                                                    child: Icon(
+                                                      Icons.close,
+                                                      color: subtitleColor,
+                                                      size: 18,
+                                                    ),
+                                                  )
+                                                  : null,
+                                          border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                vertical: 12,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+
+                                    // Storage tabs
+                                    Row(
+                                      children: List.generate(
+                                        _storageTabs.length,
+                                        (i) {
+                                          final isSelected =
+                                              _selectedTabIndex == i;
+                                          return Expanded(
+                                            child: GestureDetector(
+                                              onTap:
+                                                  () => setState(
+                                                    () => _selectedTabIndex = i,
+                                                  ),
+                                              child: Container(
+                                                margin: EdgeInsets.only(
+                                                  right:
+                                                      i <
+                                                              _storageTabs
+                                                                      .length -
+                                                                  1
+                                                          ? 8
+                                                          : 0,
+                                                ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 8,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      isSelected
+                                                          ? AppTheme
+                                                              .primaryGreen
+                                                          : Colors.transparent,
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color:
+                                                        isSelected
+                                                            ? AppTheme
+                                                                .primaryGreen
+                                                            : (isDark
+                                                                ? Colors.white24
+                                                                : Colors
+                                                                    .black12),
+                                                  ),
+                                                ),
+                                                alignment: Alignment.center,
+                                                child: Text(
+                                                  _storageTabs[i],
+                                                  style: TextStyle(
+                                                    fontFamily: 'Roboto',
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        isSelected
+                                                            ? Colors.white
+                                                            : subtitleColor,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
                                           );
                                         },
                                       ),
+                                    ),
+                                    const SizedBox(height: 10),
+
+                                    // Status filter chips
+                                    SizedBox(
+                                      height: 32,
+                                      child: ListView.separated(
+                                        scrollDirection: Axis.horizontal,
+                                        itemCount: _statusFilters.length,
+                                        separatorBuilder:
+                                            (_, __) => const SizedBox(width: 8),
+                                        itemBuilder: (_, i) {
+                                          final f = _statusFilters[i];
+                                          final isSelected =
+                                              _selectedStatus == f;
+                                          Color chipColor;
+                                          if (f == 'Expiring Soon') {
+                                            chipColor = const Color(0xFFD97706);
+                                          } else if (f == 'Expired') {
+                                            chipColor = const Color(0xFFDC2626);
+                                          } else if (f == 'Fresh') {
+                                            chipColor = AppTheme.primaryGreen;
+                                          } else {
+                                            chipColor =
+                                                isDark
+                                                    ? Colors.white54
+                                                    : Colors.black54;
+                                          }
+                                          return GestureDetector(
+                                            onTap:
+                                                () => setState(
+                                                  () => _selectedStatus = f,
+                                                ),
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 14,
+                                                    vertical: 6,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    isSelected
+                                                        ? chipColor.withValues(
+                                                          alpha: 0.15,
+                                                        )
+                                                        : Colors.transparent,
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                                border: Border.all(
+                                                  color:
+                                                      isSelected
+                                                          ? chipColor
+                                                          : (isDark
+                                                              ? Colors.white24
+                                                              : Colors.black12),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                f.toUpperCase(),
+                                                style: TextStyle(
+                                                  fontFamily: 'Roboto',
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 0.5,
+                                                  color:
+                                                      isSelected
+                                                          ? chipColor
+                                                          : subtitleColor,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                  ],
+                                ),
+                              ),
+
+                              // ── List ────────────────────────────────────────────
+                              Expanded(
+                                child:
+                                    snapshot.connectionState ==
+                                            ConnectionState.waiting
+                                        ? const Center(
+                                          child: CircularProgressIndicator(
+                                            color: AppTheme.primaryGreen,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                        : allItems.isEmpty
+                                        ? _buildEmptyState(
+                                          textColor,
+                                          subtitleColor,
+                                        )
+                                        : filteredItems.isEmpty
+                                        ? Center(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(40),
+                                            child: Text(
+                                              'No items match your filter',
+                                              style: TextStyle(
+                                                fontFamily: 'Roboto',
+                                                fontSize: 14,
+                                                color: subtitleColor,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                        : ListView.separated(
+                                          padding: const EdgeInsets.fromLTRB(
+                                            16,
+                                            12,
+                                            16,
+                                            100,
+                                          ),
+                                          itemCount: filteredItems.length,
+                                          separatorBuilder:
+                                              (_, __) =>
+                                                  const SizedBox(height: 12),
+                                          itemBuilder: (_, i) {
+                                            // Mark the first non-expired item as "USE FIRST" (FIFO)
+                                            final firstNonExpiredIndex =
+                                                filteredItems.indexWhere(
+                                                  (item) => !item.isExpired,
+                                                );
+                                            return _InventoryItemCard(
+                                              item: filteredItems[i],
+                                              isDark: isDark,
+                                              cardColor: cardColor,
+                                              textColor: textColor,
+                                              subtitleColor: subtitleColor,
+                                              onTap:
+                                                  () => _openUpdateSheet(
+                                                    filteredItems[i],
+                                                  ),
+                                              showUseFist:
+                                                  i == firstNonExpiredIndex,
+                                            );
+                                          },
+                                        ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
-                    ],
-                  );
-                },
-              ),
             ),
           ],
         ),
@@ -418,8 +509,11 @@ class _InventoryScreenState extends State<InventoryScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2_outlined,
-                size: 72, color: subtitleColor.withValues(alpha: 0.4)),
+            Icon(
+              Icons.inventory_2_outlined,
+              size: 72,
+              color: subtitleColor.withValues(alpha: 0.4),
+            ),
             const SizedBox(height: 20),
             Text(
               'Your inventory is empty',
@@ -587,15 +681,16 @@ class _InventoryItemCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: isDark
-              ? []
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+          boxShadow:
+              isDark
+                  ? []
+                  : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -608,29 +703,36 @@ class _InventoryItemCard extends StatelessWidget {
                 color: AppTheme.primaryGreen.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: item.imageUrl != null && item.imageUrl!.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: CachedNetworkImage(
-                        imageUrl: item.imageUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => Icon(
-                          _categoryIcon(item.category),
-                          color: AppTheme.primaryGreen.withValues(alpha: 0.4),
-                          size: 32,
+              child:
+                  item.imageUrl != null && item.imageUrl!.isNotEmpty
+                      ? ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: CachedNetworkImage(
+                          imageUrl: item.imageUrl!,
+                          fit: BoxFit.cover,
+                          placeholder:
+                              (_, __) => Icon(
+                                _categoryIcon(item.category),
+                                color: AppTheme.primaryGreen.withValues(
+                                  alpha: 0.4,
+                                ),
+                                size: 32,
+                              ),
+                          errorWidget:
+                              (_, __, ___) => Icon(
+                                _categoryIcon(item.category),
+                                color: AppTheme.primaryGreen.withValues(
+                                  alpha: 0.4,
+                                ),
+                                size: 32,
+                              ),
                         ),
-                        errorWidget: (_, __, ___) => Icon(
-                          _categoryIcon(item.category),
-                          color: AppTheme.primaryGreen.withValues(alpha: 0.4),
-                          size: 32,
-                        ),
+                      )
+                      : Icon(
+                        _categoryIcon(item.category),
+                        color: AppTheme.primaryGreen.withValues(alpha: 0.4),
+                        size: 32,
                       ),
-                    )
-                  : Icon(
-                      _categoryIcon(item.category),
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.4),
-                      size: 32,
-                    ),
             ),
             const SizedBox(width: 14),
 
@@ -661,12 +763,19 @@ class _InventoryItemCard extends StatelessWidget {
                         Container(
                           margin: const EdgeInsets.only(right: 6),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 7, vertical: 3),
+                            horizontal: 7,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1565C0).withValues(alpha: 0.12),
+                            color: const Color(
+                              0xFF1565C0,
+                            ).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                                color: const Color(0xFF1565C0).withValues(alpha: 0.4)),
+                              color: const Color(
+                                0xFF1565C0,
+                              ).withValues(alpha: 0.4),
+                            ),
                           ),
                           child: const Text(
                             'USE FIRST',
@@ -681,7 +790,9 @@ class _InventoryItemCard extends StatelessWidget {
                         ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: chipBg,
                           borderRadius: BorderRadius.circular(20),
@@ -713,8 +824,11 @@ class _InventoryItemCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Icon(_storageIcon(item.storageLocation),
-                          size: 13, color: subtitleColor),
+                      Icon(
+                        _storageIcon(item.storageLocation),
+                        size: 13,
+                        color: subtitleColor,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         item.storageLocation,
@@ -765,11 +879,13 @@ class _InventoryItemCard extends StatelessWidget {
                               child: LinearProgressIndicator(
                                 value: fraction,
                                 minHeight: 6,
-                                backgroundColor: isDark
-                                    ? Colors.white12
-                                    : Colors.black.withValues(alpha: 0.07),
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(barColor),
+                                backgroundColor:
+                                    isDark
+                                        ? Colors.white12
+                                        : Colors.black.withValues(alpha: 0.07),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  barColor,
+                                ),
                               ),
                             ),
                           ],

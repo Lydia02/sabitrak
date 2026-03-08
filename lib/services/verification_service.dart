@@ -83,7 +83,9 @@ class VerificationService {
     required String toName,
     required String verificationCode,
   }) async {
-    final url = Uri.parse('https://us-central1-sabitrak-63dc2.cloudfunctions.net/sendEmail');
+    final url = Uri.parse(
+      'https://us-central1-sabitrak-63dc2.cloudfunctions.net/sendEmail',
+    );
 
     final response = await http.post(
       url,
@@ -101,19 +103,19 @@ class VerificationService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to send verification email (${response.statusCode}): ${response.body}');
+      throw Exception(
+        'Failed to send verification email (${response.statusCode}): ${response.body}',
+      );
     }
   }
 
   /// Verify the code entered by the user
-  Future<bool> verifyCode({
-    required String email,
-    required String code,
-  }) async {
-    final doc = await _firebaseService.firestore
-        .collection('verification_codes')
-        .doc(email)
-        .get();
+  Future<bool> verifyCode({required String email, required String code}) async {
+    final doc =
+        await _firebaseService.firestore
+            .collection('verification_codes')
+            .doc(email)
+            .get();
 
     if (!doc.exists) return false;
 

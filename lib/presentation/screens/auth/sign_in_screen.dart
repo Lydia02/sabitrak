@@ -38,10 +38,12 @@ class _SignInScreenState extends State<SignInScreen> {
 
   void _onSignIn() {
     if (_formKey.currentState!.validate()) {
-      context.read<AuthBloc>().add(SignInSubmitted(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          ));
+      context.read<AuthBloc>().add(
+        SignInSubmitted(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        ),
+      );
     }
   }
 
@@ -61,106 +63,108 @@ class _SignInScreenState extends State<SignInScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white24 : Colors.black12,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Icon
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.person_add_outlined,
-                color: AppTheme.primaryGreen,
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Account Not Found',
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: textColor,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'No SabiTrak account is linked to this Google account.\nPlease sign up first to create your account.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 14,
-                color: subtitleColor,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 28),
-            // Sign Up button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop(); // close sheet
-                  Navigator.of(ctx).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider(
-                        create: (_) => AuthBloc(),
-                        child: const SignUpScreen(),
-                      ),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryGreen,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+      builder:
+          (_) => Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.black12,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                child: const Text(
-                  'Create Account',
+                const SizedBox(height: 24),
+                // Icon
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.person_add_outlined,
+                    color: AppTheme.primaryGreen,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Account Not Found',
                   style: TextStyle(
                     fontFamily: 'Roboto',
-                    fontSize: 15,
+                    fontSize: 20,
                     fontWeight: FontWeight.w700,
+                    color: textColor,
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Dismiss
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(
-                'Try a different account',
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 14,
-                  color: subtitleColor,
+                const SizedBox(height: 10),
+                Text(
+                  'No SabiTrak account is linked to this Google account.\nPlease sign up first to create your account.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 14,
+                    color: subtitleColor,
+                    height: 1.5,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 28),
+                // Sign Up button
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop(); // close sheet
+                      Navigator.of(ctx).pushReplacement(
+                        MaterialPageRoute(
+                          builder:
+                              (_) => BlocProvider(
+                                create: (_) => AuthBloc(),
+                                child: const SignUpScreen(),
+                              ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryGreen,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Create Account',
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Dismiss
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(
+                    'Try a different account',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 14,
+                      color: subtitleColor,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -203,10 +207,11 @@ class _SignInScreenState extends State<SignInScreen> {
   Future<String> _getHouseholdId(FirebaseService svc) async {
     final uid = svc.currentUser?.uid;
     if (uid == null) return '';
-    final query = await svc.households
-        .where('members', arrayContains: uid)
-        .limit(1)
-        .get();
+    final query =
+        await svc.households
+            .where('members', arrayContains: uid)
+            .limit(1)
+            .get();
     if (query.docs.isEmpty) return '';
     return query.docs.first.id;
   }
@@ -221,198 +226,233 @@ class _SignInScreenState extends State<SignInScreen> {
           _routeAfterSignIn(context);
         } else if (state is GoogleSignInSuccess) {
           final authBloc = context.read<AuthBloc>();
-          Navigator.of(context).push(PageRouteBuilder(
-            pageBuilder: (_, __, ___) => BlocProvider.value(
-              value: authBloc,
-              child: const ProfileDetailsScreen(isGoogleUser: true),
+          Navigator.of(context).push(
+            PageRouteBuilder(
+              pageBuilder:
+                  (_, __, ___) => BlocProvider.value(
+                    value: authBloc,
+                    child: const ProfileDetailsScreen(isGoogleUser: true),
+                  ),
+              transitionsBuilder:
+                  (_, animation, __, child) =>
+                      FadeTransition(opacity: animation, child: child),
             ),
-            transitionsBuilder: (_, animation, __, child) =>
-                FadeTransition(opacity: animation, child: child),
-          ));
+          );
         } else if (state is GoogleSignUpRequired) {
           _showSignUpRequiredSheet(context);
         } else if (state is AuthError) {
-          showErrorModal(context,
-              title: 'Sign In Failed', message: state.message);
+          showErrorModal(
+            context,
+            title: 'Sign In Failed',
+            message: state.message,
+          );
         }
       },
       child: Builder(
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-          final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+          final subtitleColor =
+              isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
 
           return Scaffold(
             body: SafeArea(
               child: LayoutBuilder(
-                builder: (context, constraints) => SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                    child: IntrinsicHeight(
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(height: 16),
-                            GestureDetector(
-                              onTap: () => Navigator.of(context).pop(),
-                              child: Icon(Icons.arrow_back,
-                                  color: textColor, size: 28),
-                            ),
-                            // Logo only (no text on auth screens)
-                            const Center(child: SabiTrakLogo(iconSize: 40, showText: false)),
-                            const SizedBox(height: 40),
-                            // Email
-                            Text(
-                              'Email',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: textColor,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              style: TextStyle(color: textColor),
-                              decoration: const InputDecoration(
-                                hintText: 'Enter your email',
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your email';
-                                }
-                                if (!value.contains('@')) {
-                                  return 'Please enter a valid email';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 24),
-                            // Password
-                            Text(
-                              'Password',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: textColor,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _passwordController,
-                              obscureText: _obscurePassword,
-                              style: TextStyle(color: textColor),
-                              decoration: InputDecoration(
-                                hintText: 'Enter your password',
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: subtitleColor,
-                                    size: 20,
-                                  ),
-                                  onPressed: () => setState(
-                                      () => _obscurePassword = !_obscurePassword),
-                                ),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your password';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 32),
-                            // Sign In button
-                            BlocBuilder<AuthBloc, AuthState>(
-                              builder: (context, state) {
-                                final isLoading = state is AuthLoading;
-                                return ElevatedButton(
-                                  onPressed: isLoading ? null : _onSignIn,
-                                  child: isLoading
-                                      ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: AppTheme.white,
-                                          ),
-                                        )
-                                      : const Text('Sign In'),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            // Continue with Google
-                            OutlinedButton.icon(
-                              onPressed: _onGoogleSignIn,
-                              icon: const Text('G',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w700, fontSize: 16)),
-                              label: const Text('Continue with Google'),
-                            ),
-                            const SizedBox(height: 24),
-                            // Forgot password + Create Account
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                builder:
+                    (context, constraints) => SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: IntrinsicHeight(
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
+                                const SizedBox(height: 16),
                                 GestureDetector(
-                                  onTap: () {
-                                    Navigator.of(context).push(MaterialPageRoute(
-                                      builder: (_) => BlocProvider(
-                                        create: (_) => AuthBloc(),
-                                        child: const ForgotPasswordScreen(),
-                                      ),
-                                    ));
+                                  onTap: () => Navigator.of(context).pop(),
+                                  child: Icon(
+                                    Icons.arrow_back,
+                                    color: textColor,
+                                    size: 28,
+                                  ),
+                                ),
+                                // Logo only (no text on auth screens)
+                                const Center(
+                                  child: SabiTrakLogo(
+                                    iconSize: 40,
+                                    showText: false,
+                                  ),
+                                ),
+                                const SizedBox(height: 40),
+                                // Email
+                                Text(
+                                  'Email',
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: textColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                  style: TextStyle(color: textColor),
+                                  decoration: const InputDecoration(
+                                    hintText: 'Enter your email',
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter your email';
+                                    }
+                                    if (!value.contains('@')) {
+                                      return 'Please enter a valid email';
+                                    }
+                                    return null;
                                   },
-                                  child: Text(
-                                    'Forgot Password?',
-                                    style: TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontSize: 14,
-                                      color: textColor,
-                                      fontWeight: FontWeight.w500,
+                                ),
+                                const SizedBox(height: 24),
+                                // Password
+                                Text(
+                                  'Password',
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: textColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: _passwordController,
+                                  obscureText: _obscurePassword,
+                                  style: TextStyle(color: textColor),
+                                  decoration: InputDecoration(
+                                    hintText: 'Enter your password',
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscurePassword
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                        color: subtitleColor,
+                                        size: 20,
+                                      ),
+                                      onPressed:
+                                          () => setState(
+                                            () =>
+                                                _obscurePassword =
+                                                    !_obscurePassword,
+                                          ),
                                     ),
                                   ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter your password';
+                                    }
+                                    return null;
+                                  },
                                 ),
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.of(context).pushReplacement(
-                                      MaterialPageRoute(
-                                        builder: (_) => BlocProvider(
-                                          create: (_) => AuthBloc(),
-                                          child: const SignUpScreen(),
-                                        ),
-                                      ),
+                                const SizedBox(height: 32),
+                                // Sign In button
+                                BlocBuilder<AuthBloc, AuthState>(
+                                  builder: (context, state) {
+                                    final isLoading = state is AuthLoading;
+                                    return ElevatedButton(
+                                      onPressed: isLoading ? null : _onSignIn,
+                                      child:
+                                          isLoading
+                                              ? const SizedBox(
+                                                height: 20,
+                                                width: 20,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: AppTheme.white,
+                                                    ),
+                                              )
+                                              : const Text('Sign In'),
                                     );
                                   },
-                                  child: Text(
-                                    'Create Account',
+                                ),
+                                const SizedBox(height: 16),
+                                // Continue with Google
+                                OutlinedButton.icon(
+                                  onPressed: _onGoogleSignIn,
+                                  icon: const Text(
+                                    'G',
                                     style: TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontSize: 14,
-                                      color: textColor,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
                                     ),
                                   ),
+                                  label: const Text('Continue with Google'),
                                 ),
+                                const SizedBox(height: 24),
+                                // Forgot password + Create Account
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder:
+                                                (_) => BlocProvider(
+                                                  create: (_) => AuthBloc(),
+                                                  child:
+                                                      const ForgotPasswordScreen(),
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        'Forgot Password?',
+                                        style: TextStyle(
+                                          fontFamily: 'Roboto',
+                                          fontSize: 14,
+                                          color: textColor,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.of(context).pushReplacement(
+                                          MaterialPageRoute(
+                                            builder:
+                                                (_) => BlocProvider(
+                                                  create: (_) => AuthBloc(),
+                                                  child: const SignUpScreen(),
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        'Create Account',
+                                        style: TextStyle(
+                                          fontFamily: 'Roboto',
+                                          fontSize: 14,
+                                          color: textColor,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
                               ],
                             ),
-                            const SizedBox(height: 24),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
               ),
             ),
           );
@@ -421,5 +461,3 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 }
-
-

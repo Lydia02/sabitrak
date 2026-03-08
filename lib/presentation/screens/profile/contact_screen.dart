@@ -16,7 +16,8 @@ class ContactScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
 
     return Scaffold(
@@ -43,8 +44,11 @@ class ContactScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            Icon(Icons.support_agent,
-                size: 64, color: AppTheme.primaryGreen.withValues(alpha: 0.6)),
+            Icon(
+              Icons.support_agent,
+              size: 64,
+              color: AppTheme.primaryGreen.withValues(alpha: 0.6),
+            ),
             const SizedBox(height: 16),
             Text(
               'We\'d love to hear from you!',
@@ -135,15 +139,16 @@ class _ContactTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: isDark
-              ? []
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+          boxShadow:
+              isDark
+                  ? []
+                  : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
         ),
         child: Row(
           children: [
