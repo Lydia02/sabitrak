@@ -26,10 +26,11 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
   }
 
   Future<String> _getHouseholdId(FirebaseService svc, String uid) async {
-    final q = await svc.households
-        .where('members', arrayContains: uid)
-        .limit(1)
-        .get();
+    final q =
+        await svc.households
+            .where('members', arrayContains: uid)
+            .limit(1)
+            .get();
     return q.docs.isEmpty ? '' : q.docs.first.id;
   }
 
@@ -43,11 +44,11 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
     });
 
     try {
-      final query = await FirebaseService()
-          .households
-          .where('inviteCode', isEqualTo: code)
-          .limit(1)
-          .get();
+      final query =
+          await FirebaseService().households
+              .where('inviteCode', isEqualTo: code)
+              .limit(1)
+              .get();
 
       if (query.docs.isEmpty) {
         setState(() {
@@ -87,10 +88,12 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
   Widget _buildJoinForm() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : AppTheme.fieldBorderColor;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final borderColor =
+        isDark
+            ? Colors.white.withValues(alpha: 0.12)
+            : AppTheme.fieldBorderColor;
 
     return Scaffold(
       body: SafeArea(
@@ -132,28 +135,37 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: const BorderSide(
-                        color: AppTheme.primaryGreen, width: 1.5),
+                      color: AppTheme.primaryGreen,
+                      width: 1.5,
+                    ),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isLoading ? null : _onJoinHousehold,
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: AppTheme.white))
-                    : const Text('Join Household'),
+                child:
+                    _isLoading
+                        ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppTheme.white,
+                          ),
+                        )
+                        : const Text('Join Household'),
               ),
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.backButtonColor),
+                  backgroundColor: AppTheme.backButtonColor,
+                ),
                 child: const Text('Back'),
               ),
               const SizedBox(height: 16),
@@ -176,7 +188,8 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
   Widget _buildSuccess() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
 
     return Scaffold(
@@ -189,15 +202,16 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
               decoration: BoxDecoration(
                 color: cardColor,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: isDark
-                    ? []
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 20,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                boxShadow:
+                    isDark
+                        ? []
+                        : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 20,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -209,8 +223,11 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
                       color: AppTheme.primaryGreen,
                       shape: BoxShape.circle,
                     ),
-                    child:
-                        const Icon(Icons.check, color: AppTheme.white, size: 36),
+                    child: const Icon(
+                      Icons.check,
+                      color: AppTheme.white,
+                      size: 36,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -227,18 +244,20 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
                   Text(
                     'Role: Member',
                     style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 14,
-                        color: subtitleColor),
+                      fontFamily: 'Roboto',
+                      fontSize: 14,
+                      color: subtitleColor,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Inventory and shopping lists now sync across devices.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 13,
-                        color: subtitleColor),
+                      fontFamily: 'Roboto',
+                      fontSize: 13,
+                      color: subtitleColor,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
@@ -257,7 +276,9 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
                         );
                       }
                       nav.pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => MainShell(key: MainShell.shellKey)),
+                        MaterialPageRoute(
+                          builder: (_) => MainShell(key: MainShell.shellKey),
+                        ),
                         (route) => false,
                       );
                     },
@@ -275,7 +296,8 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
   Widget _buildInvalidCode() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
 
     return Scaffold(
@@ -288,15 +310,16 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
               decoration: BoxDecoration(
                 color: cardColor,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: isDark
-                    ? []
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 20,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                boxShadow:
+                    isDark
+                        ? []
+                        : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 20,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -317,25 +340,24 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
                     'Invalid or expired invite code.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 14,
-                        color: subtitleColor),
+                      fontFamily: 'Roboto',
+                      fontSize: 14,
+                      color: subtitleColor,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Row(
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () =>
-                              setState(() => _invalidCode = false),
+                          onPressed: () => setState(() => _invalidCode = false),
                           child: const Text('Try Again'),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () =>
-                              setState(() => _invalidCode = false),
+                          onPressed: () => setState(() => _invalidCode = false),
                           child: const Text('Request New Code'),
                         ),
                       ),

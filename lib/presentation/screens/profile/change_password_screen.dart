@@ -115,8 +115,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   obscure: !_showCurrent,
                   toggle: () => setState(() => _showCurrent = !_showCurrent),
                   showPassword: _showCurrent,
-                  validator: (v) =>
-                      v == null || v.isEmpty ? 'Required' : null,
+                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                 ),
                 const SizedBox(height: 20),
                 _buildField(
@@ -145,20 +144,24 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,
-                    color: isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey,
+                    color:
+                        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey,
                   ),
                 ),
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: _loading ? null : _submit,
-                  child: _loading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: AppTheme.white),
-                        )
-                      : const Text('Update Password'),
+                  child:
+                      _loading
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppTheme.white,
+                            ),
+                          )
+                          : const Text('Update Password'),
                 ),
               ],
             ),
@@ -188,8 +191,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide:
-              const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppTheme.primaryGreen,
+            width: 1.5,
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -199,8 +204,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Colors.red, width: 1.5),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         suffixIcon: IconButton(
           icon: Icon(
             showPassword ? Icons.visibility_off : Icons.visibility,
@@ -212,5 +219,4 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       ),
     );
   }
-
 }

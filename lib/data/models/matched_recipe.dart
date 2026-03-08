@@ -47,10 +47,11 @@ class MatchedRecipe {
     if (prepTimeOverride != null && prepTimeOverride!.isNotEmpty) {
       return prepTimeOverride!;
     }
-    final steps = instructions
-        .split(RegExp(r'\r\n|\n'))
-        .where((s) => s.trim().isNotEmpty)
-        .length;
+    final steps =
+        instructions
+            .split(RegExp(r'\r\n|\n'))
+            .where((s) => s.trim().isNotEmpty)
+            .length;
     if (steps <= 4) return '10–15 min';
     if (steps <= 8) return '20–30 min';
     if (steps <= 14) return '30–45 min';

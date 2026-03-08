@@ -29,8 +29,7 @@ class _SoloSetupScreenState extends State<SoloSetupScreen> {
   String _generateInviteCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final rand = DateTime.now().millisecondsSinceEpoch;
-    return List.generate(9, (i) => chars[(rand + i * 7) % chars.length])
-        .join();
+    return List.generate(9, (i) => chars[(rand + i * 7) % chars.length]).join();
   }
 
   Future<void> _onSavePreferences() async {
@@ -55,10 +54,11 @@ class _SoloSetupScreenState extends State<SoloSetupScreen> {
       await prefs.setBool('household_setup_done', true);
       if (user != null) {
         final svc = FirebaseService();
-        final q = await svc.households
-            .where('members', arrayContains: user.uid)
-            .limit(1)
-            .get();
+        final q =
+            await svc.households
+                .where('members', arrayContains: user.uid)
+                .limit(1)
+                .get();
         final hid = q.docs.isEmpty ? '' : q.docs.first.id;
         await LocalCacheService().saveUserProfile(
           uid: user.uid,
@@ -74,8 +74,11 @@ class _SoloSetupScreenState extends State<SoloSetupScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        showErrorModal(context,
-            title: 'Error', message: 'Failed to save preferences: $e');
+        showErrorModal(
+          context,
+          title: 'Error',
+          message: 'Failed to save preferences: $e',
+        );
       }
     }
   }
@@ -84,10 +87,12 @@ class _SoloSetupScreenState extends State<SoloSetupScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.primaryGreen;
-    final subtitleColor = isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : AppTheme.fieldBorderColor;
+    final subtitleColor =
+        isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
+    final borderColor =
+        isDark
+            ? Colors.white.withValues(alpha: 0.12)
+            : AppTheme.fieldBorderColor;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
 
     return Scaffold(
@@ -129,17 +134,19 @@ class _SoloSetupScreenState extends State<SoloSetupScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              ..._householdTypes.map((type) => RadioListTile<String>(
-                    title: Text(type,
-                        style: TextStyle(
-                            fontFamily: 'Roboto',
-                            color: textColor)),
-                    value: type,
-                    groupValue: _householdType,
-                    activeColor: AppTheme.primaryGreen,
-                    onChanged: (v) => setState(() => _householdType = v!),
-                    contentPadding: EdgeInsets.zero,
-                  )),
+              ..._householdTypes.map(
+                (type) => RadioListTile<String>(
+                  title: Text(
+                    type,
+                    style: TextStyle(fontFamily: 'Roboto', color: textColor),
+                  ),
+                  value: type,
+                  groupValue: _householdType,
+                  activeColor: AppTheme.primaryGreen,
+                  onChanged: (v) => setState(() => _householdType = v!),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
               const SizedBox(height: 24),
               Text(
                 'Default Expiry Alert:',
@@ -155,11 +162,16 @@ class _SoloSetupScreenState extends State<SoloSetupScreen> {
                 value: _expiryAlert,
                 dropdownColor: cardColor,
                 hint: const Text('Select when to alert you'),
-                items: _expiryOptions
-                    .map((o) => DropdownMenuItem(value: o, child: Text(o)))
-                    .toList(),
+                items:
+                    _expiryOptions
+                        .map((o) => DropdownMenuItem(value: o, child: Text(o)))
+                        .toList(),
                 onChanged: (v) => setState(() => _expiryAlert = v),
-                style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: textColor),
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 14,
+                  color: textColor,
+                ),
                 decoration: InputDecoration(
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -168,10 +180,14 @@ class _SoloSetupScreenState extends State<SoloSetupScreen> {
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: const BorderSide(
-                        color: AppTheme.primaryGreen, width: 1.5),
+                      color: AppTheme.primaryGreen,
+                      width: 1.5,
+                    ),
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -186,19 +202,24 @@ class _SoloSetupScreenState extends State<SoloSetupScreen> {
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: _isLoading ? null : _onSavePreferences,
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: AppTheme.white))
-                    : const Text('Save & Continue'),
+                child:
+                    _isLoading
+                        ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppTheme.white,
+                          ),
+                        )
+                        : const Text('Save & Continue'),
               ),
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.backButtonColor),
+                  backgroundColor: AppTheme.backButtonColor,
+                ),
                 child: const Text('Back'),
               ),
               const SizedBox(height: 40),

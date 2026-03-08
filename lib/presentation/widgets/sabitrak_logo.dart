@@ -22,11 +22,9 @@ class SabiTrakLogo extends StatelessWidget {
       'assets/images/leaf_icon.png',
       width: iconSize,
       height: iconSize,
-      errorBuilder: (_, __, ___) => Icon(
-        Icons.eco,
-        color: AppTheme.primaryGreen,
-        size: iconSize,
-      ),
+      errorBuilder:
+          (_, __, ___) =>
+              Icon(Icons.eco, color: AppTheme.primaryGreen, size: iconSize),
     );
 
     if (!showText) return icon;
