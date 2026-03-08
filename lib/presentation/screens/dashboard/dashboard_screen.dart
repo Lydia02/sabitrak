@@ -169,7 +169,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         isDark ? AppTheme.darkSubtitle : AppTheme.subtitleGrey;
     final cardColor = isDark ? AppTheme.darkCard : AppTheme.white;
 
-
     return Scaffold(
       body: SafeArea(
         child: Column(
