@@ -105,9 +105,12 @@ class FoodItem {
     };
   }
 
-  // Calculate days until expiry
+  // Calculate days until expiry (calendar-day difference, not hour-based)
   int get daysUntilExpiry {
-    return expiryDate.difference(DateTime.now()).inDays;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final expiry = DateTime(expiryDate.year, expiryDate.month, expiryDate.day);
+    return expiry.difference(today).inDays;
   }
 
   // Check if item is expired
