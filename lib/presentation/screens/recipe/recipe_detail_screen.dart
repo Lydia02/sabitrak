@@ -65,7 +65,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   }
 
   // Convert recipeQty in recipeUnit → pantryUnit. Returns null if no conversion known.
-  double? _convertToPantryUnit(double recipeQty, String recipeUnit, String pantryUnit) {
+  double? _convertToPantryUnit(
+    double recipeQty,
+    String recipeUnit,
+    String pantryUnit,
+  ) {
     final r = recipeUnit.toLowerCase().trim();
     final p = pantryUnit.toLowerCase().trim();
     if (r == p) return recipeQty;
@@ -76,7 +80,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       'kg': 1000, 'g': 1, 'gram': 1, 'grams': 1,
       'oz': 28.35, 'lb': 453.6, 'lbs': 453.6,
       // Volume units — approximate using water density (ml≈g), good enough for pantry
-      'ml': 1, 'l': 1000, 'litre': 1000, 'litres': 1000, 'liter': 1000, 'liters': 1000,
+      'ml': 1,
+      'l': 1000,
+      'litre': 1000,
+      'litres': 1000,
+      'liter': 1000,
+      'liters': 1000,
       'cup': 240, 'cups': 240,
       'tbsp': 15, 'tablespoon': 15, 'tablespoons': 15,
       'tsp': 5, 'teaspoon': 5, 'teaspoons': 5,
@@ -104,8 +113,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       for (final ri in widget.recipe.ingredients) {
         final riLower = ri.name.toLowerCase().trim();
         final pantryLower = pantryItem.name.toLowerCase().trim();
-        if (riLower.contains(ingLower) || ingLower.contains(riLower) ||
-            riLower.contains(pantryLower) || pantryLower.contains(riLower)) {
+        if (riLower.contains(ingLower) ||
+            ingLower.contains(riLower) ||
+            riLower.contains(pantryLower) ||
+            pantryLower.contains(riLower)) {
           recipeIng = ri;
           break;
         }
@@ -117,7 +128,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (recipeIng != null && recipeIng.measure.trim().isNotEmpty) {
         final recipeQty = _quantityFromMeasure(recipeIng.measure);
         final recipeUnit = _unitFromMeasure(recipeIng.measure);
-        final converted = _convertToPantryUnit(recipeQty, recipeUnit, pantryItem.unit);
+        final converted = _convertToPantryUnit(
+          recipeQty,
+          recipeUnit,
+          pantryItem.unit,
+        );
         if (converted != null) {
           // Round up — always deduct at least 1
           deductAmount = converted.ceil().clamp(1, pantryItem.quantity);
@@ -132,7 +147,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         fromMeasure = '';
       }
 
-      toDeduct.add((item: pantryItem, amount: deductAmount, fromMeasure: fromMeasure));
+      toDeduct.add((
+        item: pantryItem,
+        amount: deductAmount,
+        fromMeasure: fromMeasure,
+      ));
     }
 
     if (toDeduct.isEmpty) {
@@ -191,37 +210,36 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                ...toDeduct.map(
-                  (entry) {
-                    final newQty = entry.item.quantity - entry.amount;
-                    final measureNote = entry.fromMeasure.isNotEmpty
-                        ? ' (recipe: ${entry.fromMeasure})'
-                        : '';
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.remove_circle_outline,
-                            color: Color(0xFFE65100),
-                            size: 16,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '${entry.item.name}: ${entry.item.quantity} ${entry.item.unit} → ${newQty < 0 ? 0 : newQty} ${entry.item.unit}$measureNote',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 13,
-                                color: textColor,
-                              ),
+                ...toDeduct.map((entry) {
+                  final newQty = entry.item.quantity - entry.amount;
+                  final measureNote =
+                      entry.fromMeasure.isNotEmpty
+                          ? ' (recipe: ${entry.fromMeasure})'
+                          : '';
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.remove_circle_outline,
+                          color: Color(0xFFE65100),
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${entry.item.name}: ${entry.item.quantity} ${entry.item.unit} → ${newQty < 0 ? 0 : newQty} ${entry.item.unit}$measureNote',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 13,
+                              color: textColor,
                             ),
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
                 if (toDeduct.any((e) => e.item.quantity - e.amount <= 0)) ...[
                   const SizedBox(height: 8),
                   const Text(
