@@ -4,6 +4,28 @@
 
 SabiTrak is a mobile food inventory management app designed for African students and young professionals. It helps reduce food waste through barcode scanning, expiry tracking, recipe recommendations based on what you have, and household collaboration.
 
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [How to Install (APK)](#how-to-install-apk--android)
+- [How to Run from Source](#how-to-run-from-source)
+- [Project Structure](#project-structure)
+- [App Flow](#app-flow)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Related Files](#related-files)
+- [Use Case Implementation](#use-case-implementation-input--output-mapping)
+- [Testing Results](#testing-results)
+- [Analysis](#analysis)
+- [Discussion](#discussion)
+- [Recommendations](#recommendations)
+- [License](#license)
+
+---
+
 **Design Mockups:** [View on Uizard](https://app.uizard.io/p/4f316171)
 
 **Demo Video:** [Watch on Google Drive](https://drive.google.com/file/d/1A36YG-tz08lAD4LfKe_sV9lpNG_kJiCq/view?usp=drive_link)
@@ -406,7 +428,7 @@ The following core functionalities were tested and demonstrated across different
 ### Screenshots from Test Results
 
 #### Unit Test
-!<img width="1217" height="887" alt="image" src="https://github.com/user-attachments/assets/3aab2f1a-317f-4b81-907a-ba9d58d78ebc" />
+<img width="1217" height="887" alt="image" src="https://github.com/user-attachments/assets/3aab2f1a-317f-4b81-907a-ba9d58d78ebc" />
 
 
 #### Integration Test
