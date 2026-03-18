@@ -401,6 +401,24 @@ The following core functionalities were tested and demonstrated across different
 | Offline Caching | Manual network toggle test | Pass — inventory loads from cache when offline |
 | Dark Mode | Manual UI testing | Pass — theme persists across sessions |
 
+---
+
+### Screenshots
+
+#### Inventory Management — Different Data Values
+![Inventory Management](assets/images/screenshots/inventory.png)
+
+#### Barcode Scanning & OCR — Different Hardware
+![Barcode Scanning](assets/images/screenshots/barcode_scan.png)
+
+#### Recipe Recommendations — Different Pantry Data
+![Recipe Recommendations](assets/images/screenshots/recipes.png)
+
+#### Analytics & Waste Tracking — Performance on Device
+![Analytics](assets/images/screenshots/analytics.png)
+
+---
+
 ### Performance
 
 - Tested on **Android 12 (physical device)** and **Android 13 emulator**
