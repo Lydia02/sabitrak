@@ -403,19 +403,23 @@ The following core functionalities were tested and demonstrated across different
 
 ---
 
-### Screenshots
+### Screenshots from Test Results
 
-#### Inventory Management — Different Data Values
-![Inventory Management](assets/images/screenshots/inventory.png)
+#### Unit Test
+!<img width="1217" height="887" alt="image" src="https://github.com/user-attachments/assets/3aab2f1a-317f-4b81-907a-ba9d58d78ebc" />
 
-#### Barcode Scanning & OCR — Different Hardware
-![Barcode Scanning](assets/images/screenshots/barcode_scan.png)
 
-#### Recipe Recommendations — Different Pantry Data
-![Recipe Recommendations](assets/images/screenshots/recipes.png)
+#### Integration Test
+<img width="756" height="261" alt="image" src="https://github.com/user-attachments/assets/5d616167-8e16-4239-a708-d7088893b828" />
 
-#### Analytics & Waste Tracking — Performance on Device
-![Analytics](assets/images/screenshots/analytics.png)
+
+#### Validation Test
+<img width="598" height="437" alt="image" src="https://github.com/user-attachments/assets/6fe41acc-4803-4d95-888e-85d75f8b168e" />
+
+
+#### Acceptance Testing
+<img width="1038" height="531" alt="image" src="https://github.com/user-attachments/assets/64c562a2-7eb5-49df-8143-0e6ae2ae2454" />
+
 
 ---
 
