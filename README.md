@@ -61,7 +61,7 @@ SabiTrak is a mobile food inventory management app designed for African students
 | OCR | Google ML Kit Text Recognition |
 | Notifications | Firebase Cloud Messaging (FCM) |
 | Local Storage | SharedPreferences |
-| AI Recipes | Gemini API (Google) |
+| AI Recipes | African food  API |
 
 ---
 
@@ -350,7 +350,7 @@ This section maps each functional use case to its implementation, showing the in
 |---|---|
 | **Actor** | Authenticated user |
 | **Input** | Current pantry inventory (item names, quantities, expiry dates) |
-| **Process** | Items passed to African Food Database (Railway) → recipes ranked by: expiry urgency weight, ingredient match %, African origin flag, cooking simplicity score → Gemini API used for contextual suggestions → TheMealDB as fallback |
+| **Process** | Items passed to African Food Database (Railway) → recipes ranked by: expiry urgency weight, ingredient match %, African origin flag, cooking simplicity score → African food  API used for contextual suggestions → TheMealDB as fallback |
 | **Output** | Ranked list of recipe cards showing match percentage, missing ingredients, and cook time |
 | **Implemented in** | `lib/services/recipe_service.dart`, `lib/presentation/screens/recipe/recipe_detail_screen.dart` |
 
@@ -416,7 +416,7 @@ The following core functionalities were tested and demonstrated across different
 | Inventory Management | Unit tests (FoodItem model, duplicate detection) | Pass — add, edit, delete, filter by storage type |
 | Barcode Scanning | Manual device testing (Android physical device) | Pass — Open Food Facts API returns product details |
 | Expiry Date OCR | Manual device testing with real product labels | Pass — ML Kit extracts dates from camera capture |
-| Recipe Recommendations | Manual testing with varied inventory data | Pass — Gemini API returns African-cuisine recipes based on pantry |
+| Recipe Recommendations | Manual testing with varied inventory data | Pass —  An API returns African-cuisine recipes based on pantry |
 | Waste Tracking | Manual testing with multiple food item types | Pass — wasted items logged and reflected in analytics |
 | Household Collaboration | Manual testing with two accounts | Pass — invite codes, member management, shared pantry |
 | Push Notifications | FCM integration test on physical Android device | Pass — expiry alerts delivered within expected window |
@@ -467,18 +467,25 @@ The project successfully delivered all core objectives outlined in the project p
 
 - **Food waste reduction** — Users can track expiry dates, receive alerts, and log waste. The analytics screen quantifies savings and waste trends over time.
 - **Inventory visibility** — Items are categorised by storage location and type (Ingredient / Leftover / Product), giving users a clear picture of what they own.
-- **Recipe recommendations** — The Gemini API integration surfaces relevant recipes using available pantry items, prioritising items close to expiry.
+- **Recipe recommendations** — The African food API integration surfaces relevant recipes using available pantry items, prioritising items close to expiry.
 - **Household collaboration** — Multi-user households with invite codes and admin controls were fully implemented.
 - **Offline capability** — Local caching ensures the app remains usable without an internet connection.
 
 ### Objectives Partially Met
 
 - **Barcode scanning coverage** — The Open Food Facts API does not cover all African food products. Users may need to fall back to manual entry for local brands.
-- **AI recipe accuracy** — Gemini API suggestions are generally relevant but occasionally recommend items not in the pantry; prompt engineering improvements are ongoing.
-
+  
 ### Objectives Not Met
 
-- **iOS deployment** — The app was configured for iOS but not submitted to the App Store due to Apple Developer account requirements. The iOS build compiles successfully locally.
+- **iOS deployment** — The app was configured for iOS and Abdroid. However it was only build, deplolyed and tested on Android successfully.
+
+  ### Analysis Screenshots
+
+  
+<img width="540" height="1230" alt="image" src="https://github.com/user-attachments/assets/667bc992-32df-47a5-8453-b83e52ff6c1b" />
+
+<img width="540" height="1230" alt="image" src="https://github.com/user-attachments/assets/3c9ef5aa-7dbc-4718-a710-513dec350ce9" />
+
 
 ---
 
@@ -493,7 +500,7 @@ The most impactful feature for the target user group (African students and young
 ### Key Decisions
 
 - **Firebase** was chosen over a custom backend for speed of development and built-in scalability.
-- **Gemini API** was selected for recipe recommendations due to its awareness of African cuisine and food context.
+- **African food API** was selected for recipe recommendations due to its awareness of African cuisine and food context.
 - **BLoC** was used over Provider or Riverpod for its testability and clear separation of concerns, which paid off during the testing phase.
 
 ---
@@ -503,12 +510,18 @@ The most impactful feature for the target user group (African students and young
 1. **Expand barcode database** — Integrate a secondary API or allow community contributions for African food products not covered by Open Food Facts.
 2. **iOS release** — Publish to the App Store once an Apple Developer account is available to reach a wider audience.
 3. **Meal planning** — Add a weekly meal planner that automatically deducts ingredients from the pantry when a plan is confirmed.
-4. **Sharing pantry insights** — Allow household members to view waste analytics together to encourage collective accountability.
-5. **Multi-language support** — Add French and Swahili interfaces to better serve francophone and East African users.
-6. **Smarter AI prompts** — Refine Gemini prompts to strictly filter recipes by available ingredients and preferred cuisine tags set in user profile.
+4. **Multi-language support** — Add French and Swahili interfaces to better serve francophone and East African users.
 
 ---
 
 ## License
 
 This project is licensed under the MIT License.
+
+---
+
+## Author
+
+Lydia Ojoawo
+
+GitHub:[Lydia Ojoawo](https://github.com/Lydia02)
