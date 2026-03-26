@@ -9,17 +9,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sabitrak/data/models/waste_log.dart';
 
 WasteLog _makeLog() => WasteLog(
-      id: 'log-1',
-      itemId: 'item-99',
-      itemName: 'Milk',
-      category: 'Dairy',
-      quantity: 2,
-      unit: 'L',
-      householdId: 'hh-001',
-      addedBy: 'uid-abc',
-      expiryDate: DateTime(2024, 3, 10),
-      wastedAt: DateTime(2024, 3, 12),
-    );
+  id: 'log-1',
+  itemId: 'item-99',
+  itemName: 'Milk',
+  category: 'Dairy',
+  quantity: 2,
+  unit: 'L',
+  householdId: 'hh-001',
+  addedBy: 'uid-abc',
+  expiryDate: DateTime(2024, 3, 10),
+  wastedAt: DateTime(2024, 3, 12),
+);
 
 void main() {
   group('WasteLog constructor', () {
@@ -53,19 +53,13 @@ void main() {
     test('serialises expiryDate as Timestamp', () {
       final map = _makeLog().toFirestore();
       expect(map['expiryDate'], isA<Timestamp>());
-      expect(
-        (map['expiryDate'] as Timestamp).toDate(),
-        DateTime(2024, 3, 10),
-      );
+      expect((map['expiryDate'] as Timestamp).toDate(), DateTime(2024, 3, 10));
     });
 
     test('serialises wastedAt as Timestamp', () {
       final map = _makeLog().toFirestore();
       expect(map['wastedAt'], isA<Timestamp>());
-      expect(
-        (map['wastedAt'] as Timestamp).toDate(),
-        DateTime(2024, 3, 12),
-      );
+      expect((map['wastedAt'] as Timestamp).toDate(), DateTime(2024, 3, 12));
     });
 
     test('does not include id in serialised map', () {

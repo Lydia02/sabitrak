@@ -144,7 +144,7 @@ void main() {
       act:
           (bloc) => bloc.add(
             const SecuritySetupSubmitted(
-              password: 'T3st_Fixture@99',
+              password: 'test-password-value',
               confirmPassword: 'Other_Fixture@11',
             ),
           ),
@@ -227,8 +227,8 @@ void main() {
       act:
           (bloc) => bloc.add(
             const SecuritySetupSubmitted(
-              password: 'T3st_Fixture@99',
-              confirmPassword: 'T3st_Fixture@99',
+              password: 'test-password-value',
+              confirmPassword: 'test-password-value',
             ),
           ),
       expect:
@@ -264,8 +264,8 @@ void main() {
         );
         bloc.add(
           const SecuritySetupSubmitted(
-            password: 'T3st_Fixture@99',
-            confirmPassword: 'T3st_Fixture@99',
+            password: 'test-password-value',
+            confirmPassword: 'test-password-value',
           ),
         );
       },
@@ -321,8 +321,8 @@ void main() {
         );
         bloc.add(
           const SecuritySetupSubmitted(
-            password: 'T3st_Fixture@99',
-            confirmPassword: 'T3st_Fixture@99',
+            password: 'test-password-value',
+            confirmPassword: 'test-password-value',
           ),
         );
         bloc.add(
@@ -416,7 +416,7 @@ void main() {
           (bloc) => bloc.add(
             const SignInSubmitted(
               email: 'ada@example.com',
-              password: 'T3st_Fixture@99',
+              password: 'test-password-value',
             ),
           ),
       expect:
@@ -468,7 +468,7 @@ void main() {
           (bloc) => bloc.add(
             const SignInSubmitted(
               email: 'nobody@example.com',
-              password: 'T3st_Fixture@99',
+              password: 'test-password-value',
             ),
           ),
       expect:
@@ -492,7 +492,7 @@ void main() {
           (bloc) => bloc.add(
             const SignInSubmitted(
               email: 'ada@example.com',
-              password: 'T3st_Fixture@99',
+              password: 'test-password-value',
             ),
           ),
       expect:
@@ -518,7 +518,7 @@ void main() {
           (bloc) => bloc.add(
             const SignInSubmitted(
               email: 'ada@example.com',
-              password: 'T3st_Fixture@99',
+              password: 'test-password-value',
             ),
           ),
       expect:

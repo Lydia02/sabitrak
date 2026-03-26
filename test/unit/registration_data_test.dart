@@ -16,7 +16,7 @@ void main() {
     email: 'lydia@example.com',
     occupation: 'Engineer',
     country: 'Nigeria',
-    password: 'Pass123!',
+    password: 'test-password-value',
   );
 
   group('RegistrationData defaults', () {

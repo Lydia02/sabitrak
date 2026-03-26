@@ -16,18 +16,18 @@ Ingredient _makeIngredient({
 }) => Ingredient(name: name, quantity: quantity, unit: unit);
 
 Recipe _makeRecipe() => Recipe(
-      id: 'recipe-1',
-      name: 'Jollof Rice',
-      ingredients: [
-        _makeIngredient(name: 'Rice', quantity: '2', unit: 'cups'),
-        _makeIngredient(name: 'Tomato', quantity: '3', unit: 'pcs'),
-      ],
-      instructions: 'Step 1. Boil water.\nStep 2. Add rice.',
-      prepTime: 30,
-      servings: 4,
-      category: 'Main',
-      createdAt: DateTime(2024, 6, 1),
-    );
+  id: 'recipe-1',
+  name: 'Jollof Rice',
+  ingredients: [
+    _makeIngredient(name: 'Rice', quantity: '2', unit: 'cups'),
+    _makeIngredient(name: 'Tomato', quantity: '3', unit: 'pcs'),
+  ],
+  instructions: 'Step 1. Boil water.\nStep 2. Add rice.',
+  prepTime: 30,
+  servings: 4,
+  category: 'Main',
+  createdAt: DateTime(2024, 6, 1),
+);
 
 void main() {
   // ── Ingredient ─────────────────────────────────────────────────────────────
