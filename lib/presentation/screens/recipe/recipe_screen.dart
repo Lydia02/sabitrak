@@ -24,6 +24,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   final InventoryRepository _inventoryRepo = InventoryRepository();
   final RecipeService _recipeService = RecipeService();
   final SnackService _snackService = SnackService();
+  int _householdMemberCount = 1;
 
   StreamSubscription<List<FoodItem>>? _inventorySub;
   List<FoodItem> _inventoryItems = [];
@@ -78,7 +79,15 @@ class _RecipeScreenState extends State<RecipeScreen> {
       return;
     }
 
-    final householdId = query.docs.first.id;
+    final householdDoc = query.docs.first;
+    final members = (householdDoc.data() as Map<String, dynamic>)['members'];
+    if (mounted) {
+      setState(() {
+        _householdMemberCount = members is List ? members.length : 1;
+      });
+    }
+
+    final householdId = householdDoc.id;
     _inventorySub = _inventoryRepo.getFoodItems(householdId).listen((items) {
       if (!mounted) return;
 
@@ -218,6 +227,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
             (_) => RecipeDetailScreen(
               recipe: recipe,
               pantryItems: _inventoryItems,
+              householdMemberCount: _householdMemberCount,
             ),
       ),
     );
@@ -808,83 +818,77 @@ class _SnackCard extends StatelessWidget {
     required this.subtitleColor,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 200,
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow:
-            isDark
-                ? []
-                : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+  void _showDetail(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child:
-                suggestion.imageUrl != null
-                    ? CachedNetworkImage(
-                      imageUrl: suggestion.imageUrl!,
-                      height: 120,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      placeholder:
-                          (_, __) => _EmojiPlaceholder(
-                            emoji: suggestion.emoji,
-                            isDark: isDark,
-                          ),
-                      errorWidget:
-                          (_, __, ___) => _EmojiPlaceholder(
-                            emoji: suggestion.emoji,
-                            isDark: isDark,
-                          ),
-                    )
-                    : _EmojiPlaceholder(
-                      emoji: suggestion.emoji,
-                      isDark: isDark,
-                    ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      builder:
+          (_) => Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  suggestion.productName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: subtitleColor.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 16),
                 Row(
                   children: [
-                    const Icon(Icons.bolt, size: 12, color: Color(0xFFF9A825)),
-                    const SizedBox(width: 3),
+                    Text(
+                      suggestion.emoji,
+                      style: const TextStyle(fontSize: 32),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        suggestion.productName,
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: textColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (suggestion.imageUrl != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: CachedNetworkImage(
+                      imageUrl: suggestion.imageUrl!,
+                      height: 160,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                    ),
+                  ),
+                if (suggestion.imageUrl != null) const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.bolt, size: 16, color: Color(0xFFF9A825)),
+                    const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         suggestion.servingSuggestion,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: 'Roboto',
-                          fontSize: 10,
+                          fontSize: 14,
                           color: subtitleColor,
-                          height: 1.3,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -893,7 +897,104 @@ class _SnackCard extends StatelessWidget {
               ],
             ),
           ),
-        ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showDetail(context),
+      child: Container(
+        width: 200,
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow:
+              isDark
+                  ? []
+                  : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+              child:
+                  suggestion.imageUrl != null
+                      ? CachedNetworkImage(
+                        imageUrl: suggestion.imageUrl!,
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder:
+                            (_, __) => _EmojiPlaceholder(
+                              emoji: suggestion.emoji,
+                              isDark: isDark,
+                            ),
+                        errorWidget:
+                            (_, __, ___) => _EmojiPlaceholder(
+                              emoji: suggestion.emoji,
+                              isDark: isDark,
+                            ),
+                      )
+                      : _EmojiPlaceholder(
+                        emoji: suggestion.emoji,
+                        isDark: isDark,
+                      ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    suggestion.productName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.bolt,
+                        size: 12,
+                        color: Color(0xFFF9A825),
+                      ),
+                      const SizedBox(width: 3),
+                      Expanded(
+                        child: Text(
+                          suggestion.servingSuggestion,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 10,
+                            color: subtitleColor,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

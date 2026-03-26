@@ -10,11 +10,13 @@ import '../../../services/firebase_service.dart';
 class RecipeDetailScreen extends StatefulWidget {
   final MatchedRecipe recipe;
   final List<FoodItem> pantryItems;
+  final int householdMemberCount;
 
   const RecipeDetailScreen({
     super.key,
     required this.recipe,
     this.pantryItems = const [],
+    this.householdMemberCount = 1,
   });
 
   @override
@@ -128,23 +130,53 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (recipeIng != null && recipeIng.measure.trim().isNotEmpty) {
         final recipeQty = _quantityFromMeasure(recipeIng.measure);
         final recipeUnit = _unitFromMeasure(recipeIng.measure);
-        final converted = _convertToPantryUnit(
-          recipeQty,
-          recipeUnit,
-          pantryItem.unit,
-        );
-        if (converted != null) {
-          // Round up — always deduct at least 1
-          deductAmount = converted.ceil().clamp(1, pantryItem.quantity);
-          fromMeasure = recipeIng.measure;
+
+        // For grains stored in Cups: deduct 1 cup per household member
+        final pantryUnitLower = pantryItem.unit.toLowerCase();
+        final isGrainInCups =
+            pantryItem.category.toLowerCase() == 'grains' &&
+            (pantryUnitLower == 'cups' || pantryUnitLower == 'cup');
+
+        if (isGrainInCups) {
+          // 1 cup per person, scaled by household size
+          final perPerson = recipeQty.clamp(1.0, double.infinity);
+          final totalCups = (perPerson * widget.householdMemberCount).ceil();
+          deductAmount = totalCups.clamp(1, pantryItem.quantity);
+          fromMeasure =
+              '${widget.householdMemberCount} cup${widget.householdMemberCount > 1 ? 's' : ''} (${widget.householdMemberCount} ${widget.householdMemberCount == 1 ? 'person' : 'people'})';
         } else {
-          // Units completely incompatible (e.g. cups → pcs) — deduct 1
-          deductAmount = 1;
-          fromMeasure = recipeIng.measure;
+          final converted = _convertToPantryUnit(
+            recipeQty,
+            recipeUnit,
+            pantryItem.unit,
+          );
+          if (converted != null) {
+            // Round up — always deduct at least 1
+            deductAmount = converted.ceil().clamp(1, pantryItem.quantity);
+            fromMeasure = recipeIng.measure;
+          } else {
+            // Units completely incompatible (e.g. cups → pcs) — deduct 1
+            deductAmount = 1;
+            fromMeasure = recipeIng.measure;
+          }
         }
       } else {
-        deductAmount = 1;
-        fromMeasure = '';
+        // No measure in recipe — for grains default to 1 cup per person
+        final pantryUnitLower = pantryItem.unit.toLowerCase();
+        final isGrainInCups =
+            pantryItem.category.toLowerCase() == 'grains' &&
+            (pantryUnitLower == 'cups' || pantryUnitLower == 'cup');
+        if (isGrainInCups) {
+          deductAmount = widget.householdMemberCount.clamp(
+            1,
+            pantryItem.quantity,
+          );
+          fromMeasure =
+              '${widget.householdMemberCount} cup${widget.householdMemberCount > 1 ? 's' : ''} (${widget.householdMemberCount} ${widget.householdMemberCount == 1 ? 'person' : 'people'})';
+        } else {
+          deductAmount = 1;
+          fromMeasure = '';
+        }
       }
 
       toDeduct.add((
