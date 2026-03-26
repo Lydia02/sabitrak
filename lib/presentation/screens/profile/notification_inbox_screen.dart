@@ -47,11 +47,12 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen>
         }
       }
 
-      if (mounted)
+      if (mounted) {
         setState(() {
           _all = items;
           _loading = false;
         });
+      }
       svc.markAllRead('');
     } catch (_) {
       if (mounted) setState(() => _loading = false);
@@ -197,9 +198,12 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen>
   }
 }
 
-// ── Alerts tab ───────────────────────────────────────────────────────────────
+// ── Alerts tab ────────────────────────────────────────────────────────────────
 
-class _AlertsTab extends StatelessWidget {
+/// Filter options for the Alerts tab.
+enum _AlertFilter { all, expiringSoon, expired, lowStock }
+
+class _AlertsTab extends StatefulWidget {
   final List<AppNotification> alerts;
   final Color textColor;
   final Color subtitleColor;
@@ -217,81 +221,201 @@ class _AlertsTab extends StatelessWidget {
   });
 
   @override
+  State<_AlertsTab> createState() => _AlertsTabState();
+}
+
+class _AlertsTabState extends State<_AlertsTab> {
+  static const int _pageSize = 10;
+
+  _AlertFilter _filter = _AlertFilter.all;
+  bool _newestFirst = true;
+  int _visibleCount = _pageSize;
+
+  List<AppNotification> get _filtered {
+    List<AppNotification> items;
+    switch (_filter) {
+      case _AlertFilter.expiringSoon:
+        items =
+            widget.alerts
+                .where((n) => n.type == NotificationType.expiringSoon)
+                .toList();
+        break;
+      case _AlertFilter.expired:
+        items =
+            widget.alerts
+                .where((n) => n.type == NotificationType.expired)
+                .toList();
+        break;
+      case _AlertFilter.lowStock:
+        items =
+            widget.alerts
+                .where((n) => n.type == NotificationType.lowStock)
+                .toList();
+        break;
+      case _AlertFilter.all:
+        items = List.of(widget.alerts);
+    }
+    items.sort(
+      (a, b) =>
+          _newestFirst
+              ? b.createdAt.compareTo(a.createdAt)
+              : a.createdAt.compareTo(b.createdAt),
+    );
+    return items;
+  }
+
+  List<AppNotification> get _page => _filtered.take(_visibleCount).toList();
+
+  void _resetPagination() => _visibleCount = _pageSize;
+
+  @override
   Widget build(BuildContext context) {
-    if (alerts.isEmpty) {
+    final filtered = _filtered;
+    final page = _page;
+    final hasMore = filtered.length > _visibleCount;
+
+    if (widget.alerts.isEmpty) {
       return _EmptyState(
         icon: Icons.check_circle_outline,
         title: 'No alerts',
         subtitle: 'Your pantry is in great shape!',
-        subtitleColor: subtitleColor,
-        textColor: textColor,
+        subtitleColor: widget.subtitleColor,
+        textColor: widget.textColor,
       );
     }
 
-    final expiringSoon =
-        alerts.where((n) => n.type == NotificationType.expiringSoon).toList();
-    final expired =
-        alerts.where((n) => n.type == NotificationType.expired).toList();
-    final lowStock =
-        alerts.where((n) => n.type == NotificationType.lowStock).toList();
-
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        if (expiringSoon.isNotEmpty) ...[
-          _SectionHeader(
-            label: 'Expiring Soon',
-            count: expiringSoon.length,
-            subtitleColor: subtitleColor,
+        // ── Filter chips + sort toggle ────────────────────────────────────
+        Row(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _FilterChip(
+                      label: 'All',
+                      count: widget.alerts.length,
+                      selected: _filter == _AlertFilter.all,
+                      onTap:
+                          () => setState(() {
+                            _filter = _AlertFilter.all;
+                            _resetPagination();
+                          }),
+                      subtitleColor: widget.subtitleColor,
+                    ),
+                    const SizedBox(width: 6),
+                    _FilterChip(
+                      label: 'Expiring Soon',
+                      count:
+                          widget.alerts
+                              .where(
+                                (n) => n.type == NotificationType.expiringSoon,
+                              )
+                              .length,
+                      selected: _filter == _AlertFilter.expiringSoon,
+                      accent: const Color(0xFFD97706),
+                      onTap:
+                          () => setState(() {
+                            _filter = _AlertFilter.expiringSoon;
+                            _resetPagination();
+                          }),
+                      subtitleColor: widget.subtitleColor,
+                    ),
+                    const SizedBox(width: 6),
+                    _FilterChip(
+                      label: 'Expired',
+                      count:
+                          widget.alerts
+                              .where((n) => n.type == NotificationType.expired)
+                              .length,
+                      selected: _filter == _AlertFilter.expired,
+                      accent: const Color(0xFFC62828),
+                      onTap:
+                          () => setState(() {
+                            _filter = _AlertFilter.expired;
+                            _resetPagination();
+                          }),
+                      subtitleColor: widget.subtitleColor,
+                    ),
+                    const SizedBox(width: 6),
+                    _FilterChip(
+                      label: 'Low Stock',
+                      count:
+                          widget.alerts
+                              .where((n) => n.type == NotificationType.lowStock)
+                              .length,
+                      selected: _filter == _AlertFilter.lowStock,
+                      accent: const Color(0xFFE65100),
+                      onTap:
+                          () => setState(() {
+                            _filter = _AlertFilter.lowStock;
+                            _resetPagination();
+                          }),
+                      subtitleColor: widget.subtitleColor,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _SortButton(
+              newestFirst: _newestFirst,
+              subtitleColor: widget.subtitleColor,
+              onToggle:
+                  () => setState(() {
+                    _newestFirst = !_newestFirst;
+                    _resetPagination();
+                  }),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // ── Result count ──────────────────────────────────────────────────
+        Text(
+          '${filtered.length} ${filtered.length == 1 ? 'alert' : 'alerts'}',
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 11,
+            color: widget.subtitleColor.withValues(alpha: 0.7),
           ),
-          const SizedBox(height: 8),
-          ...expiringSoon.map(
+        ),
+        const SizedBox(height: 8),
+
+        // ── Cards ─────────────────────────────────────────────────────────
+        if (filtered.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: _EmptyState(
+              icon: Icons.filter_list_off,
+              title: 'No results',
+              subtitle: 'No alerts match the selected filter.',
+              subtitleColor: widget.subtitleColor,
+              textColor: widget.textColor,
+            ),
+          )
+        else
+          ...page.map(
             (n) => _AlertCard(
               notif: n,
-              textColor: textColor,
-              subtitleColor: subtitleColor,
-              cardColor: cardColor,
-              isDark: isDark,
-              onTap: () => onTap(n),
+              textColor: widget.textColor,
+              subtitleColor: widget.subtitleColor,
+              cardColor: widget.cardColor,
+              isDark: widget.isDark,
+              onTap: () => widget.onTap(n),
             ),
           ),
-          const SizedBox(height: 16),
-        ],
-        if (expired.isNotEmpty) ...[
-          _SectionHeader(
-            label: 'Expired',
-            count: expired.length,
-            subtitleColor: subtitleColor,
-          ),
+
+        // ── Load more ─────────────────────────────────────────────────────
+        if (hasMore) ...[
           const SizedBox(height: 8),
-          ...expired.map(
-            (n) => _AlertCard(
-              notif: n,
-              textColor: textColor,
-              subtitleColor: subtitleColor,
-              cardColor: cardColor,
-              isDark: isDark,
-              onTap: () => onTap(n),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-        if (lowStock.isNotEmpty) ...[
-          _SectionHeader(
-            label: 'Low Stock',
-            count: lowStock.length,
-            subtitleColor: subtitleColor,
-          ),
-          const SizedBox(height: 8),
-          ...lowStock.map(
-            (n) => _AlertCard(
-              notif: n,
-              textColor: textColor,
-              subtitleColor: subtitleColor,
-              cardColor: cardColor,
-              isDark: isDark,
-              onTap: () => onTap(n),
-            ),
+          _LoadMoreButton(
+            remaining: filtered.length - _visibleCount,
+            subtitleColor: widget.subtitleColor,
+            onTap: () => setState(() => _visibleCount += _pageSize),
           ),
         ],
       ],
@@ -351,6 +475,15 @@ class _AlertCard extends StatelessWidget {
       default:
         return 'View Inventory';
     }
+  }
+
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    return '${diff.inDays}d ago';
   }
 
   @override
@@ -413,6 +546,14 @@ class _AlertCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                Text(
+                  _timeAgo(notif.createdAt),
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 10,
+                    color: subtitleColor.withValues(alpha: 0.7),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 6),
@@ -457,9 +598,9 @@ class _AlertCard extends StatelessWidget {
   }
 }
 
-// ── Activity tab ─────────────────────────────────────────────────────────────
+// ── Activity tab ──────────────────────────────────────────────────────────────
 
-class _ActivityTab extends StatelessWidget {
+class _ActivityTab extends StatefulWidget {
   final List<AppNotification> activity;
   final Color textColor;
   final Color subtitleColor;
@@ -475,39 +616,101 @@ class _ActivityTab extends StatelessWidget {
   });
 
   @override
+  State<_ActivityTab> createState() => _ActivityTabState();
+}
+
+class _ActivityTabState extends State<_ActivityTab> {
+  static const int _pageSize = 10;
+  bool _newestFirst = true;
+  int _visibleCount = _pageSize;
+
+  List<AppNotification> get _sorted {
+    final items = List.of(widget.activity);
+    items.sort(
+      (a, b) =>
+          _newestFirst
+              ? b.createdAt.compareTo(a.createdAt)
+              : a.createdAt.compareTo(b.createdAt),
+    );
+    return items;
+  }
+
+  List<AppNotification> get _page => _sorted.take(_visibleCount).toList();
+
+  @override
   Widget build(BuildContext context) {
-    if (activity.isEmpty) {
+    if (widget.activity.isEmpty) {
       return _EmptyState(
         icon: Icons.history_outlined,
         title: 'No recent activity',
         subtitle: 'Actions by you and your household will appear here.',
-        subtitleColor: subtitleColor,
-        textColor: textColor,
+        subtitleColor: widget.subtitleColor,
+        textColor: widget.textColor,
       );
     }
 
+    final sorted = _sorted;
+    final page = _page;
+    final hasMore = sorted.length > _visibleCount;
+
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
+        // ── Header + sort ─────────────────────────────────────────────────
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Recent Activity',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: widget.textColor,
+              ),
+            ),
+            _SortButton(
+              newestFirst: _newestFirst,
+              subtitleColor: widget.subtitleColor,
+              onToggle:
+                  () => setState(() {
+                    _newestFirst = !_newestFirst;
+                    _visibleCount = _pageSize;
+                  }),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
         Text(
-          'Recent Activity',
+          '${sorted.length} ${sorted.length == 1 ? 'event' : 'events'}',
           style: TextStyle(
             fontFamily: 'Roboto',
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: textColor,
+            fontSize: 11,
+            color: widget.subtitleColor.withValues(alpha: 0.7),
           ),
         ),
         const SizedBox(height: 12),
-        ...activity.map(
+
+        // ── Rows ──────────────────────────────────────────────────────────
+        ...page.map(
           (n) => _ActivityRow(
             notif: n,
-            textColor: textColor,
-            subtitleColor: subtitleColor,
-            cardColor: cardColor,
-            isDark: isDark,
+            textColor: widget.textColor,
+            subtitleColor: widget.subtitleColor,
+            cardColor: widget.cardColor,
+            isDark: widget.isDark,
           ),
         ),
+
+        // ── Load more ─────────────────────────────────────────────────────
+        if (hasMore) ...[
+          const SizedBox(height: 8),
+          _LoadMoreButton(
+            remaining: sorted.length - _visibleCount,
+            subtitleColor: widget.subtitleColor,
+            onTap: () => setState(() => _visibleCount += _pageSize),
+          ),
+        ],
       ],
     );
   }
@@ -632,43 +835,172 @@ class _ActivityRow extends StatelessWidget {
   }
 }
 
-// ── Shared helpers ────────────────────────────────────────────────────────────
+// ── Shared helpers ─────────────────────────────────────────────────────────────
 
-class _SectionHeader extends StatelessWidget {
+/// Pill-shaped filter chip for the Alerts tab.
+class _FilterChip extends StatelessWidget {
   final String label;
   final int count;
+  final bool selected;
+  final Color? accent;
+  final VoidCallback onTap;
   final Color subtitleColor;
 
-  const _SectionHeader({
+  const _FilterChip({
     required this.label,
     required this.count,
+    required this.selected,
+    required this.onTap,
     required this.subtitleColor,
+    this.accent,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Roboto',
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: subtitleColor,
-            letterSpacing: 0.5,
+    final activeColor = accent ?? AppTheme.primaryGreen;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? activeColor : activeColor.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? activeColor : activeColor.withValues(alpha: 0.3),
           ),
         ),
-        const SizedBox(width: 6),
-        Text(
-          '· $count ${count == 1 ? 'item' : 'items'}',
-          style: TextStyle(
-            fontFamily: 'Roboto',
-            fontSize: 11,
-            color: subtitleColor.withValues(alpha: 0.7),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: selected ? Colors.white : activeColor,
+              ),
+            ),
+            if (count > 0) ...[
+              const SizedBox(width: 5),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color:
+                      selected
+                          ? Colors.white.withValues(alpha: 0.25)
+                          : activeColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? Colors.white : activeColor,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Sort direction toggle button.
+class _SortButton extends StatelessWidget {
+  final bool newestFirst;
+  final Color subtitleColor;
+  final VoidCallback onToggle;
+
+  const _SortButton({
+    required this.newestFirst,
+    required this.subtitleColor,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onToggle,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: subtitleColor.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: subtitleColor.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              newestFirst ? Icons.arrow_downward : Icons.arrow_upward,
+              size: 12,
+              color: subtitleColor,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              newestFirst ? 'Newest' : 'Oldest',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: subtitleColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Load more" button shown when there are more items beyond the current page.
+class _LoadMoreButton extends StatelessWidget {
+  final int remaining;
+  final Color subtitleColor;
+  final VoidCallback onTap;
+
+  const _LoadMoreButton({
+    required this.remaining,
+    required this.subtitleColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: subtitleColor.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: subtitleColor.withValues(alpha: 0.2)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.expand_more, size: 16, color: subtitleColor),
+              const SizedBox(width: 6),
+              Text(
+                'Load $remaining more',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: subtitleColor,
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
