@@ -20,10 +20,17 @@ class FoodIntelligenceService {
   // ── Public API ─────────────────────────────────────────────────────────────
 
   /// All known food names in the database — used for autocomplete.
-  static List<String> get allFoodNames => _db.keys.map((k) {
-    // Capitalise first letter of each word for display
-    return k.split(' ').map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
-  }).toList()..sort();
+  static List<String> get allFoodNames =>
+      _db.keys.map((k) {
+          // Capitalise first letter of each word for display
+          return k
+              .split(' ')
+              .map(
+                (w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}',
+              )
+              .join(' ');
+        }).toList()
+        ..sort();
 
   /// Returns a [FoodSuggestion] for the given food name.
   /// Never throws — always returns a result (may be a category default).
