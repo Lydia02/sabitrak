@@ -15,7 +15,7 @@ const _reg = RegistrationData(
   email: 'lydia@example.com',
   occupation: 'Student',
   country: 'Nigeria',
-  password: 'Pass123!',
+  password: 'test-password-value',
 );
 
 void main() {

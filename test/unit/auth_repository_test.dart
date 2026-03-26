@@ -18,52 +18,31 @@ void main() {
     });
 
     test('registerWithEmailAndPassword throws without Firebase init', () {
-      expect(
-        () => AuthRepository(),
-        throwsA(anything),
-      );
+      expect(() => AuthRepository(), throwsA(anything));
     });
 
     test('signInWithEmailAndPassword throws without Firebase init', () {
-      expect(
-        () => AuthRepository(),
-        throwsA(anything),
-      );
+      expect(() => AuthRepository(), throwsA(anything));
     });
 
     test('sendPasswordResetEmail throws without Firebase init', () {
-      expect(
-        () => AuthRepository(),
-        throwsA(anything),
-      );
+      expect(() => AuthRepository(), throwsA(anything));
     });
 
     test('userProfileExists throws without Firebase init', () {
-      expect(
-        () => AuthRepository(),
-        throwsA(anything),
-      );
+      expect(() => AuthRepository(), throwsA(anything));
     });
 
     test('saveGoogleUserProfile throws without Firebase init', () {
-      expect(
-        () => AuthRepository(),
-        throwsA(anything),
-      );
+      expect(() => AuthRepository(), throwsA(anything));
     });
 
     test('signOut throws without Firebase init', () {
-      expect(
-        () => AuthRepository(),
-        throwsA(anything),
-      );
+      expect(() => AuthRepository(), throwsA(anything));
     });
 
     test('changePassword throws without Firebase init', () {
-      expect(
-        () => AuthRepository(),
-        throwsA(anything),
-      );
+      expect(() => AuthRepository(), throwsA(anything));
     });
   });
 }

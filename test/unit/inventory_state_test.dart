@@ -65,10 +65,7 @@ void main() {
     });
 
     test('two instances with same message are equal', () {
-      expect(
-        const InventoryError('err'),
-        equals(const InventoryError('err')),
-      );
+      expect(const InventoryError('err'), equals(const InventoryError('err')));
     });
 
     test('two instances with different messages are not equal', () {

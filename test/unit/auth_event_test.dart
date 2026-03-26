@@ -67,19 +67,19 @@ void main() {
   group('SecuritySetupSubmitted', () {
     test('stores password and confirmPassword', () {
       const e = SecuritySetupSubmitted(
-        password: 'Pass123!',
-        confirmPassword: 'Pass123!',
+        password: 'test-password-value',
+        confirmPassword: 'test-password-value',
       );
-      expect(e.password, 'Pass123!');
-      expect(e.confirmPassword, 'Pass123!');
+      expect(e.password, 'test-password-value');
+      expect(e.confirmPassword, 'test-password-value');
     });
 
     test('props contains password fields', () {
       const e = SecuritySetupSubmitted(
-        password: 'Pass123!',
-        confirmPassword: 'Pass123!',
+        password: 'test-password-value',
+        confirmPassword: 'test-password-value',
       );
-      expect(e.props, ['Pass123!', 'Pass123!']);
+      expect(e.props, ['test-password-value', 'test-password-value']);
     });
   });
 
@@ -121,19 +121,13 @@ void main() {
 
   group('VerificationCodeSent', () {
     test('stores email and firstName', () {
-      const e = VerificationCodeSent(
-        email: 'test@test.com',
-        firstName: 'Test',
-      );
+      const e = VerificationCodeSent(email: 'test@test.com', firstName: 'Test');
       expect(e.email, 'test@test.com');
       expect(e.firstName, 'Test');
     });
 
     test('props contains email and firstName', () {
-      const e = VerificationCodeSent(
-        email: 'test@test.com',
-        firstName: 'Test',
-      );
+      const e = VerificationCodeSent(email: 'test@test.com', firstName: 'Test');
       expect(e.props, ['test@test.com', 'Test']);
     });
   });
@@ -166,18 +160,18 @@ void main() {
     test('stores email and password', () {
       const e = SignInSubmitted(
         email: 'user@example.com',
-        password: 'Pass123!',
+        password: 'test-password-value',
       );
       expect(e.email, 'user@example.com');
-      expect(e.password, 'Pass123!');
+      expect(e.password, 'test-password-value');
     });
 
     test('props contains email and password', () {
       const e = SignInSubmitted(
         email: 'user@example.com',
-        password: 'Pass123!',
+        password: 'test-password-value',
       );
-      expect(e.props, ['user@example.com', 'Pass123!']);
+      expect(e.props, ['user@example.com', 'test-password-value']);
     });
   });
 
@@ -246,21 +240,21 @@ void main() {
     test('stores email, newPassword, resetToken', () {
       const e = ForgotPasswordReset(
         email: 'test@test.com',
-        newPassword: 'NewPass123!',
+        newPassword: 'test-new-password',
         resetToken: 'token123',
       );
       expect(e.email, 'test@test.com');
-      expect(e.newPassword, 'NewPass123!');
+      expect(e.newPassword, 'test-new-password');
       expect(e.resetToken, 'token123');
     });
 
     test('props contains all three fields', () {
       const e = ForgotPasswordReset(
         email: 'test@test.com',
-        newPassword: 'NewPass123!',
+        newPassword: 'test-new-password',
         resetToken: 'token123',
       );
-      expect(e.props, ['test@test.com', 'NewPass123!', 'token123']);
+      expect(e.props, ['test@test.com', 'test-new-password', 'token123']);
     });
   });
 }

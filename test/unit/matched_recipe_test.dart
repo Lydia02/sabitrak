@@ -185,9 +185,7 @@ void main() {
 
     test('blank lines are ignored in step count', () {
       // 3 real steps + 2 blank lines = still 3 steps → 10–15 min
-      final r = _makeRecipe(
-        instructions: 'Step 1.\n\nStep 2.\n\nStep 3.',
-      );
+      final r = _makeRecipe(instructions: 'Step 1.\n\nStep 2.\n\nStep 3.');
       expect(r.estimatedPrepTime, '10–15 min');
     });
   });

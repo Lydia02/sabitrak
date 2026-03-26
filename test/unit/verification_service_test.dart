@@ -37,9 +37,12 @@ void main() {
       expect(() => VerificationService(), throwsA(anything));
     });
 
-    test('sendVerificationCode with empty email throws without Firebase init', () {
-      expect(() => VerificationService(), throwsA(anything));
-    });
+    test(
+      'sendVerificationCode with empty email throws without Firebase init',
+      () {
+        expect(() => VerificationService(), throwsA(anything));
+      },
+    );
 
     test('isConfigured throws without Firebase init', () {
       expect(() => VerificationService(), throwsA(anything));
