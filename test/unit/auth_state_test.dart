@@ -15,7 +15,7 @@ const _reg = RegistrationData(
   email: 'lydia@example.com',
   occupation: 'Student',
   country: 'Nigeria',
-  password: 'test-password-value',
+  password: 'fixture9.test',
 );
 
 void main() {

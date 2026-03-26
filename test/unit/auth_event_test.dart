@@ -67,19 +67,19 @@ void main() {
   group('SecuritySetupSubmitted', () {
     test('stores password and confirmPassword', () {
       const e = SecuritySetupSubmitted(
-        password: 'test-password-value',
-        confirmPassword: 'test-password-value',
+        password: 'fixture9.test',
+        confirmPassword: 'fixture9.test',
       );
-      expect(e.password, 'test-password-value');
-      expect(e.confirmPassword, 'test-password-value');
+      expect(e.password, 'fixture9.test');
+      expect(e.confirmPassword, 'fixture9.test');
     });
 
     test('props contains password fields', () {
       const e = SecuritySetupSubmitted(
-        password: 'test-password-value',
-        confirmPassword: 'test-password-value',
+        password: 'fixture9.test',
+        confirmPassword: 'fixture9.test',
       );
-      expect(e.props, ['test-password-value', 'test-password-value']);
+      expect(e.props, ['fixture9.test', 'fixture9.test']);
     });
   });
 
@@ -160,18 +160,18 @@ void main() {
     test('stores email and password', () {
       const e = SignInSubmitted(
         email: 'user@example.com',
-        password: 'test-password-value',
+        password: 'fixture9.test',
       );
       expect(e.email, 'user@example.com');
-      expect(e.password, 'test-password-value');
+      expect(e.password, 'fixture9.test');
     });
 
     test('props contains email and password', () {
       const e = SignInSubmitted(
         email: 'user@example.com',
-        password: 'test-password-value',
+        password: 'fixture9.test',
       );
-      expect(e.props, ['user@example.com', 'test-password-value']);
+      expect(e.props, ['user@example.com', 'fixture9.test']);
     });
   });
 

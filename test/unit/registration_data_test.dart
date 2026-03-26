@@ -16,7 +16,7 @@ void main() {
     email: 'lydia@example.com',
     occupation: 'Engineer',
     country: 'Nigeria',
-    password: 'test-password-value',
+    password: 'fixture9.test',
   );
 
   group('RegistrationData defaults', () {
