@@ -144,7 +144,7 @@ void main() {
       act:
           (bloc) => bloc.add(
             const SecuritySetupSubmitted(
-              password: 'T3st_Fixture@99',
+              password: 'fixture9.test',
               confirmPassword: 'Other_Fixture@11',
             ),
           ),
@@ -227,8 +227,8 @@ void main() {
       act:
           (bloc) => bloc.add(
             const SecuritySetupSubmitted(
-              password: 'T3st_Fixture@99',
-              confirmPassword: 'T3st_Fixture@99',
+              password: 'fixture9.test',
+              confirmPassword: 'fixture9.test',
             ),
           ),
       expect:
@@ -264,8 +264,8 @@ void main() {
         );
         bloc.add(
           const SecuritySetupSubmitted(
-            password: 'T3st_Fixture@99',
-            confirmPassword: 'T3st_Fixture@99',
+            password: 'fixture9.test',
+            confirmPassword: 'fixture9.test',
           ),
         );
       },
@@ -288,6 +288,12 @@ void main() {
     blocTest<AuthBloc, AuthState>(
       'emits RegistrationSuccess when code is valid and password set',
       build: () {
+        when(
+          mockVerificationService.sendVerificationCode(
+            email: anyNamed('email'),
+            firstName: anyNamed('firstName'),
+          ),
+        ).thenAnswer((_) async {});
         when(
           mockVerificationService.verifyCode(
             email: anyNamed('email'),
@@ -321,8 +327,8 @@ void main() {
         );
         bloc.add(
           const SecuritySetupSubmitted(
-            password: 'T3st_Fixture@99',
-            confirmPassword: 'T3st_Fixture@99',
+            password: 'fixture9.test',
+            confirmPassword: 'fixture9.test',
           ),
         );
         bloc.add(
@@ -334,8 +340,6 @@ void main() {
       },
       skip:
           4, // skip SignUpInfoCollected, ProfileDetailsCollected, AuthLoading, VerificationCodeSentSuccess
-      // Note: VerificationCodeSubmitted's AuthLoading is Equatable-deduplicated
-      // when running in multi-event bloc_test; only RegistrationSuccess is captured
       expect:
           () => [
             isA<RegistrationSuccess>()
@@ -416,7 +420,7 @@ void main() {
           (bloc) => bloc.add(
             const SignInSubmitted(
               email: 'ada@example.com',
-              password: 'T3st_Fixture@99',
+              password: 'fixture9.test',
             ),
           ),
       expect:
@@ -442,7 +446,7 @@ void main() {
           (bloc) => bloc.add(
             const SignInSubmitted(
               email: 'ada@example.com',
-              password: 'Wrong_Fixture@1',
+              password: 'wrongfixture9.',
             ),
           ),
       expect:
@@ -468,7 +472,7 @@ void main() {
           (bloc) => bloc.add(
             const SignInSubmitted(
               email: 'nobody@example.com',
-              password: 'T3st_Fixture@99',
+              password: 'fixture9.test',
             ),
           ),
       expect:
@@ -492,7 +496,7 @@ void main() {
           (bloc) => bloc.add(
             const SignInSubmitted(
               email: 'ada@example.com',
-              password: 'T3st_Fixture@99',
+              password: 'fixture9.test',
             ),
           ),
       expect:
@@ -518,7 +522,7 @@ void main() {
           (bloc) => bloc.add(
             const SignInSubmitted(
               email: 'ada@example.com',
-              password: 'T3st_Fixture@99',
+              password: 'fixture9.test',
             ),
           ),
       expect:
