@@ -46,7 +46,7 @@ void main() {
       expect(full.email, 'lydia@example.com');
       expect(full.occupation, 'Engineer');
       expect(full.country, 'Nigeria');
-      expect(full.password, 'Pass123!');
+      expect(full.password, 'fixture9.test');
     });
   });
 
@@ -58,7 +58,7 @@ void main() {
         'lydia@example.com',
         'Engineer',
         'Nigeria',
-        'Pass123!',
+        'fixture9.test',
       ]);
     });
 

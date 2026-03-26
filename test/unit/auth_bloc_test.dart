@@ -339,7 +339,7 @@ void main() {
         );
       },
       skip:
-          5, // skip SignUpInfoCollected, ProfileDetailsCollected, AuthLoading, VerificationCodeSentSuccess, AuthLoading
+          4, // skip SignUpInfoCollected, ProfileDetailsCollected, AuthLoading, VerificationCodeSentSuccess
       expect:
           () => [
             isA<RegistrationSuccess>()
