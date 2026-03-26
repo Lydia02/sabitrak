@@ -20,17 +20,23 @@ class InventoryRepository {
     final cached = _cache.getCachedFoodItems(householdId);
     if (cached.isNotEmpty) yield cached;
 
-    // 2. Stream live updates from Firestore and keep the cache in sync
-    await for (final snapshot
-        in _firebaseService.foodItems
-            .where('householdId', isEqualTo: householdId)
-            .orderBy('expiryDate')
-            .snapshots()) {
-      final items =
-          snapshot.docs.map((doc) => FoodItem.fromFirestore(doc)).toList();
-      // Persist to Hive so offline reads are fresh
-      await _cache.saveFoodItems(householdId, items);
-      yield items;
+    // 2. Stream live updates from Firestore and keep the cache in sync.
+    //    If offline or Firestore unreachable the stream stalls — we catch
+    //    errors so the UI keeps showing the already-yielded cached data.
+    try {
+      await for (final snapshot
+          in _firebaseService.foodItems
+              .where('householdId', isEqualTo: householdId)
+              .orderBy('expiryDate')
+              .snapshots()) {
+        final items =
+            snapshot.docs.map((doc) => FoodItem.fromFirestore(doc)).toList();
+        // Persist to Hive so offline reads are fresh
+        await _cache.saveFoodItems(householdId, items);
+        yield items;
+      }
+    } catch (_) {
+      // Network unavailable — cached data already yielded above, nothing more to do.
     }
   }
 

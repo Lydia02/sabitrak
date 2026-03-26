@@ -358,7 +358,7 @@ class FoodIntelligenceService {
         'Store in cool dry place, sealed after opening.',
       );
     }
-    // Rice / grain
+    // Rice / grain — measured in Cups for cooking (not Kg)
     if (q.contains('rice') ||
         q.contains('grain') ||
         q.contains('sorghum') ||
@@ -369,7 +369,7 @@ class FoodIntelligenceService {
         'Cupboard',
         365,
         'Keep in sealed container away from moisture.',
-        'Kg',
+        'Cups',
       );
     }
     // Pasta / noodle
@@ -1656,28 +1656,28 @@ class FoodIntelligenceService {
       'Cupboard',
       730,
       'White rice keeps 2 years in airtight container.',
-      'Kg',
+      'Cups',
     ),
     'white rice': _s(
       'Grains',
       'Cupboard',
       730,
       'Store sealed in cool dry place. Up to 2 years.',
-      'Kg',
+      'Cups',
     ),
     'brown rice': _s(
       'Grains',
       'Cupboard',
       180,
       'Brown rice has oils that go rancid — keep 6 months.',
-      'Kg',
+      'Cups',
     ),
     'basmati rice': _s(
       'Grains',
       'Cupboard',
       730,
       'Basmati keeps well. Store sealed, 2 years.',
-      'Kg',
+      'Cups',
     ),
     'parboiled rice': _s(
       'Grains',
