@@ -95,13 +95,61 @@ class InventoryRepository {
     return FoodItem.fromFirestore(snapshot.docs.first);
   }
 
-  // Find existing item by name + itemType (case-insensitive)
+  // Synonym groups — names that refer to the same food item.
+  // Both directions are checked so order within the group doesn't matter.
+  static const List<List<String>> _synonymGroups = [
+    ['okra', 'okro', 'ladies finger', 'lady finger'],
+    ['yam', 'yams'],
+    ['plantain', 'plantains'],
+    ['tomato', 'tomatoes'],
+    ['pepper', 'peppers'],
+    ['onion', 'onions'],
+    ['carrot', 'carrots'],
+    ['potato', 'potatoes', 'irish potato', 'irish potatoes'],
+    ['sweet potato', 'sweet potatoes'],
+    ['garlic', 'garlics'],
+    ['ginger', 'gingers'],
+    ['bean', 'beans', 'black-eyed peas', 'black eyed peas'],
+    ['pea', 'peas', 'green peas'],
+    ['corn', 'maize', 'sweetcorn', 'sweet corn'],
+    ['spinach', 'ugwu', 'pumpkin leaves'],
+    ['egg', 'eggs'],
+    ['banana', 'bananas'],
+    ['orange', 'oranges'],
+    ['apple', 'apples'],
+    ['mango', 'mangoes'],
+    ['fish', 'fishes'],
+    ['chicken', 'chickens'],
+    ['rice', 'white rice'],
+    ['peanut', 'groundnut', 'groundnuts', 'peanuts'],
+    ['palm oil', 'red oil'],
+    ['vegetable oil', 'cooking oil', 'veg oil'],
+    ['spaghetti', 'pasta', 'macaroni', 'noodles'],
+    ['bread', 'loaf', 'loaves'],
+    ['milk', 'whole milk', 'skimmed milk'],
+    ['flour', 'wheat flour', 'plain flour', 'all-purpose flour'],
+  ];
+
+  // Returns the canonical synonym key for a name, or the name itself.
+  static String _synonymKey(String name) {
+    final lower = name.trim().toLowerCase();
+    for (final group in _synonymGroups) {
+      if (group.any((s) => lower == s || lower.contains(s) || s.contains(lower))) {
+        return group.first; // canonical form
+      }
+    }
+    return lower;
+  }
+
+  // Find existing item by name + itemType (case-insensitive, synonym-aware)
   Future<FoodItem?> findDuplicate(
     String name,
     String householdId, {
     ItemType itemType = ItemType.ingredient,
   }) async {
     final normalised = name.trim().toLowerCase();
+    final canonicalKey = _synonymKey(normalised);
+
     // Fetch all items of the same type for this household (no compound index needed)
     final snapshot =
         await _firebaseService.foodItems
@@ -117,6 +165,11 @@ class InventoryRepository {
     // Exact match first
     for (final item in sameType) {
       if (item.name.trim().toLowerCase() == normalised) return item;
+    }
+    // Synonym match — same canonical key
+    for (final item in sameType) {
+      final existingKey = _synonymKey(item.name.trim().toLowerCase());
+      if (existingKey == canonicalKey) return item;
     }
     // Fuzzy: one name contains the other
     for (final item in sameType) {

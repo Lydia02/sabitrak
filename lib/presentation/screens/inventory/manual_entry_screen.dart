@@ -164,7 +164,12 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     if (!mounted) return;
     setState(() {
       _currentSuggestion = suggestion;
-      if (!_userOverrodeCategory) _selectedCategory = suggestion.category;
+      // For leftovers: NEVER override category from AI — the user is logging
+      // cooked food in the fridge, not a dairy/grain item.
+      // Only apply category suggestion for non-leftover types.
+      if (!_userOverrodeCategory && _itemType != ItemType.leftover) {
+        _selectedCategory = suggestion.category;
+      }
       if (!_userOverrodeStorage) {
         _selectedStorage =
             _itemType == ItemType.leftover
@@ -669,33 +674,99 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: borderColor),
-                      ),
-                      child: TextField(
-                        controller: _nameController,
-                        textCapitalization: TextCapitalization.words,
-                        style: TextStyle(color: textColor),
-                        decoration: InputDecoration(
-                          hintText: 'Enter food name',
-                          hintStyle: TextStyle(color: subtitleColor),
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
+                    Autocomplete<String>(
+                      optionsBuilder: (TextEditingValue textEditingValue) {
+                        if (textEditingValue.text.isEmpty) {
+                          return const Iterable<String>.empty();
+                        }
+                        final query = textEditingValue.text.toLowerCase();
+                        return FoodIntelligenceService.allFoodNames
+                            .where(
+                              (name) => name.toLowerCase().startsWith(query),
+                            )
+                            .take(8);
+                      },
+                      onSelected: (String selection) {
+                        _nameController.text = selection;
+                        _applyNameSuggestion(selection);
+                      },
+                      fieldViewBuilder: (
+                        BuildContext context,
+                        TextEditingController fieldController,
+                        FocusNode focusNode,
+                        VoidCallback onFieldSubmitted,
+                      ) {
+                        // Keep our _nameController in sync
+                        fieldController.text = _nameController.text;
+                        fieldController.addListener(() {
+                          if (_nameController.text != fieldController.text) {
+                            _nameController.text = fieldController.text;
+                          }
+                        });
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: borderColor),
                           ),
-                          suffixIcon: const Icon(
-                            Icons.auto_awesome,
-                            color: AppTheme.primaryGreen,
-                            size: 20,
+                          child: TextField(
+                            controller: fieldController,
+                            focusNode: focusNode,
+                            textCapitalization: TextCapitalization.words,
+                            style: TextStyle(color: textColor),
+                            onChanged: (value) {
+                              if (value.isNotEmpty) {
+                                _applyNameSuggestion(value);
+                              }
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'Enter food name',
+                              hintStyle: TextStyle(color: subtitleColor),
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              suffixIcon: const Icon(
+                                Icons.tips_and_updates,
+                                color: AppTheme.primaryGreen,
+                                size: 20,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
+                      optionsViewBuilder: (
+                        BuildContext context,
+                        AutocompleteOnSelected<String> onSelected,
+                        Iterable<String> options,
+                      ) {
+                        return Align(
+                          alignment: Alignment.topLeft,
+                          child: Material(
+                            elevation: 4,
+                            borderRadius: BorderRadius.circular(12),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 200),
+                              child: ListView.builder(
+                                padding: EdgeInsets.zero,
+                                shrinkWrap: true,
+                                itemCount: options.length,
+                                itemBuilder: (context, index) {
+                                  final option = options.elementAt(index);
+                                  return ListTile(
+                                    dense: true,
+                                    title: Text(option),
+                                    onTap: () => onSelected(option),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
 
@@ -722,7 +793,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                             child: Row(
                               children: [
                                 const Icon(
-                                  Icons.auto_awesome,
+                                  Icons.tips_and_updates,
                                   color: AppTheme.primaryGreen,
                                   size: 12,
                                 ),
@@ -813,7 +884,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                             child: Row(
                               children: [
                                 const Icon(
-                                  Icons.auto_awesome,
+                                  Icons.tips_and_updates,
                                   color: AppTheme.primaryGreen,
                                   size: 12,
                                 ),
@@ -921,7 +992,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                       child: Row(
                         children: [
                           const Icon(
-                            Icons.auto_awesome,
+                            Icons.tips_and_updates,
                             color: AppTheme.primaryGreen,
                             size: 18,
                           ),
