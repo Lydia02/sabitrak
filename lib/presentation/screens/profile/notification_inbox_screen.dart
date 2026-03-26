@@ -624,8 +624,39 @@ class _ActivityTabState extends State<_ActivityTab> {
   bool _newestFirst = true;
   int _visibleCount = _pageSize;
 
-  List<AppNotification> get _sorted {
-    final items = List.of(widget.activity);
+  // null = show all members; a uid string = show only that member;
+  // '' = show system notifications (no actor)
+  String? _selectedActorUid =
+      null; // ignore: prefer_typing_uninitialized_variables
+
+  // Ordered list of unique actors derived from the activity list.
+  // Each entry: { 'uid': String (or ''), 'name': String }
+  List<Map<String, String>> get _actors {
+    final seen = <String>{};
+    final result = <Map<String, String>>[];
+    for (final n in widget.activity) {
+      final uid = n.actorUid ?? '';
+      final name = (n.actorName?.isNotEmpty == true) ? n.actorName! : 'System';
+      if (seen.add(uid)) {
+        result.add({'uid': uid, 'name': name});
+      }
+    }
+    // Sort: non-empty uids first (real members), then system last
+    result.sort((a, b) {
+      if (a['uid']!.isEmpty && b['uid']!.isNotEmpty) return 1;
+      if (a['uid']!.isNotEmpty && b['uid']!.isEmpty) return -1;
+      return a['name']!.compareTo(b['name']!);
+    });
+    return result;
+  }
+
+  List<AppNotification> get _filtered {
+    final items =
+        _selectedActorUid == null
+            ? List.of(widget.activity)
+            : widget.activity
+                .where((n) => (n.actorUid ?? '') == _selectedActorUid)
+                .toList();
     items.sort(
       (a, b) =>
           _newestFirst
@@ -635,7 +666,22 @@ class _ActivityTabState extends State<_ActivityTab> {
     return items;
   }
 
-  List<AppNotification> get _page => _sorted.take(_visibleCount).toList();
+  List<AppNotification> get _page => _filtered.take(_visibleCount).toList();
+
+  void _resetPagination() => _visibleCount = _pageSize;
+
+  // Generate a deterministic avatar colour from the actor's name.
+  Color _avatarColor(String name) {
+    const palette = [
+      Color(0xFF1B5E20),
+      Color(0xFF0D47A1),
+      Color(0xFF6A1B9A),
+      Color(0xFFBF360C),
+      Color(0xFF004D40),
+      Color(0xFF37474F),
+    ];
+    return palette[name.codeUnits.fold(0, (s, c) => s + c) % palette.length];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -649,9 +695,10 @@ class _ActivityTabState extends State<_ActivityTab> {
       );
     }
 
-    final sorted = _sorted;
+    final actors = _actors;
+    final filtered = _filtered;
     final page = _page;
-    final hasMore = sorted.length > _visibleCount;
+    final hasMore = filtered.length > _visibleCount;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -675,38 +722,97 @@ class _ActivityTabState extends State<_ActivityTab> {
               onToggle:
                   () => setState(() {
                     _newestFirst = !_newestFirst;
-                    _visibleCount = _pageSize;
+                    _resetPagination();
                   }),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 10),
+
+        // ── Member filter chips ───────────────────────────────────────────
+        // Only show if there is more than one distinct actor
+        if (actors.length > 1) ...[
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                // "All" chip
+                _MemberChip(
+                  label: 'All',
+                  selected: _selectedActorUid == null,
+                  color: AppTheme.primaryGreen,
+                  onTap:
+                      () => setState(() {
+                        _selectedActorUid = null;
+                        _resetPagination();
+                      }),
+                  subtitleColor: widget.subtitleColor,
+                ),
+                ...actors.map((actor) {
+                  final uid = actor['uid']!;
+                  final name = actor['name']!;
+                  final color =
+                      uid.isEmpty ? widget.subtitleColor : _avatarColor(name);
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: _MemberChip(
+                      label: name,
+                      selected: _selectedActorUid == uid,
+                      color: color,
+                      onTap:
+                          () => setState(() {
+                            _selectedActorUid = uid;
+                            _resetPagination();
+                          }),
+                      subtitleColor: widget.subtitleColor,
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+
+        // ── Result count ──────────────────────────────────────────────────
         Text(
-          '${sorted.length} ${sorted.length == 1 ? 'event' : 'events'}',
+          '${filtered.length} ${filtered.length == 1 ? 'event' : 'events'}',
           style: TextStyle(
             fontFamily: 'Roboto',
             fontSize: 11,
             color: widget.subtitleColor.withValues(alpha: 0.7),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
 
         // ── Rows ──────────────────────────────────────────────────────────
-        ...page.map(
-          (n) => _ActivityRow(
-            notif: n,
-            textColor: widget.textColor,
-            subtitleColor: widget.subtitleColor,
-            cardColor: widget.cardColor,
-            isDark: widget.isDark,
+        if (filtered.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: _EmptyState(
+              icon: Icons.person_off_outlined,
+              title: 'No activity',
+              subtitle: 'No events found for this member.',
+              subtitleColor: widget.subtitleColor,
+              textColor: widget.textColor,
+            ),
+          )
+        else
+          ...page.map(
+            (n) => _ActivityRow(
+              notif: n,
+              textColor: widget.textColor,
+              subtitleColor: widget.subtitleColor,
+              cardColor: widget.cardColor,
+              isDark: widget.isDark,
+            ),
           ),
-        ),
 
         // ── Load more ─────────────────────────────────────────────────────
         if (hasMore) ...[
           const SizedBox(height: 8),
           _LoadMoreButton(
-            remaining: sorted.length - _visibleCount,
+            remaining: filtered.length - _visibleCount,
             subtitleColor: widget.subtitleColor,
             onTap: () => setState(() => _visibleCount += _pageSize),
           ),
@@ -999,6 +1105,77 @@ class _LoadMoreButton extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Avatar-style chip for filtering activity by household member.
+class _MemberChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Color color;
+  final VoidCallback onTap;
+  final Color subtitleColor;
+
+  const _MemberChip({
+    required this.label,
+    required this.selected,
+    required this.color,
+    required this.onTap,
+    required this.subtitleColor,
+  });
+
+  String get _initials {
+    final parts = label.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return label.isNotEmpty ? label[0].toUpperCase() : '?';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? color : color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? color : color.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 10,
+              backgroundColor:
+                  selected ? Colors.white.withValues(alpha: 0.3) : color,
+              child: Text(
+                _initials,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  color: selected ? Colors.white : Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: selected ? Colors.white : color,
+              ),
+            ),
+          ],
         ),
       ),
     );
