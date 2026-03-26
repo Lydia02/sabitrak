@@ -142,8 +142,8 @@ class FoodIntelligenceService {
         'Cool and refrigerate. Best within 4 days or freeze up to 3 months.',
       );
     }
-    // Powder / flour / mix
-    if (q.contains('powder') || q.contains('flour') || q.contains('mix')) {
+    // Powder / flour
+    if (q.contains('powder') || q.contains('flour')) {
       return _s(
         'Grains',
         'Cupboard',
@@ -516,19 +516,19 @@ class FoodIntelligenceService {
   static final Map<String, FoodSuggestion> _db = {
     // ── AFRICAN STAPLES ───────────────────────────────────────────────────────
     'jollof rice': _s(
-      'Grains',
+      'Other',
       'Fridge',
       3,
       'Refrigerate cooked jollof. Reheat thoroughly before eating.',
     ),
     'fried rice': _s(
-      'Grains',
+      'Other',
       'Fridge',
       3,
       'Refrigerate cooked fried rice. Reheat thoroughly.',
     ),
     'egusi': _s(
-      'Grains',
+      'Spices',
       'Cupboard',
       180,
       'Dried egusi keeps 4–6 months in airtight container.',
@@ -540,7 +540,7 @@ class FoodIntelligenceService {
       'Refrigerate cooked soup. Consume within 4 days or freeze.',
     ),
     'ogbono': _s(
-      'Grains',
+      'Spices',
       'Cupboard',
       180,
       'Dried ogbono keeps up to 6 months away from moisture.',
@@ -655,19 +655,19 @@ class FoodIntelligenceService {
       'Keep dried crayfish in airtight container away from moisture.',
     ),
     'ogi': _s(
-      'Grains',
+      'Other',
       'Fridge',
       5,
       'Prepared ogi/pap keeps 5 days refrigerated. Dry ogi powder lasts 3 months.',
     ),
     'akamu': _s(
-      'Grains',
+      'Other',
       'Fridge',
       5,
       'Same as ogi/pap. Refrigerate and use within 5 days.',
     ),
     'pap': _s(
-      'Grains',
+      'Other',
       'Fridge',
       5,
       'Refrigerate prepared pap. Consume within 5 days.',
@@ -679,31 +679,31 @@ class FoodIntelligenceService {
       'Store in a dry airtight container. Keeps 4–6 months.',
     ),
     'eba': _s(
-      'Grains',
+      'Other',
       'Counter',
       1,
       'Eba is best eaten immediately. Do not refrigerate.',
     ),
     'fufu': _s(
-      'Grains',
+      'Other',
       'Counter',
       1,
       'Eat immediately. Can refrigerate up to 1 day but best fresh.',
     ),
     'pounded yam': _s(
-      'Grains',
+      'Other',
       'Counter',
       1,
       'Best eaten fresh. Refrigerate if needed, use within 1 day.',
     ),
     'amala': _s(
-      'Grains',
+      'Other',
       'Counter',
       1,
       'Best consumed immediately after preparation.',
     ),
-    'tuwo shinkafa': _s('Grains', 'Counter', 1, 'Serve and eat immediately.'),
-    'tuwo masara': _s('Grains', 'Counter', 1, 'Serve and eat immediately.'),
+    'tuwo shinkafa': _s('Other', 'Counter', 1, 'Serve and eat immediately.'),
+    'tuwo masara': _s('Other', 'Counter', 1, 'Serve and eat immediately.'),
     'semovita': _s(
       'Grains',
       'Cupboard',
@@ -897,7 +897,7 @@ class FoodIntelligenceService {
       'Dried hibiscus keeps 6 months in airtight container.',
     ),
     'soybeans': _s(
-      'Grains',
+      'Legumes',
       'Cupboard',
       365,
       'Dried soybeans keep 1 year in sealed container.',
