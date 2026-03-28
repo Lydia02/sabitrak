@@ -134,7 +134,9 @@ class InventoryRepository {
   static String _synonymKey(String name) {
     final lower = name.trim().toLowerCase();
     for (final group in _synonymGroups) {
-      if (group.any((s) => lower == s || lower.contains(s) || s.contains(lower))) {
+      if (group.any(
+        (s) => lower == s || lower.contains(s) || s.contains(lower),
+      )) {
         return group.first; // canonical form
       }
     }
