@@ -127,56 +127,45 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       int deductAmount;
       String fromMeasure;
 
-      if (recipeIng != null && recipeIng.measure.trim().isNotEmpty) {
+      // Grains & legumes are bought in Kg but cooked by the cup.
+      // 1 cup of dry grain/legume ≈ 0.2 Kg.
+      // Deduct (householdMembers × 0.2 Kg) rounded up, min 1 unit.
+      final pantryUnitLower = pantryItem.unit.toLowerCase();
+      final categoryLower = pantryItem.category.toLowerCase();
+      final isGrainOrLegume =
+          (categoryLower == 'grains' || categoryLower == 'legumes') &&
+          (pantryUnitLower == 'kg' ||
+              pantryUnitLower == 'cups' ||
+              pantryUnitLower == 'cup');
+
+      if (isGrainOrLegume) {
+        // 1 cup ≈ 0.2 Kg; stored in Kg → deduct members × 0.2, min 1 unit
+        final kgPerCup = pantryUnitLower == 'kg' ? 0.2 : 1.0;
+        final totalDeduct = (widget.householdMemberCount * kgPerCup)
+            .ceil()
+            .clamp(1, pantryItem.quantity);
+        deductAmount = totalDeduct;
+        final unit = pantryUnitLower == 'kg' ? 'Kg' : 'cup(s)';
+        fromMeasure =
+            '${widget.householdMemberCount} cup${widget.householdMemberCount > 1 ? 's' : ''} → $totalDeduct $unit (${widget.householdMemberCount} ${widget.householdMemberCount == 1 ? 'person' : 'people'})';
+      } else if (recipeIng != null && recipeIng.measure.trim().isNotEmpty) {
         final recipeQty = _quantityFromMeasure(recipeIng.measure);
         final recipeUnit = _unitFromMeasure(recipeIng.measure);
-
-        // For grains stored in Cups: deduct 1 cup per household member
-        final pantryUnitLower = pantryItem.unit.toLowerCase();
-        final isGrainInCups =
-            pantryItem.category.toLowerCase() == 'grains' &&
-            (pantryUnitLower == 'cups' || pantryUnitLower == 'cup');
-
-        if (isGrainInCups) {
-          // 1 cup per person, scaled by household size
-          final perPerson = recipeQty.clamp(1.0, double.infinity);
-          final totalCups = (perPerson * widget.householdMemberCount).ceil();
-          deductAmount = totalCups.clamp(1, pantryItem.quantity);
-          fromMeasure =
-              '${widget.householdMemberCount} cup${widget.householdMemberCount > 1 ? 's' : ''} (${widget.householdMemberCount} ${widget.householdMemberCount == 1 ? 'person' : 'people'})';
-        } else {
-          final converted = _convertToPantryUnit(
-            recipeQty,
-            recipeUnit,
-            pantryItem.unit,
-          );
-          if (converted != null) {
-            // Round up — always deduct at least 1
-            deductAmount = converted.ceil().clamp(1, pantryItem.quantity);
-            fromMeasure = recipeIng.measure;
-          } else {
-            // Units completely incompatible (e.g. cups → pcs) — deduct 1
-            deductAmount = 1;
-            fromMeasure = recipeIng.measure;
-          }
-        }
-      } else {
-        // No measure in recipe — for grains default to 1 cup per person
-        final pantryUnitLower = pantryItem.unit.toLowerCase();
-        final isGrainInCups =
-            pantryItem.category.toLowerCase() == 'grains' &&
-            (pantryUnitLower == 'cups' || pantryUnitLower == 'cup');
-        if (isGrainInCups) {
-          deductAmount = widget.householdMemberCount.clamp(
-            1,
-            pantryItem.quantity,
-          );
-          fromMeasure =
-              '${widget.householdMemberCount} cup${widget.householdMemberCount > 1 ? 's' : ''} (${widget.householdMemberCount} ${widget.householdMemberCount == 1 ? 'person' : 'people'})';
+        final converted = _convertToPantryUnit(
+          recipeQty,
+          recipeUnit,
+          pantryItem.unit,
+        );
+        if (converted != null) {
+          deductAmount = converted.ceil().clamp(1, pantryItem.quantity);
+          fromMeasure = recipeIng.measure;
         } else {
           deductAmount = 1;
-          fromMeasure = '';
+          fromMeasure = recipeIng.measure;
         }
+      } else {
+        deductAmount = 1;
+        fromMeasure = '';
       }
 
       toDeduct.add((

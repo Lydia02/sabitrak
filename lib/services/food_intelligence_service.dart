@@ -1843,46 +1843,53 @@ class FoodIntelligenceService {
 
     // ── LEGUMES ───────────────────────────────────────────────────────────────
     'beans': _s(
-      'Grains',
+      'Legumes',
       'Cupboard',
       365,
       'Dried beans keep 1 year. Cooked beans: fridge 5 days.',
+      'Kg',
     ),
     'black eyed beans': _s(
-      'Grains',
+      'Legumes',
       'Cupboard',
       365,
       'Dried cowpeas — 1 year in airtight container.',
+      'Kg',
     ),
     'cowpeas': _s(
-      'Grains',
+      'Legumes',
       'Cupboard',
       365,
       'Store dried in sealed container.',
+      'Kg',
     ),
     'lentils': _s(
-      'Grains',
+      'Legumes',
       'Cupboard',
       730,
       'Dried lentils keep up to 2 years.',
+      'Kg',
     ),
     'chickpeas': _s(
-      'Grains',
+      'Legumes',
       'Cupboard',
       730,
       'Dried: 2 years. Canned: 2 years sealed, fridge 5 days opened.',
+      'Kg',
     ),
     'kidney beans': _s(
-      'Grains',
+      'Legumes',
       'Cupboard',
       730,
       'Dried: 2 years. Canned: see label; opened: fridge 5 days.',
+      'Kg',
     ),
     'soya beans': _s(
-      'Grains',
+      'Legumes',
       'Cupboard',
       365,
       'Dried soybeans — 1 year in cool dry place.',
+      'Kg',
     ),
 
     // ── SPICES & SEASONINGS ───────────────────────────────────────────────────
