@@ -800,8 +800,8 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                                 const SizedBox(width: 4),
                                 Text(
                                   _userOverrodeCategory
-                                      ? 'TAP TO RESTORE AI'
-                                      : 'AI SUGGESTED',
+                                      ? 'TAP TO RESTORE'
+                                      : 'AUTO SUGGESTED',
                                   style: const TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 10,
@@ -891,8 +891,8 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                                 const SizedBox(width: 4),
                                 Text(
                                   _userOverrodeStorage
-                                      ? 'TAP TO RESTORE AI'
-                                      : 'AI SUGGESTED',
+                                      ? 'TAP TO RESTORE'
+                                      : 'AUTO SUGGESTED',
                                   style: const TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 10,
