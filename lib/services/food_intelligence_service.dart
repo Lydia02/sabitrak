@@ -395,6 +395,7 @@ class FoodIntelligenceService {
         'Cupboard',
         730,
         'Dried pasta keeps 2 years in a cool dry cupboard.',
+        'Grams',
       );
     }
     // Tomato
@@ -1739,18 +1740,21 @@ class FoodIntelligenceService {
       'Cupboard',
       730,
       'Dried pasta keeps 2 years. No special storage needed.',
+      'Grams',
     ),
     'spaghetti': _s(
       'Grains',
       'Cupboard',
       730,
       'Dried pasta — 2 years in cupboard.',
+      'Grams',
     ),
     'noodles': _s(
       'Grains',
       'Cupboard',
       730,
       'Dried noodles — keep in cool dry cupboard, 2 years.',
+      'Packs',
     ),
     'instant noodles': _s(
       'Grains',

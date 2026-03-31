@@ -30,18 +30,59 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   ];
 
   static const List<String> _countries = [
-    'Nigeria',
-    'Ghana',
-    'Kenya',
-    'South Africa',
-    'Tanzania',
-    'Uganda',
-    'Rwanda',
-    'Ethiopia',
+    'Algeria',
+    'Angola',
+    'Benin',
+    'Botswana',
+    'Burkina Faso',
+    'Burundi',
+    'Cabo Verde',
     'Cameroon',
-    'Senegal',
+    'Central African Republic',
+    'Chad',
+    'Comoros',
+    'Congo (Brazzaville)',
+    'Congo (DRC)',
+    'Djibouti',
     'Egypt',
+    'Equatorial Guinea',
+    'Eritrea',
+    'Eswatini',
+    'Ethiopia',
+    'Gabon',
+    'Gambia',
+    'Ghana',
+    'Guinea',
+    'Guinea-Bissau',
+    'Ivory Coast',
+    'Kenya',
+    'Lesotho',
+    'Liberia',
+    'Libya',
+    'Madagascar',
+    'Malawi',
+    'Mali',
+    'Mauritania',
+    'Mauritius',
     'Morocco',
+    'Mozambique',
+    'Namibia',
+    'Niger',
+    'Nigeria',
+    'Rwanda',
+    'São Tomé & Príncipe',
+    'Senegal',
+    'Sierra Leone',
+    'Somalia',
+    'South Africa',
+    'South Sudan',
+    'Sudan',
+    'Tanzania',
+    'Togo',
+    'Tunisia',
+    'Uganda',
+    'Zambia',
+    'Zimbabwe',
     'Other',
   ];
 
@@ -247,52 +288,114 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                                       ),
                                     ),
                                     const SizedBox(height: 8),
-                                    DropdownButtonFormField<String>(
-                                      value: _selectedCountry,
-                                      dropdownColor: cardColor,
-                                      items:
-                                          _countries
-                                              .map(
-                                                (c) => DropdownMenuItem(
-                                                  value: c,
-                                                  child: Text(c),
-                                                ),
-                                              )
-                                              .toList(),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _selectedCountry = value!;
-                                        });
+                                    Autocomplete<String>(
+                                      initialValue: TextEditingValue(
+                                        text: _selectedCountry,
+                                      ),
+                                      optionsBuilder: (TextEditingValue value) {
+                                        if (value.text.isEmpty) {
+                                          return _countries;
+                                        }
+                                        final q = value.text.toLowerCase();
+                                        return _countries.where(
+                                          (c) => c.toLowerCase().startsWith(q),
+                                        );
                                       },
-                                      decoration: InputDecoration(
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
+                                      onSelected: (String selection) {
+                                        setState(
+                                          () => _selectedCountry = selection,
+                                        );
+                                      },
+                                      fieldViewBuilder: (
+                                        context,
+                                        controller,
+                                        focusNode,
+                                        onSubmitted,
+                                      ) {
+                                        return TextField(
+                                          controller: controller,
+                                          focusNode: focusNode,
+                                          style: TextStyle(
+                                            fontFamily: 'Roboto',
+                                            fontSize: 14,
+                                            color: textColor,
                                           ),
-                                          borderSide: BorderSide(
-                                            color: borderColor,
-                                          ),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: AppTheme.primaryGreen,
-                                            width: 1.5,
-                                          ),
-                                        ),
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 12,
+                                          decoration: InputDecoration(
+                                            hintText: 'Search country...',
+                                            hintStyle: TextStyle(
+                                              color: borderColor,
                                             ),
-                                      ),
-                                      style: TextStyle(
-                                        fontFamily: 'Roboto',
-                                        fontSize: 14,
-                                        color: textColor,
-                                      ),
+                                            suffixIcon: Icon(
+                                              Icons.search,
+                                              color: borderColor,
+                                              size: 18,
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: BorderSide(
+                                                color: borderColor,
+                                              ),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: const BorderSide(
+                                                color: AppTheme.primaryGreen,
+                                                width: 1.5,
+                                              ),
+                                            ),
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 12,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                      optionsViewBuilder: (
+                                        context,
+                                        onSelected,
+                                        options,
+                                      ) {
+                                        return Align(
+                                          alignment: Alignment.topLeft,
+                                          child: Material(
+                                            elevation: 4,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            child: ConstrainedBox(
+                                              constraints: const BoxConstraints(
+                                                maxHeight: 220,
+                                              ),
+                                              child: ListView.builder(
+                                                padding: EdgeInsets.zero,
+                                                shrinkWrap: true,
+                                                itemCount: options.length,
+                                                itemBuilder: (context, index) {
+                                                  final option = options
+                                                      .elementAt(index);
+                                                  return ListTile(
+                                                    dense: true,
+                                                    title: Text(
+                                                      option,
+                                                      style: TextStyle(
+                                                        fontFamily: 'Roboto',
+                                                        fontSize: 14,
+                                                        color: textColor,
+                                                      ),
+                                                    ),
+                                                    onTap:
+                                                        () =>
+                                                            onSelected(option),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     ),
                                     const SizedBox(height: 32),
                                     BlocBuilder<AuthBloc, AuthState>(

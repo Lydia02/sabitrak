@@ -81,12 +81,17 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     'Kg',
     'Grams',
     'Cups',
+    'Bowls',
     'Litres',
     'Packs',
     'Bags',
     'Bunch',
     'Cans',
     'Bottles',
+    'Jars',
+    'Container',
+    'Wraps',
+    'Sachets',
   ];
 
   static const Map<String, IconData> _storageIcons = {
@@ -122,7 +127,9 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   }
 
   String get _shelfLifeLabel =>
-      _currentSuggestion?.shelfLifeLabel ?? '${_suggestedDays}d';
+      _itemType == ItemType.leftover
+          ? '3d'
+          : (_currentSuggestion?.shelfLifeLabel ?? '${_suggestedDays}d');
 
   @override
   void initState() {
@@ -696,13 +703,11 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                         FocusNode focusNode,
                         VoidCallback onFieldSubmitted,
                       ) {
-                        // Keep our _nameController in sync
-                        fieldController.text = _nameController.text;
-                        fieldController.addListener(() {
-                          if (_nameController.text != fieldController.text) {
-                            _nameController.text = fieldController.text;
-                          }
-                        });
+                        // Sync initial value only (no addListener — avoids
+                        // duplicate listeners on every rebuild)
+                        if (fieldController.text != _nameController.text) {
+                          fieldController.text = _nameController.text;
+                        }
                         return Container(
                           decoration: BoxDecoration(
                             color: cardColor,
@@ -715,9 +720,9 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                             textCapitalization: TextCapitalization.words,
                             style: TextStyle(color: textColor),
                             onChanged: (value) {
-                              if (value.isNotEmpty) {
-                                _applyNameSuggestion(value);
-                              }
+                              // Keep _nameController in sync
+                              _nameController.text = value;
+                              _applyNameSuggestion(value);
                             },
                             decoration: InputDecoration(
                               hintText: 'Enter food name',
