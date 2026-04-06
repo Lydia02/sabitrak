@@ -1,34 +1,33 @@
 # SabiTrak
 
-**Smart tracking. Less waste.**
+**Smart food tracking for African households. Less waste, better meals.**
 
-SabiTrak is a mobile food inventory management app for African students and young professionals. It reduces food waste through barcode scanning, expiry tracking, recipe recommendations, and household collaboration.
+SabiTrak is an Android app that helps students and young professionals manage their food pantry — tracking expiry dates, suggesting recipes, and enabling household collaboration.
 
 ---
 
-## Live Demo & Download
+## Hosted Solution
 
 | Resource | Link |
 |----------|------|
-| **Download APK** | [SabiTrak-release.apk](https://drive.google.com/file/d/1CjCq2bJPOt4qP2vWJrXwsTWxQY4K8R0r/view?usp=sharing) |
+| **Download APK** | [sabitrak-v1.apk](https://drive.google.com/file/d/1EeU0RCDaUSxPGYvpORXUkOTlv6AMvb51/view?usp=sharing) |
 | **Demo Video** | [Watch on Google Drive](https://drive.google.com/file/d/1ulhGcUdO65bLNxI_zObQT-PHgIYizrK-/view?usp=sharing) |
 | **Design Mockups** | [View on Uizard](https://app.uizard.io/p/4f316171) |
 
-> **To install the APK:** Download → Settings → Security → Allow unknown apps → Open the `.apk` file → Install.
+> **Install:** Download the APK → Settings → Security → Enable *Install unknown apps* → Open file → Install.
 
 ---
 
 ## Features
 
-- **Inventory Management** — Add items by type (Ingredient / Leftover / Product) with duplicate detection
-- **Barcode Scanning** — Auto-fill item details via Open Food Facts API + ML Kit
-- **Expiry Date OCR** — Capture expiry dates from product labels using the camera
-- **Expiry Alerts** — Color-coded indicators (green/orange/red) with push notifications
-- **Recipe Recommendations** — AI-powered suggestions prioritising expiring items, with African cuisine support
-- **Household Collaboration** — Create/join households with invite codes; shared pantry
-- **Waste Analytics** — Waste reduction ring, savings tracker, top wasted items chart
-- **Offline Mode** — Firestore persistence + Hive local caching
-- **Dark Mode** — Full dark/light theme toggle
+- **Inventory Tracking** — Add ingredients, leftovers, and packaged products; color-coded expiry alerts
+- **Barcode Scanning** — Auto-fill item details via Open Food Facts API and ML Kit
+- **Expiry Date OCR** — Read expiry dates from product labels using the device camera
+- **Recipe Recommendations** — Suggests recipes that use items expiring soon, with African cuisine support
+- **Household Collaboration** — Create or join a shared household pantry using a 6-digit invite code
+- **Waste Analytics** — Waste reduction ring, savings tracker, and top wasted items chart
+- **Offline Mode** — Works without internet using Hive local cache; syncs when reconnected
+- **Push Notifications** — Expiry and low-stock alerts via Firebase Cloud Messaging
 
 ---
 
@@ -36,17 +35,19 @@ SabiTrak is a mobile food inventory management app for African students and youn
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Flutter 3.x (Dart) |
-| State Management | BLoC |
-| Backend | Firebase (Auth, Firestore, Cloud Messaging) |
-| Barcode Scanning | Open Food Facts API + ML Kit |
+| Framework | Flutter 3.29.2 (Dart) |
+| State Management | BLoC (`flutter_bloc`) |
+| Backend | Firebase Auth, Firestore, Cloud Functions, FCM |
+| Barcode | Open Food Facts API + Google ML Kit |
 | OCR | Google ML Kit Text Recognition |
-| Local Storage | SharedPreferences + Hive |
-| AI Recipes | African Food API |
+| Local Cache | Hive + SharedPreferences |
+| CI | GitHub Actions |
 
 ---
 
-## Run from Source
+## Run Locally
+
+**Prerequisites:** Flutter SDK (stable channel), Android Studio or physical Android device, Firebase CLI.
 
 ```bash
 git clone https://github.com/Lydia02/sabitrak.git
@@ -55,55 +56,25 @@ flutter pub get
 flutter run
 ```
 
-**Build release APK:**
-```bash
-flutter build apk --release
-```
-
-**Prerequisites:** Flutter SDK (stable), Android Studio or physical Android device, Node.js + Firebase CLI.
-
 ---
 
-## Project Structure
+## Tests
 
-```
-lib/
-├── main.dart
-├── config/theme/             # Light + dark theme
-├── data/
-│   ├── models/               # FoodItem, UserModel, Recipe
-│   └── repositories/         # InventoryRepository, AuthRepository
-├── presentation/
-│   ├── screens/              # Dashboard, Inventory, Recipe, Analytics, Auth, Household, Profile
-│   └── blocs/                # Auth BLoC
-└── services/                 # Firebase, Notification, Recipe services
-```
-
----
-
-## Testing
-
-103 automated tests — all passing.
+103 automated tests across four categories.
 
 ```bash
-flutter test test/unit/ test/integration/ test/validation/ test/acceptance/
+flutter test
 ```
 
-| Category | What it covers |
-|----------|---------------|
-| Unit | FoodItem model, duplicate detection, auth flows |
-| Integration | Multi-step auth flows with mocked services |
-| Validation | Password rules, email format, quantity/date constraints |
-| Acceptance | Core user journey acceptance criteria (AC-01–AC-06) |
-
-**Performance:** Cold start < 3s · Firestore reads < 1s on 4G · Barcode scan < 2s · OCR < 3s
+| Suite | Covers |
+|-------|--------|
+| Unit | FoodItem model, duplicate detection, food intelligence service |
+| Validation | Email, password, quantity, and date input rules |
+| Integration | Auth flows, inventory repository with mocked Firebase |
+| Acceptance | Core user journeys (AC-01 to AC-06) |
 
 ---
-
-## License
-
-MIT License
 
 ## Author
 
-**Lydia Ojoawo** — [GitHub](https://github.com/Lydia02)
+**Lydia Ojoawo** — [github.com/Lydia02](https://github.com/Lydia02)
